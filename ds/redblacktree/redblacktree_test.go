@@ -740,3 +740,24 @@ func BenchmarkRedBlackTreeRemove100000(b *testing.B) {
 	b.StartTimer()
 	benchmarkRemove(b, tree, size)
 }
+
+func TestRedBlackTreeCount(t *testing.T) {
+	tree := NewWithIntComparator()
+	tree.Put(5, "e")
+	tree.Put(6, "f")
+	tree.Put(7, "g")
+	tree.Put(3, "c")
+	tree.Put(4, "d")
+	tree.Put(1, "x")
+	tree.Put(2, "b")
+	tree.Put(1, "a") //overwrite
+	tree.Put(0, "0")
+	tree.Put(8, "h")
+	tree.Put(9, "i")
+
+	tree.Remove(5)
+	tree.Remove(8)
+	tree.Remove(8)
+
+	fmt.Println(tree.String())
+}
