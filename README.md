@@ -11,6 +11,7 @@
 * 만료된 데이터는 config 속성을 통해 AMQP 등에게 정보가 전달 된다
 * 하나의 테이블에 대해 복수개의 세컨더리 인덱스를 지원한다
 * 추후 분산 컴퓨팅이 지원될 것이다
+* 추후 Fast concurrent lock-free binary search tree 개념이 도입될 것이다
 
 
 ### 테이블 API (사이즈가 n 일 때)
