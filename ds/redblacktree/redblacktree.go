@@ -15,7 +15,6 @@ import (
 	"fmt"
 	"github.com/emirpasic/gods/trees"
 	"github.com/emirpasic/gods/utils"
-	"github.com/emirpasic/gods/lists/arraylist"
 )
 
 func assertTreeImplementation() {
@@ -69,10 +68,8 @@ func (tree *Tree) Put(key interface{}, value interface{}) {
 		tree.Root = insertedNode
 	} else {
 		node := tree.Root
-		trace := arraylist.New()
 		loop := true
 		for loop {
-			trace.Add(node)
 			compare := tree.Comparator(key, node.Key)
 			switch {
 			case compare == 0:
@@ -97,8 +94,8 @@ func (tree *Tree) Put(key interface{}, value interface{}) {
 		}
 		insertedNode.Parent = node
 
-		for it := trace.Iterator(); it.Next(); {
-			it.Value().(*Node).count++
+		for it := node; it != nil; it = it.Parent {
+			it.count++
 		}
 	}
 
@@ -110,17 +107,9 @@ func (tree *Tree) Put(key interface{}, value interface{}) {
 // Second return parameter is true if key was found, otherwise false.
 // Key should adhere to the comparator's type assertion, otherwise method panics.
 func (tree *Tree) Get(key interface{}) (value interface{}, found bool) {
-	node := tree.Root
-	for node != nil {
-		compare := tree.Comparator(key, node.Key)
-		switch {
-		case compare == 0:
-			return node.Value, true
-		case compare < 0:
-			node = node.Left
-		case compare > 0:
-			node = node.Right
-		}
+	node := tree.lookup(key)
+	if node != nil {
+		return node.Value, true
 	}
 	return nil, false
 }
@@ -129,19 +118,18 @@ func (tree *Tree) Get(key interface{}) (value interface{}, found bool) {
 // Key should adhere to the comparator's type assertion, otherwise method panics.
 func (tree *Tree) Remove(key interface{}) {
 	var child *Node
-	trace := arraylist.New()
-	node := tree.lookup(key, trace)
+	node := tree.lookup(key)
 	if node == nil {
 		return
 	}
 	if node.Left != nil && node.Right != nil {
-		pred := node.Left.maximumNode(trace)
+		pred := node.Left.maximumNode()
 		node.Key = pred.Key
 		node.Value = pred.Value
 		node = pred
 	}
-	for it := trace.Iterator(); it.Next(); {
-		it.Value().(*Node).count--
+	for it := node.Parent; it != nil; it = it.Parent {
+		it.count--
 	}
 	if node.Left == nil || node.Right == nil {
 		if node.Right == nil {
@@ -319,12 +307,9 @@ func output(node *Node, prefix string, isTail bool, str *string) {
 	}
 }
 
-func (tree *Tree) lookup(key interface{}, trace *arraylist.List) *Node {
+func (tree *Tree) lookup(key interface{}) *Node {
 	node := tree.Root
 	for node != nil {
-		if trace != nil {
-			trace.Add(node)
-		}
 		compare := tree.Comparator(key, node.Key)
 		switch {
 		case compare == 0:
@@ -457,12 +442,11 @@ func (tree *Tree) insertCase5(node *Node) {
 	}
 }
 
-func (node *Node) maximumNode(trace *arraylist.List) *Node {
+func (node *Node) maximumNode() *Node {
 	if node == nil {
 		return nil
 	}
 	for node.Right != nil {
-		trace.Add(node)
 		node = node.Right
 	}
 	return node
