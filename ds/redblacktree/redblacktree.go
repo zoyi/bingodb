@@ -202,62 +202,91 @@ func (tree *Tree) Right() *Node {
 	return parent
 }
 
-// Floor Finds floor node of the input key, return the floor node or nil if no ceiling is found.
+// Floor Finds floor node of the input key, return the floor node or nil if no floor is found.
 // Second return parameter is true if floor was found, otherwise false.
+// Third return parameter indicates the index(1-based) of the floor node. Return 0 if no floor is found.
 //
 // Floor node is defined as the largest node that is smaller than or equal to the given node.
 // A floor node may not be found, either because the tree is empty, or because
 // all nodes in the tree is larger than the given node.
 //
 // Key should adhere to the comparator's type assertion, otherwise method panics.
-func (tree *Tree) Floor(key interface{}) (floor *Node, found bool) {
+func (tree *Tree) Floor(key interface{}) (floor *Node, found bool, index int) {
 	found = false
 	node := tree.Root
+	count := 0
 	for node != nil {
 		compare := tree.Comparator(key, node.Key)
+		lcount := 0
+		if node.Left != nil {
+			lcount = node.Left.count
+		}
+
 		switch {
 		case compare == 0:
-			return node, true
+			count += lcount + 1
+			return node, true, count
 		case compare < 0:
 			node = node.Left
 		case compare > 0:
+			count += lcount + 1
 			floor, found = node, true
 			node = node.Right
 		}
 	}
 	if found {
-		return floor, true
+		return floor, true, count
 	}
-	return nil, false
+	return nil, false, 0
 }
 
 // Ceiling finds ceiling node of the input key, return the ceiling node or nil if no ceiling is found.
 // Second return parameter is true if ceiling was found, otherwise false.
+// Third return parameter indicates the index(1-based) of the ceiling node. Return tree.size + 1 if no ceiling is found.
 //
 // Ceiling node is defined as the smallest node that is larger than or equal to the given node.
 // A ceiling node may not be found, either because the tree is empty, or because
 // all nodes in the tree is smaller than the given node.
 //
 // Key should adhere to the comparator's type assertion, otherwise method panics.
-func (tree *Tree) Ceiling(key interface{}) (ceiling *Node, found bool) {
+func (tree *Tree) Ceiling(key interface{}) (ceiling *Node, found bool, index int) {
 	found = false
 	node := tree.Root
+	count := 0
 	for node != nil {
 		compare := tree.Comparator(key, node.Key)
+		lcount := 0
+		if node.Left != nil {
+			lcount = node.Left.count
+		}
+
 		switch {
 		case compare == 0:
-			return node, true
+			count += lcount + 1
+			return node, true, count
 		case compare < 0:
 			ceiling, found = node, true
 			node = node.Left
 		case compare > 0:
+			count += lcount + 1
 			node = node.Right
 		}
 	}
 	if found {
-		return ceiling, true
+		return ceiling, true, count + 1
 	}
-	return nil, false
+	return nil, false, tree.size + 1
+}
+
+// Count the total nodes which its key is between min and max (inclusive).
+func (tree *Tree) count(min interface{}, max interface{}) (int) {
+	if tree.Comparator(min, max) > 0 {
+		return 0
+	}
+
+	_, _, maxIndex := tree.Floor(max)
+	_, _, minIndex := tree.Ceiling(min)
+	return maxIndex - minIndex + 1
 }
 
 // Clear removes all nodes from the tree.
