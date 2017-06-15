@@ -1,0 +1,15 @@
+tables:
+  onlines:
+    fields:
+      id: 'string'
+      guestKey: 'string'
+      channelId: 'string'
+      expiresAt: 'integer'
+      lastSeen: 'integer'
+    expire: 'expiresAt'
+    hashKey: 'channelId'
+    rangeKey: 'id'
+    subIndices:
+      guest:
+        hashKey: 'channelId'
+        rangeKey: 'lastSeen'
