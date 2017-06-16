@@ -85,7 +85,7 @@ func (index *SubIndex) Get(hash interface{}, sort interface{}) (*Document, bool)
 	return node.Key.(SubSortTreeKey).Document, true
 }
 
-func (index *PrimaryIndex) put(doc *Document) {
+func (index *PrimaryIndex) put(doc *Document) (replaced bool, removed interface{}) {
 	hashValue := doc.Get(index.HashKey.Name)
 	sortValue := doc.Get(index.SortKey.Name)
 
@@ -96,7 +96,7 @@ func (index *PrimaryIndex) put(doc *Document) {
 		index.Data[hashValue] = tree
 	}
 
-	tree.Put(sortValue, doc)
+	return tree.Put(sortValue, doc)
 }
 
 func (index *SubIndex) put(doc *Document) {

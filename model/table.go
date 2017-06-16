@@ -118,9 +118,12 @@ func (table *Table) Put(data *Data) *Document {
 	doc := ParseDoc(*data, table.Schema)
 
 	// Insert doc into primary index
-	table.PrimaryIndex.put(doc)
+	replaced, removed := table.PrimaryIndex.put(doc)
 
 	for _, index := range table.SubIndices {
+		if replaced {
+			index.delete(removed.(*Document))
+		}
 		index.put(doc)
 	}
 

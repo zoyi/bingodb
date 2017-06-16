@@ -75,7 +75,6 @@ func main() {
 		table.Put(&data)
 	}
 
-
 	fmt.Println(v.Tables["onlines"].Get("1", "test@gmail.com"))
 
 	fmt.Println(v.Tables["onlines"].Index("guest").Get("1", "123"))
@@ -84,4 +83,22 @@ func main() {
 	fmt.Println(v.Tables["onlines"].Delete("1", "aaa@gmail.com"))
 
 	fmt.Println(v.Tables["onlines"].Index("guest").Get("1", "123"))
+	
+
+	{
+		var s = `{
+			"channelId": "1",
+			"id": "red@gmail.com",
+			"lastSeen": 100
+		}`
+
+		dec := json.NewDecoder(strings.NewReader(s))
+		dec.UseNumber()
+		var data model.Data
+		dec.Decode(&data)
+		table.Put(&data)
+	}
+
+	fmt.Println(v.Tables["onlines"].Index("guest").Get("1", "123"))
+	fmt.Println(v.Tables["onlines"].Index("guest").Get("1", "100"))
 }
