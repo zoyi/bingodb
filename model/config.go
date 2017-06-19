@@ -2,10 +2,11 @@ package model
 
 import (
 	"io/ioutil"
+	"path/filepath"
 	"gopkg.in/yaml.v2"
 	"fmt"
 	"log"
-	"bingodb/ds/redblacktree"
+	"github.com/zoyi/bingodb/ds/redblacktree"
 )
 
 type Config struct {
@@ -29,7 +30,8 @@ type configInfo struct {
 }
 
 func Load(filename string) *Config {
-	source,_ := ioutil.ReadFile(filename)
+	absPath, _ := filepath.Abs(filename)
+	source, _ := ioutil.ReadFile(absPath)
 
 	configInfo := configInfo{}
 

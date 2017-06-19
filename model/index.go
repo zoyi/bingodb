@@ -2,7 +2,7 @@ package model
 
 import (
 	"fmt"
-	"bingodb/ds/redblacktree"
+	"github.com/zoyi/bingodb/ds/redblacktree"
 )
 
 

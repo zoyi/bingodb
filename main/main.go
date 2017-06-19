@@ -1,9 +1,7 @@
 package main
 
 import (
-)
-import (
-	"bingodb/model"
+	"github.com/zoyi/bingodb/model"
 	"fmt"
 	"encoding/json"
 	"strings"
@@ -11,7 +9,7 @@ import (
 
 func main() {
 
-	v := model.Load("/Users/red/go/src/bingodb/config.yml")
+	v := model.Load("config.yml")
 
 	fmt.Println(v.Tables["onlines"])
 
