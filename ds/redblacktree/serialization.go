@@ -18,7 +18,8 @@ func assertSerializationImplementation() {
 // ToJSON outputs the JSON representation of list's elements.
 func (tree *Tree) ToJSON() ([]byte, error) {
 	elements := make(map[string]interface{})
-	for it := tree.Iterator(); it.isValid(); it.Next() {
+	it := tree.Iterator()
+	for it.Next() {
 		elements[utils.ToString(it.Key())] = it.Value()
 	}
 	return json.Marshal(&elements)

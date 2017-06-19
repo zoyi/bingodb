@@ -158,9 +158,9 @@ func (tree *Tree) Size() int {
 // Keys returns all keys in-order
 func (tree *Tree) Keys() []interface{} {
 	keys := make([]interface{}, tree.size)
-	for i, it := 0, tree.Iterator(); it.isValid(); it.Next() {
+	it := tree.Iterator()
+	for i := 0; it.Next(); i++ {
 		keys[i] = it.Key()
-		i++
 	}
 	return keys
 }
@@ -168,9 +168,9 @@ func (tree *Tree) Keys() []interface{} {
 // Values returns all values in-order based on the key.
 func (tree *Tree) Values() []interface{} {
 	values := make([]interface{}, tree.size)
-	for i, it := 0, tree.Iterator(); it.isValid(); it.Next() {
+	it := tree.Iterator()
+	for i := 0; it.Next(); i++ {
 		values[i] = it.Value()
-		i++
 	}
 	return values
 }
