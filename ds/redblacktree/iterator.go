@@ -25,7 +25,28 @@ const (
 
 // Iterator returns a stateful iterator whose elements are key/value pairs.
 func (tree *Tree) Iterator() Iterator {
-	return Iterator{tree: tree, node: nil, position: begin}
+	node := tree.Left()
+
+	if node == nil {
+		return Iterator{tree: tree, node: nil, position: end}
+	}
+	return Iterator{tree: tree, node: node, position: between}
+}
+
+func (tree *Tree) IteratorFromFloor(key interface{}) Iterator {
+	node, found := tree.Floor(key)
+	if !found {
+		return Iterator{tree: tree, node: nil, position: begin}
+	}
+	return Iterator{tree: tree, node: node, position: between}
+}
+
+func (tree *Tree) IteratorFromCeiling(key interface{}) Iterator {
+	node, found := tree.Ceiling(key)
+	if !found {
+		return Iterator{tree: tree, node: nil, position: end}
+	}
+	return Iterator{tree: tree, node: node, position: between}
 }
 
 // Next moves the iterator to the next element and returns true if there was a next element in the container.
@@ -69,6 +90,11 @@ end:
 between:
 	iterator.position = between
 	return true
+}
+
+// Return true if current iterator is valid, otherwise false.
+func (iterator *Iterator) isValid() bool {
+	return iterator.position == between
 }
 
 // Prev moves the iterator to the previous element and returns true if there was a previous element in the container.
@@ -125,11 +151,17 @@ func (iterator *Iterator) Key() interface{} {
 	return iterator.node.Key
 }
 
-// Begin resets the iterator to its initial state (one-before-first)
-// Call Next() to fetch the first element if any.
+// Begin resets the iterator to its initial state
 func (iterator *Iterator) Begin() {
-	iterator.node = nil
-	iterator.position = begin
+	node := iterator.tree.Left()
+
+	if node == nil {
+		iterator.node = nil
+		iterator.position = end
+		return
+	}
+	iterator.node = node
+	iterator.position = between
 }
 
 // End moves the iterator past the last element (one-past-the-end).
@@ -144,7 +176,7 @@ func (iterator *Iterator) End() {
 // Modifies the state of the iterator
 func (iterator *Iterator) First() bool {
 	iterator.Begin()
-	return iterator.Next()
+	return iterator.position != end
 }
 
 // Last moves the iterator to the last element and returns true if there was a last element in the container.
