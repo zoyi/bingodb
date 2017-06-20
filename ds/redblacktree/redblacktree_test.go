@@ -154,10 +154,10 @@ func TestRedBlackTreeLeftAndRight(t *testing.T) {
 func TestRedBlackTreeCeilingAndFloor(t *testing.T) {
 	tree := NewWithIntComparator()
 
-	if node, found, _ := tree.Floor(0); node != nil || found {
+	if node, found := tree.Floor(0); node != nil || found {
 		t.Errorf("Got %v expected %v", node, "<nil>")
 	}
-	if node, found, _ := tree.Ceiling(0); node != nil || found {
+	if node, found := tree.Ceiling(0); node != nil || found {
 		t.Errorf("Got %v expected %v", node, "<nil>")
 	}
 
@@ -169,17 +169,17 @@ func TestRedBlackTreeCeilingAndFloor(t *testing.T) {
 	tree.Put(1, "x")
 	tree.Put(2, "b")
 
-	if node, found, _ := tree.Floor(4); node.Key != 4 || !found {
+	if node, found := tree.Floor(4); node.Key != 4 || !found {
 		t.Errorf("Got %v expected %v", node.Key, 4)
 	}
-	if node, found, _ := tree.Floor(0); node != nil || found {
+	if node, found := tree.Floor(0); node != nil || found {
 		t.Errorf("Got %v expected %v", node, "<nil>")
 	}
 
-	if node, found, _ := tree.Ceiling(4); node.Key != 4 || !found {
+	if node, found := tree.Ceiling(4); node.Key != 4 || !found {
 		t.Errorf("Got %v expected %v", node.Key, 4)
 	}
-	if node, found, _ := tree.Ceiling(8); node != nil || found {
+	if node, found := tree.Ceiling(8); node != nil || found {
 		t.Errorf("Got %v expected %v", node, "<nil>")
 	}
 }
@@ -739,63 +739,4 @@ func BenchmarkRedBlackTreeRemove100000(b *testing.B) {
 	}
 	b.StartTimer()
 	benchmarkRemove(b, tree, size)
-}
-
-func TestRedBlackTreeCount(t *testing.T) {
-	tree := NewWithIntComparator()
-	tree.Put(5, "e")
-	tree.Put(6, "f")
-	tree.Put(7, "g")
-	tree.Put(3, "c")
-	tree.Put(4, "d")
-	tree.Put(1, "x")
-	tree.Put(2, "b")
-	tree.Put(1, "a") //overwrite
-	tree.Put(0, "0")
-	tree.Put(8, "h")
-	tree.Put(9, "i")
-
-	tree.Remove(5)
-	tree.Remove(8)
-	tree.Remove(8)
-
-	fmt.Println(tree.String())
-
-	var values []int
-
-	it := tree.Iterator()
-	count := 0
-	for it.Next() {
-		count++
-		key := it.Key().(int)
-		values = append(values, key)
-		_, _, index := tree.Floor(key)
-		if actualValue, expectedValue := index, count; actualValue != expectedValue {
-			t.Errorf("Got %v expected %v", actualValue, expectedValue)
-		}
-
-		_, _, index = tree.Ceiling(key)
-		if actualValue, expectedValue := index, count; actualValue != expectedValue {
-			t.Errorf("Got %v expected %v", actualValue, expectedValue)
-		}
-
-		_, _, indexForMinus := tree.Floor(key - 1)
-		if actualValue, expectedValue := indexForMinus, count - 1; actualValue != expectedValue {
-			t.Errorf("Search %v Got %v expected %v", key - 1, actualValue, expectedValue)
-		}
-
-		_, _, indexForPlus := tree.Ceiling(key + 1)
-		if actualValue, expectedValue := indexForPlus, count + 1; actualValue != expectedValue {
-			t.Errorf("Search %v Got %v expected %v", key + 1, actualValue, expectedValue)
-		}
-	}
-
-	for i := 0; i < len(values); i++ {
-		for j := i; j < len(values); j++ {
-			count = tree.count(values[i], values[j])
-			if actualValue, expectedValue := count, j - i + 1; actualValue != expectedValue {
-				t.Errorf("Got %v expected %v", actualValue, expectedValue)
-			}
-		}
-	}
 }
