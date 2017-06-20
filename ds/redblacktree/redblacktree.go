@@ -13,13 +13,12 @@ package redblacktree
 
 import (
 	"fmt"
-	"github.com/emirpasic/gods/trees"
 	"github.com/emirpasic/gods/utils"
 )
 
-func assertTreeImplementation() {
-	var _ trees.Tree = (*Tree)(nil)
-}
+//func assertTreeImplementation() {
+//	var _ trees.Tree = (*Tree)(nil)
+//}
 
 type color bool
 
@@ -155,25 +154,25 @@ func (tree *Tree) Size() int {
 	return tree.size
 }
 
-// Keys returns all keys in-order
-func (tree *Tree) Keys() []interface{} {
-	keys := make([]interface{}, tree.size)
-	it := tree.Iterator()
-	for i := 0; it.Next(); i++ {
-		keys[i] = it.Key()
-	}
-	return keys
-}
-
-// Values returns all values in-order based on the key.
-func (tree *Tree) Values() []interface{} {
-	values := make([]interface{}, tree.size)
-	it := tree.Iterator()
-	for i := 0; it.Next(); i++ {
-		values[i] = it.Value()
-	}
-	return values
-}
+//// Keys returns all keys in-order
+//func (tree *Tree) Keys() []interface{} {
+//	keys := make([]interface{}, tree.size)
+//	it := tree.Iterator()
+//	for i := 0; it.Next(); i++ {
+//		keys[i] = it.Key()
+//	}
+//	return keys
+//}
+//
+//// Values returns all values in-order based on the key.
+//func (tree *Tree) Values() []interface{} {
+//	values := make([]interface{}, tree.size)
+//	it := tree.Iterator()
+//	for i := 0; it.Next(); i++ {
+//		values[i] = it.Value()
+//	}
+//	return values
+//}
 
 // Left returns the left-most (min) node or nil if tree is empty.
 func (tree *Tree) Left() *Node {
