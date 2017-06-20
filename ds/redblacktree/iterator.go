@@ -1,80 +1,62 @@
 package redblacktree
 
-
-type Iterator interface {
+type BaseIterator interface {
 	Present() bool
 	Remove() (value interface{}, removed bool)
 	Next()
-	Key() (interface{})
-	Value() (interface{})
+	Key() interface{}
+	Value() interface{}
 }
 
-type ForwardIterator struct {
-	tree     *Tree
-	node     *Node
+type Iterator struct {
+	BaseIterator
+	tree *Tree
+	node *Node
 }
 
-type BackwardIterator struct {
-	*ForwardIterator
+type ReverseIterator struct {
+	*Iterator
 }
 
-type Director struct {
-	tree     *Tree
-	direction Direction
+func newIterator(tree *Tree, node *Node) *Iterator {
+	return &Iterator{tree: tree, node: node}
 }
 
-type Direction byte
-
-const (
-	Forward  Direction = 0
-	Backward Direction = 1
-)
-
-func (tree *Tree) Forward() Director {
-	return Director{tree: tree, direction: Forward}
+func newReverseIterator(tree *Tree, node *Node) *ReverseIterator {
+	return &ReverseIterator{Iterator: &Iterator{tree: tree, node: node}}
 }
 
-func (tree *Tree) Backward() Director {
-	return Director{tree: tree, direction: Backward}
+func (tree *Tree) Begin() *Iterator {
+	return newIterator(tree, tree.Left())
 }
 
-func (director Director) Begin() Iterator {
-	tree := director.tree
-
-	node := tree.Root
-
-	if tree.Root != nil {
-		if director.direction == Forward {
-			node = tree.Left()
-		} else {
-			node = tree.Right()
-		}
-	}
-
-	if director.direction == Forward {
-		return &ForwardIterator{tree: tree, node: node}
-	} else {
-		return &BackwardIterator{ForwardIterator: &ForwardIterator{tree: tree, node: node}}
-	}
+func (tree *Tree) RBegin() *ReverseIterator {
+	return newReverseIterator(tree, tree.Right())
 }
 
-func (it *ForwardIterator) Key() interface{} {
+func (tree *Tree) Find(key interface{}) *Iterator {
+	node, _ := tree.Ceiling(key)
+	return newIterator(tree, node)
+}
+
+func (tree *Tree) RFind(key interface{}) *ReverseIterator {
+	node, _ := tree.Floor(key)
+	return newReverseIterator(tree, node)
+}
+
+func (it *Iterator) Key() interface{} {
 	return it.node.Key
 }
 
-func (it *ForwardIterator) Value() interface{} {
+func (it *Iterator) Value() interface{} {
 	return it.node.Value
 }
 
-func (it *ForwardIterator) Present() bool {
+func (it *Iterator) Present() bool {
 	return it.node != nil
 }
 
-func (it *ForwardIterator) Remove() (value interface{}, removed bool) {
-	return nil, false
-}
-
-func (it *ForwardIterator) Next() {
+func (it *Iterator) Next() {
 	if it.node.Right != nil {
 		it.node = it.node.Right
 		for it.node.Left != nil {
@@ -96,7 +78,7 @@ func (it *ForwardIterator) Next() {
 	it.node = nil
 }
 
-func (it *ForwardIterator) Prev() {
+func (it *Iterator) Prev() {
 	if it.node.Left != nil {
 		it.node = it.node.Left
 		for it.node.Right != nil {
@@ -118,14 +100,13 @@ func (it *ForwardIterator) Prev() {
 	it.node = nil
 }
 
-func (it *BackwardIterator) Next() {
-	it.ForwardIterator.Prev()
+func (it *ReverseIterator) Next() {
+	it.Iterator.Prev()
 }
 
-func (it *BackwardIterator) Prev() {
-	it.ForwardIterator.Next()
+func (it *ReverseIterator) Prev() {
+	it.Iterator.Next()
 }
-
 
 // Copyright (c) 2015, Emir Pasic. All rights reserved.
 //// Use of this source code is governed by a BSD-style

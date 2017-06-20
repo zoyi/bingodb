@@ -5,9 +5,8 @@ import (
 	"github.com/zoyi/bingodb/ds/redblacktree"
 )
 
-
 type Index struct {
-	Data    map[interface{}]*redblacktree.Tree
+	Data map[interface{}]*redblacktree.Tree
 	*Key
 }
 
@@ -18,7 +17,6 @@ type PrimaryIndex struct {
 type SubIndex struct {
 	*Index
 }
-
 
 func (index *PrimaryIndex) delete(hash interface{}, sort interface{}) (*Document, bool) {
 	hash = index.HashKey.Parse(hash)

@@ -5,9 +5,9 @@
 package redblacktree
 
 import (
+	"github.com/emirpasic/gods/utils"
 	"testing"
 )
-
 
 func TestRedBlackTreeIterator1Next(t *testing.T) {
 	tree := NewWithIntComparator()
@@ -27,7 +27,7 @@ func TestRedBlackTreeIterator1Next(t *testing.T) {
 	//         └── 2
 	//             └── 1
 	count := 0
-	for it := tree.Forward().Begin(); it.Present(); it.Next() {
+	for it := tree.Begin(); it.Present(); it.Next() {
 		count++
 		key := it.Key()
 		switch key {
@@ -46,7 +46,41 @@ func TestRedBlackTreeIterator1Next(t *testing.T) {
 	}
 }
 
-func TestRedBlackTreeBackwardIteratorNext(t *testing.T) {
+func TestRedBlackTreeIterator2Next(t *testing.T) {
+	tree := NewWith(utils.Float64Comparator)
+	tree.Put(5.0, "e")
+	tree.Put(6.0, "f")
+	tree.Put(7.0, "g")
+	tree.Put(3.0, "c")
+	tree.Put(4.0, "d")
+	tree.Put(1.0, "x")
+	tree.Put(2.0, "b")
+	tree.Put(1.0, "a") //overwrite
+	// │   ┌── 7
+	// └── 6
+	//     │   ┌── 5
+	//     └── 4
+	//         │   ┌── 3
+	//         └── 2
+	//             └── 1
+	count := 3.0
+	for it := tree.Find(3.5); it.Present(); it.Next() {
+		count++
+		key := it.Key()
+		switch key {
+		case count:
+			if actualValue, expectedValue := key, count; actualValue != expectedValue {
+				t.Errorf("Got %v expected %v", actualValue, expectedValue)
+			}
+		default:
+			if actualValue, expectedValue := key, count; actualValue != expectedValue {
+				t.Errorf("Got %v expected %v", actualValue, expectedValue)
+			}
+		}
+	}
+}
+
+func TestRedBlackTreeReverseIterator1Next(t *testing.T) {
 	tree := NewWithIntComparator()
 	tree.Put(5, "e")
 	tree.Put(6, "f")
@@ -64,15 +98,15 @@ func TestRedBlackTreeBackwardIteratorNext(t *testing.T) {
 	//         └── 2
 	//             └── 1
 	count := 0
-	for it := tree.Backward().Begin(); it.Present(); it.Next() {
+	for it := tree.RBegin(); it.Present(); it.Next() {
 		key := it.Key()
 		switch key {
 		case count:
-			if actualValue, expectedValue := key, tree.Size() - count; actualValue != expectedValue {
+			if actualValue, expectedValue := key, tree.Size()-count; actualValue != expectedValue {
 				t.Errorf("Got %v expected %v", actualValue, expectedValue)
 			}
 		default:
-			if actualValue, expectedValue := key, tree.Size() - count; actualValue != expectedValue {
+			if actualValue, expectedValue := key, tree.Size()-count; actualValue != expectedValue {
 				t.Errorf("Got %v expected %v", actualValue, expectedValue)
 			}
 		}
@@ -83,6 +117,39 @@ func TestRedBlackTreeBackwardIteratorNext(t *testing.T) {
 	}
 }
 
+func TestRedBlackTreeReverseIterator2Next(t *testing.T) {
+	tree := NewWith(utils.Float64Comparator)
+	tree.Put(5.0, "e")
+	tree.Put(6.0, "f")
+	tree.Put(7.0, "g")
+	tree.Put(3.0, "c")
+	tree.Put(4.0, "d")
+	tree.Put(1.0, "x")
+	tree.Put(2.0, "b")
+	tree.Put(1.0, "a") //overwrite
+	// │   ┌── 7
+	// └── 6
+	//     │   ┌── 5
+	//     └── 4
+	//         │   ┌── 3
+	//         └── 2
+	//             └── 1
+	count := 5.0
+	for it := tree.RFind(4.5); it.Present(); it.Next() {
+		count--
+		key := it.Key()
+		switch key {
+		case count:
+			if actualValue, expectedValue := key, count; actualValue != expectedValue {
+				t.Errorf("Got %v expected %v", actualValue, expectedValue)
+			}
+		default:
+			if actualValue, expectedValue := key, count; actualValue != expectedValue {
+				t.Errorf("Got %v expected %v", actualValue, expectedValue)
+			}
+		}
+	}
+}
 
 //
 //func TestRedBlackTreePut(t *testing.T) {
@@ -875,4 +942,3 @@ func TestRedBlackTreeBackwardIteratorNext(t *testing.T) {
 //		}
 //	}
 //}
-

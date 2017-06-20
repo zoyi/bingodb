@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/zoyi/bingodb/model"
-	"fmt"
 	"encoding/json"
+	"fmt"
+	"github.com/zoyi/bingodb/model"
 	"strings"
 )
 
@@ -81,7 +81,6 @@ func main() {
 	fmt.Println(v.Tables["onlines"].Delete("1", "aaa@gmail.com"))
 
 	fmt.Println(v.Tables["onlines"].Index("guest").Get("1", "123"))
-	
 
 	{
 		var s = `{

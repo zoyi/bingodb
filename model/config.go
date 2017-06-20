@@ -1,12 +1,12 @@
 package model
 
 import (
-	"io/ioutil"
-	"path/filepath"
-	"gopkg.in/yaml.v2"
 	"fmt"
-	"log"
 	"github.com/zoyi/bingodb/ds/redblacktree"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"log"
+	"path/filepath"
 )
 
 type Config struct {
@@ -14,14 +14,14 @@ type Config struct {
 }
 
 type tableInfo struct {
-	Fields map[string]string `yaml:"fields"`
-	HashKey string `yaml:"hashKey"`
-	RangeKey string `yaml:"rangeKey"`
+	Fields     map[string]string    `yaml:"fields"`
+	HashKey    string               `yaml:"hashKey"`
+	RangeKey   string               `yaml:"rangeKey"`
 	SubIndices map[string]indexInfo `yaml:"subIndices"`
 }
 
 type indexInfo struct {
-	HashKey string `yaml:"hashKey"`
+	HashKey  string `yaml:"hashKey"`
 	RangeKey string `yaml:"rangeKey"`
 }
 
@@ -59,13 +59,13 @@ func parse(configInfo *configInfo) *Config {
 			SortKey: fields[tableInfo.RangeKey]}
 
 		schema := &TableSchema{
-			Fields:   fields,
-			PrimaryKey: primaryKey,
+			Fields:       fields,
+			PrimaryKey:   primaryKey,
 			SubIndexKeys: make(map[string]*Key)}
 
 		primaryIndex := &PrimaryIndex{&Index{
 			Data: make(map[interface{}]*redblacktree.Tree),
-			Key: primaryKey}}
+			Key:  primaryKey}}
 
 		subIndices := make(map[string]*SubIndex)
 		for indexName, indexInfo := range tableInfo.SubIndices {
@@ -76,13 +76,13 @@ func parse(configInfo *configInfo) *Config {
 
 			subIndices[indexName] = &SubIndex{&Index{
 				Data: make(map[interface{}]*redblacktree.Tree),
-				Key: subKey}}
+				Key:  subKey}}
 		}
 
 		tables[tableName] = &Table{
-			Schema:     schema,
-			PrimaryIndex:  primaryIndex,
-			SubIndices: subIndices}
+			Schema:       schema,
+			PrimaryIndex: primaryIndex,
+			SubIndices:   subIndices}
 
 	}
 

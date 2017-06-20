@@ -1,10 +1,10 @@
 package bingodb
 
 import (
-	"fmt"
-	"testing"
 	"encoding/json"
+	"fmt"
 	"strings"
+	"testing"
 )
 
 func TestJson(t *testing.T) {
@@ -49,7 +49,6 @@ func TestJsonAnonymous(t *testing.T) {
 	//	fmt.Printf("\n")
 	//}
 
-
 	//var jsonBlob = []byte(s)
 	//type Animal struct {
 	//	Name  string
@@ -88,8 +87,6 @@ func TestJsonAnonymous(t *testing.T) {
 	//	}
 	//	fmt.Printf("\n")
 	//}
-
-
 
 	//if _, ok := tmp["ts"].(int64); ok {
 	//	fmt.Println("it's int32")

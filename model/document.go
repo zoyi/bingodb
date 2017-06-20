@@ -21,4 +21,3 @@ func ParseDoc(data Data, schema *TableSchema) *Document {
 func (doc *Document) Get(field string) interface{} {
 	return doc.data[field]
 }
-

@@ -2,9 +2,9 @@ package model
 
 import (
 	"encoding/json"
-	"strconv"
-	"reflect"
 	"github.com/emirpasic/gods/utils"
+	"reflect"
+	"strconv"
 )
 
 type FieldSchema struct {
@@ -18,15 +18,15 @@ type Key struct {
 }
 
 type TableSchema struct {
-	Fields map[string]FieldSchema
-	PrimaryKey *Key
+	Fields       map[string]FieldSchema
+	PrimaryKey   *Key
 	SubIndexKeys map[string]*Key
 }
 
 type Table struct {
-	PrimaryIndex  *PrimaryIndex
-	SubIndices map[string]*SubIndex
-	Schema     *TableSchema
+	PrimaryIndex *PrimaryIndex
+	SubIndices   map[string]*SubIndex
+	Schema       *TableSchema
 }
 
 type SubSortTreeKey struct {
@@ -34,13 +34,12 @@ type SubSortTreeKey struct {
 	*Document
 }
 
-
-func (field *FieldSchema) Parse(raw interface{}) interface {} {
+func (field *FieldSchema) Parse(raw interface{}) interface{} {
 	switch field.Type {
 	case "integer":
 		switch raw.(type) {
 		case json.Number:
-			value,_ := raw.(json.Number).Int64()
+			value, _ := raw.(json.Number).Int64()
 			return value
 
 		case string:
@@ -77,11 +76,11 @@ func GeneralCompare(a, b interface{}) int {
 func (key *Key) Compare(a, b *Document) int {
 	if a == nil || b == nil {
 		if a == b {
-			return 0;
+			return 0
 		} else if a == nil {
-			return -1;
+			return -1
 		} else {
-			return 1;
+			return 1
 		}
 	}
 	hashDiff := GeneralCompare(a.Get(key.HashKey.Name), b.Get(key.HashKey.Name))
@@ -91,7 +90,6 @@ func (key *Key) Compare(a, b *Document) int {
 
 	return GeneralCompare(a.Get(key.SortKey.Name), b.Get(key.SortKey.Name))
 }
-
 
 func (table *Table) Delete(hash interface{}, sort interface{}) (*Document, bool) {
 	doc, removed := table.PrimaryIndex.delete(hash, sort)
