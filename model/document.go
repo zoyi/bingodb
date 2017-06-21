@@ -21,3 +21,16 @@ func ParseDoc(data Data, schema *TableSchema) *Document {
 func (doc *Document) Get(field string) interface{} {
 	return doc.data[field]
 }
+
+func (doc *Document) GetExpiresAt() (int64, bool) {
+	if doc.schema.ExpireField == nil {
+		return 0, false
+	}
+
+	value, ok := doc.data[doc.schema.ExpireField.Name]
+	if !ok {
+		return 0, false
+	}
+
+	return value.(int64), ok
+}

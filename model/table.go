@@ -13,17 +13,20 @@ type FieldSchema struct {
 }
 
 type Key struct {
-	HashKey FieldSchema
-	SortKey FieldSchema
+	HashKey *FieldSchema
+	SortKey *FieldSchema
 }
 
 type TableSchema struct {
-	Fields       map[string]FieldSchema
+	Fields       map[string]*FieldSchema
 	PrimaryKey   *Key
 	SubIndexKeys map[string]*Key
+	ExpireField  *FieldSchema
 }
 
 type Table struct {
+	Bingo        *Bingo
+	Name         string
 	PrimaryIndex *PrimaryIndex
 	SubIndices   map[string]*SubIndex
 	Schema       *TableSchema
@@ -116,14 +119,22 @@ func (table *Table) Put(data *Data) *Document {
 	doc := ParseDoc(*data, table.Schema)
 
 	// Insert doc into primary index
-	replaced, removed := table.PrimaryIndex.put(doc)
+	removed, replaced := table.PrimaryIndex.put(doc)
 
+	// Update for sub index
 	for _, index := range table.SubIndices {
 		if replaced {
-			index.delete(removed.(*Document))
+			index.delete(removed)
 		}
 		index.put(doc)
 	}
+
+	// Update for event tree
+	keeper := table.Bingo.Keeper
+	if replaced {
+		keeper.delete(table, removed)
+	}
+	keeper.put(table, doc)
 
 	return doc
 }

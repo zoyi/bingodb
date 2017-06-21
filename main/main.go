@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-
 	v := model.Load("config.yml")
 
 	fmt.Println(v.Tables["onlines"])
@@ -21,7 +20,8 @@ func main() {
 		var s = `{
 			"channelId": "1",
 			"id": "test@gmail.com",
-			"lastSeen": 123
+			"lastSeen": 123,
+			"expiresAt": 200
 		}`
 
 		dec := json.NewDecoder(strings.NewReader(s))
@@ -35,7 +35,8 @@ func main() {
 		var s = `{
 			"channelId": "1",
 			"id": "xyz@gmail.com",
-			"lastSeen": 123
+			"lastSeen": 123,
+			"expiresAt": 201
 		}`
 
 		dec := json.NewDecoder(strings.NewReader(s))
@@ -49,7 +50,8 @@ func main() {
 		var s = `{
 			"channelId": "1",
 			"id": "aaa@gmail.com",
-			"lastSeen": 123
+			"lastSeen": 123,
+			"expiresAt": 202
 		}`
 
 		dec := json.NewDecoder(strings.NewReader(s))
@@ -63,7 +65,8 @@ func main() {
 		var s = `{
 			"channelId": "1",
 			"id": "red@gmail.com",
-			"lastSeen": 144
+			"lastSeen": 144,
+			"expiresAt": 210
 		}`
 
 		dec := json.NewDecoder(strings.NewReader(s))
@@ -86,7 +89,8 @@ func main() {
 		var s = `{
 			"channelId": "1",
 			"id": "red@gmail.com",
-			"lastSeen": 100
+			"lastSeen": 100,
+			"expiresAt": 200
 		}`
 
 		dec := json.NewDecoder(strings.NewReader(s))
@@ -98,4 +102,7 @@ func main() {
 
 	fmt.Println(v.Tables["onlines"].Index("guest").Get("1", "123"))
 	fmt.Println(v.Tables["onlines"].Index("guest").Get("1", "100"))
+
+	fmt.Println("Keeper tree:")
+	fmt.Println(v.Keeper.String())
 }

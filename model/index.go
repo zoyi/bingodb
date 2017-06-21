@@ -83,18 +83,23 @@ func (index *SubIndex) Get(hash interface{}, sort interface{}) (*Document, bool)
 	return node.Key.(SubSortTreeKey).Document, true
 }
 
-func (index *PrimaryIndex) put(doc *Document) (replaced bool, removed interface{}) {
+func (index *PrimaryIndex) put(doc *Document) (*Document, bool) {
 	hashValue := doc.Get(index.HashKey.Name)
 	sortValue := doc.Get(index.SortKey.Name)
 
-	tree, present := index.Data[hashValue]
-	if !present {
+	tree, ok := index.Data[hashValue]
+	if !ok {
 		tree = redblacktree.NewWithStringComparator()
 		// &redblacktree.Tree{Comparator: Compare}
 		index.Data[hashValue] = tree
 	}
 
-	return tree.Put(sortValue, doc)
+	removed, replaced := tree.Put(sortValue, doc)
+	if replaced {
+		return removed.(*Document), true
+	} else {
+		return nil, false
+	}
 }
 
 func (index *SubIndex) put(doc *Document) {

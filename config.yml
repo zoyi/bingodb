@@ -6,7 +6,7 @@ tables:
       channelId: 'string'
       expiresAt: 'integer'
       lastSeen: 'integer'
-    expire: 'expiresAt'
+    expireKey: 'expiresAt'
     hashKey: 'channelId'
     rangeKey: 'id'
     subIndices:

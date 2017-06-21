@@ -9,8 +9,9 @@ import (
 	"path/filepath"
 )
 
-type Config struct {
+type Bingo struct {
 	Tables map[string]*Table
+	Keeper *Keeper
 }
 
 type tableInfo struct {
@@ -18,6 +19,7 @@ type tableInfo struct {
 	HashKey    string               `yaml:"hashKey"`
 	RangeKey   string               `yaml:"rangeKey"`
 	SubIndices map[string]indexInfo `yaml:"subIndices"`
+	ExpireKey  string               `yaml:"expireKey"`
 }
 
 type indexInfo struct {
@@ -29,7 +31,7 @@ type configInfo struct {
 	Tables map[string]tableInfo `yaml:"tables"`
 }
 
-func Load(filename string) *Config {
+func Load(filename string) *Bingo {
 	absPath, _ := filepath.Abs(filename)
 	source, _ := ioutil.ReadFile(absPath)
 
@@ -45,23 +47,29 @@ func Load(filename string) *Config {
 	return parse(&configInfo)
 }
 
-func parse(configInfo *configInfo) *Config {
-	tables := make(map[string]*Table)
+func newBingo() *Bingo {
+	return &Bingo{Tables: make(map[string]*Table), Keeper: newKeeper()}
+}
+
+func parse(configInfo *configInfo) *Bingo {
+	config := newBingo()
 
 	for tableName, tableInfo := range configInfo.Tables {
-		fields := make(map[string]FieldSchema)
+		fields := make(map[string]*FieldSchema)
 		for fieldKey, fieldType := range tableInfo.Fields {
-			field := FieldSchema{Name: fieldKey, Type: fieldType}
+			field := &FieldSchema{Name: fieldKey, Type: fieldType}
 			fields[fieldKey] = field
 		}
 
-		primaryKey := &Key{HashKey: fields[tableInfo.HashKey],
+		primaryKey := &Key{
+			HashKey: fields[tableInfo.HashKey],
 			SortKey: fields[tableInfo.RangeKey]}
 
 		schema := &TableSchema{
 			Fields:       fields,
 			PrimaryKey:   primaryKey,
-			SubIndexKeys: make(map[string]*Key)}
+			SubIndexKeys: make(map[string]*Key),
+			ExpireField:  fields[tableInfo.ExpireKey]}
 
 		primaryIndex := &PrimaryIndex{&Index{
 			Data: make(map[interface{}]*redblacktree.Tree),
@@ -79,12 +87,23 @@ func parse(configInfo *configInfo) *Config {
 				Key:  subKey}}
 		}
 
-		tables[tableName] = &Table{
-			Schema:       schema,
-			PrimaryIndex: primaryIndex,
-			SubIndices:   subIndices}
+		config.AddTable(tableName, schema, primaryIndex, subIndices)
 
 	}
 
-	return &Config{Tables: tables}
+	return config
+}
+
+func (bingo *Bingo) AddTable(
+	tableName string,
+	schema *TableSchema,
+	primaryIndex *PrimaryIndex,
+	subIndices map[string]*SubIndex) {
+
+	bingo.Tables[tableName] = &Table{
+		Bingo:        bingo,
+		Name:         tableName,
+		Schema:       schema,
+		PrimaryIndex: primaryIndex,
+		SubIndices:   subIndices}
 }
