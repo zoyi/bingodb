@@ -21,7 +21,7 @@ func comparator(aRaw, bRaw interface{}) int {
 	b := bRaw.(*ExpireKey)
 
 	if a.Table.Bingo != b.Table.Bingo {
-		panic(fmt.Sprintf("Two bingos are diffenrent: %v, %v", a.Table.Bingo, b.Table.Bingo))
+		panic(fmt.Sprintf("Two bingos are different: %v, %v", a.Table.Bingo, b.Table.Bingo))
 	}
 
 	var diff int
@@ -37,7 +37,7 @@ func comparator(aRaw, bRaw interface{}) int {
 	}
 
 	if a.Table != b.Table {
-		panic(fmt.Sprintf("Two tables are diffenrent: %v, %v", a.Table, b.Table))
+		panic(fmt.Sprintf("Two tables are different: %v, %v", a.Table, b.Table))
 	}
 
 	return a.Table.Schema.PrimaryKey.Compare(a.Document, b.Document)

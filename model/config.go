@@ -6,6 +6,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 )
 
@@ -32,12 +33,17 @@ type configInfo struct {
 }
 
 func Load(filename string) *Bingo {
-	absPath, _ := filepath.Abs(filename)
-	source, _ := ioutil.ReadFile(absPath)
+	projectPath := filepath.Join(os.Getenv("GOPATH"), "/src/github.com/zoyi/bingodb/")
+	absPath, _ := filepath.Abs(filepath.Join(projectPath, "/config", filename))
+	source, err := ioutil.ReadFile(absPath)
+	if err != nil {
+		fmt.Println(err)
+		log.Fatalf("error: %v", err)
+	}
 
 	configInfo := configInfo{}
 
-	err := yaml.Unmarshal(source, &configInfo)
+	err = yaml.Unmarshal(source, &configInfo)
 
 	if err != nil {
 		fmt.Println(err)
