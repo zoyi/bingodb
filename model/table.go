@@ -37,6 +37,10 @@ type SubSortTreeKey struct {
 	*Document
 }
 
+func (key *SubSortTreeKey) Empty() bool {
+	return key.Key == nil && key.Document == nil
+}
+
 func (field *FieldSchema) Parse(raw interface{}) interface{} {
 	switch field.Type {
 	case "integer":
@@ -70,6 +74,15 @@ func NumberComparator(a, b interface{}) int {
 }
 
 func GeneralCompare(a, b interface{}) int {
+	if a == nil || b == nil {
+		if a == b {
+			return 0
+		} else if a == nil {
+			return -1
+		} else {
+			return 1
+		}
+	}
 	if reflect.TypeOf(a).Kind() == reflect.Int64 {
 		return NumberComparator(a, b)
 	}
