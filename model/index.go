@@ -76,7 +76,7 @@ func (index *SubIndex) Get(hash interface{}, sort interface{}) (*Document, bool)
 	fmt.Print(tree.String())
 
 	node, present := tree.Ceiling(SubSortTreeKey{Key: sort})
-	if !present {
+	if !present || node.Key.(SubSortTreeKey).Key != sort {
 		return nil, false
 	}
 
