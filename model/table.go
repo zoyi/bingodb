@@ -104,6 +104,8 @@ func (table *Table) Delete(hash interface{}, sort interface{}) (*Document, bool)
 		index.delete(doc)
 	}
 
+	table.Bingo.Keeper.delete(table, doc)
+
 	return doc, removed
 }
 

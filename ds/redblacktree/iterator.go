@@ -1,5 +1,7 @@
 package redblacktree
 
+import "fmt"
+
 type BaseIterator interface {
 	Present() bool
 	Remove() (value interface{}, removed bool)
@@ -79,7 +81,11 @@ func (it *Iterator) Next() {
 }
 
 func (it *Iterator) Prev() {
+	fmt.Println(it.node.String())
+
 	if it.node.Left != nil {
+		fmt.Println(it.node.Left)
+		fmt.Println("left is not nil")
 		it.node = it.node.Left
 		for it.node.Right != nil {
 			it.node = it.node.Right
@@ -88,6 +94,8 @@ func (it *Iterator) Prev() {
 	}
 
 	if it.node.Parent != nil {
+		fmt.Println(it.node.Parent)
+		fmt.Println("Parent is not nil")
 		node := it.node
 		for it.node.Parent != nil {
 			it.node = it.node.Parent
@@ -97,7 +105,14 @@ func (it *Iterator) Prev() {
 		}
 	}
 
+	fmt.Println("empty tree!!!")
 	it.node = nil
+}
+
+func (it *Iterator) Remove() (value interface{}, removed bool) {
+	target := it.Value()
+	it.Next()
+	return it.tree.Remove(target)
 }
 
 func (it *ReverseIterator) Next() {
@@ -106,6 +121,12 @@ func (it *ReverseIterator) Next() {
 
 func (it *ReverseIterator) Prev() {
 	it.Iterator.Next()
+}
+
+func (it *ReverseIterator) Remove() (value interface{}, removed bool) {
+	target := it.Value()
+	it.Next()
+	return it.tree.Remove(target)
 }
 
 // Copyright (c) 2015, Emir Pasic. All rights reserved.

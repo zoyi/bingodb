@@ -5,6 +5,7 @@
 package redblacktree
 
 import (
+	"fmt"
 	"github.com/emirpasic/gods/utils"
 	"testing"
 )
@@ -149,6 +150,28 @@ func TestRedBlackTreeReverseIterator2Next(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestRedBlackTreeRemove(t *testing.T) {
+	tree := NewWithIntComparator()
+	tree.Put(200, "a")
+	tree.Put(201, "b")
+	tree.Put(202, "c")
+	tree.Put(210, "d")
+	tree.Remove(202)
+	tree.Remove(210)
+	tree.Put(999, "999")
+
+	fmt.Println(tree.Root.String())
+	fmt.Println(tree.Root.Parent)
+	fmt.Println(tree.String())
+
+	tree.Remove(201)
+
+	fmt.Println(tree.Root.String())
+	fmt.Println(tree.Root.Parent)
+	fmt.Println(tree.String())
+
 }
 
 //

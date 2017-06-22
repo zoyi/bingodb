@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/emirpasic/gods/utils"
 	"github.com/zoyi/bingodb/ds/redblacktree"
+	"github.com/zoyi/bingodb/util"
 )
 
 type Keeper struct {
@@ -20,15 +21,21 @@ func comparator(aRaw, bRaw interface{}) int {
 	a := aRaw.(*ExpireKey)
 	b := bRaw.(*ExpireKey)
 
-	if a.Table.Bingo != b.Table.Bingo {
-		panic(fmt.Sprintf("Two bingos are different: %v, %v", a.Table.Bingo, b.Table.Bingo))
-	}
-
 	var diff int
 
 	diff = NumberComparator(a.ExpiresAt, b.ExpiresAt)
 	if diff != 0 {
 		return diff
+	}
+
+	if a.Table == nil || b.Table == nil {
+		if a.Table == b.Table {
+			return 0
+		} else if a.Table == nil {
+			return -1
+		} else {
+			return 1
+		}
 	}
 
 	diff = utils.StringComparator(a.Table.Name, b.Table.Name)
@@ -60,6 +67,22 @@ func (keeper *Keeper) delete(table *Table, doc *Document) {
 	if ok {
 		key := &ExpireKey{ExpiresAt: value, Table: table, Document: doc}
 		keeper.tree.Remove(key)
+	}
+}
+
+func (keeper *Keeper) Expire() {
+	it := keeper.tree.RFind(&ExpireKey{ExpiresAt: util.Now().Millisecond()})
+
+	for it.Present() {
+		fmt.Println("aaa")
+		expireKey := it.Key().(*ExpireKey)
+		fmt.Println(keeper.tree.String())
+		it.Next()
+		fmt.Println(expireKey.Document)
+		expireKey.Table.Delete(expireKey.Document.PrimaryKeyValue())
+		fmt.Println(keeper.tree.String())
+		fmt.Println(it.Key().(*ExpireKey))
+		fmt.Println("")
 	}
 }
 

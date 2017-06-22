@@ -8,12 +8,12 @@ import (
 	"testing"
 )
 
-var config *model.Bingo
+var bingo *model.Bingo
 
 func prepare() {
-	config = model.Load("test_config.yml")
+	bingo = model.Load("test_config.yml")
 
-	table := config.Tables["onlines"]
+	table := bingo.Tables["onlines"]
 
 	{
 		var s = `{
@@ -74,21 +74,21 @@ func prepare() {
 		table.Put(&data)
 	}
 
-	fmt.Println(config.Tables["onlines"].Get("1", "test@gmail.com"))
+	fmt.Println(bingo.Tables["onlines"].Get("1", "test@gmail.com"))
 
-	fmt.Println(config.Tables["onlines"].Index("guest").Get("1", "123"))
-	fmt.Println(config.Tables["onlines"].Index("guest").Get("1", "144"))
+	fmt.Println(bingo.Tables["onlines"].Index("guest").Get("1", "123"))
+	fmt.Println(bingo.Tables["onlines"].Index("guest").Get("1", "144"))
 
-	fmt.Println(config.Tables["onlines"].Delete("1", "aaa@gmail.com"))
+	fmt.Println(bingo.Tables["onlines"].Delete("1", "aaa@gmail.com"))
 
-	fmt.Println(config.Tables["onlines"].Index("guest").Get("1", "123"))
+	fmt.Println(bingo.Tables["onlines"].Index("guest").Get("1", "123"))
 
 	{
 		var s = `{
 			"channelId": "1",
 			"id": "red@gmail.com",
 			"lastSeen": 100,
-			"expiresAt": 200
+			"expiresAt": 9999999999999
 		}`
 
 		dec := json.NewDecoder(strings.NewReader(s))
@@ -98,8 +98,14 @@ func prepare() {
 		table.Put(&data)
 	}
 
-	fmt.Println(config.Tables["onlines"].Index("guest").Get("1", "123"))
-	fmt.Println(config.Tables["onlines"].Index("guest").Get("1", "100"))
+	fmt.Println(bingo.Tables["onlines"].Index("guest").Get("1", "123"))
+	fmt.Println(bingo.Tables["onlines"].Index("guest").Get("1", "100"))
+
+	fmt.Println("expire keeper tree")
+	fmt.Println(bingo.Keeper.String())
+	bingo.Keeper.Expire()
+	fmt.Println(bingo.Keeper.String())
+	fmt.Println(bingo.Tables["onlines"].Index("guest").Get("1", "123"))
 }
 
 func TestLoad(t *testing.T) {

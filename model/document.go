@@ -34,3 +34,8 @@ func (doc *Document) GetExpiresAt() (int64, bool) {
 
 	return value.(int64), ok
 }
+
+func (doc *Document) PrimaryKeyValue() (interface{}, interface{}) {
+	key := doc.schema.PrimaryKey
+	return doc.Get(key.HashKey.Name), doc.Get(key.SortKey.Name)
+}
