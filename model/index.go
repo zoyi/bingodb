@@ -18,6 +18,144 @@ type SubIndex struct {
 	*Index
 }
 
+func (index *PrimaryIndex) Fetch(hash interface{}, startSortKey interface{}, endSortKey interface{}, limit int) ([](*Document), interface{}) {
+	var result [](*Document)
+	var next interface{} = nil
+
+	hash = index.HashKey.Parse(hash)
+	tree, present := index.Data[hash]
+	if !present || tree.Size() == 0 {
+		return result, next
+	}
+
+	var start interface{} = nil
+	var end interface{} = nil
+
+	if startSortKey != nil {
+		start = index.SortKey.Parse(startSortKey)
+	} else {
+		start = tree.Left().Key
+	}
+	if endSortKey != nil {
+		end = index.SortKey.Parse(endSortKey)
+	} else {
+		end = tree.Right().Key
+	}
+
+	if tree.Comparator(start, end) > 0 {
+		return result, next
+	}
+
+	for it := tree.Find(start); it.Present() && len(result) <= limit && tree.Comparator(it.Key(), end) <= 0; it.Next() {
+		if len(result) == limit {
+			next = it.Key()
+			break
+		}
+		result = append(result, it.Value().(*Document))
+	}
+	return result, next
+}
+
+func (index *PrimaryIndex) RFetch(hash interface{}, startSortKey interface{}, endSortKey interface{}, limit int) ([](*Document), interface{}) {
+	var result [](*Document)
+	var next interface{} = nil
+
+	hash = index.HashKey.Parse(hash)
+	tree, present := index.Data[hash]
+	if !present || tree.Size() == 0 {
+		return result, next
+	}
+
+	var start interface{} = nil
+	var end interface{} = nil
+
+	if startSortKey != nil {
+		start = index.SortKey.Parse(startSortKey)
+	} else {
+		start = tree.Left().Key
+	}
+	if endSortKey != nil {
+		end = index.SortKey.Parse(endSortKey)
+	} else {
+		end = tree.Right().Key
+	}
+
+	if tree.Comparator(start, end) > 0 {
+		return result, next
+	}
+
+	for it := tree.RFind(end); it.Present() && len(result) <= limit && tree.Comparator(start, it.Key()) <= 0; it.Next() {
+		if len(result) == limit {
+			next = it.Key()
+			break
+		}
+		result = append(result, it.Value().(*Document))
+	}
+	return result, next
+}
+
+func (index *SubIndex) Fetch(hash interface{}, startSortKey SubSortTreeKey, endSortKey SubSortTreeKey, limit int) ([](*Document), SubSortTreeKey) {
+	var result [](*Document)
+	var next SubSortTreeKey
+
+	hash = index.HashKey.Parse(hash)
+	tree, present := index.Data[hash]
+	if !present || tree.Size() == 0 {
+		return result, next
+	}
+
+	if startSortKey.Empty() {
+		startSortKey = tree.Left().Key.(SubSortTreeKey)
+	}
+	if endSortKey.Empty() {
+		endSortKey = tree.Right().Key.(SubSortTreeKey)
+	}
+
+	if tree.Comparator(startSortKey, endSortKey) > 0 {
+		return result, next
+	}
+
+	for it := tree.Find(startSortKey); it.Present() && len(result) <= limit && tree.Comparator(it.Key(), endSortKey) <= 0; it.Next() {
+		if len(result) == limit {
+			next = it.Key().(SubSortTreeKey)
+			break
+		}
+		result = append(result, it.Key().(SubSortTreeKey).Document)
+	}
+	return result, next
+}
+
+func (index *SubIndex) RFetch(hash interface{}, startSortKey SubSortTreeKey, endSortKey SubSortTreeKey, limit int) ([](*Document), SubSortTreeKey) {
+	var result [](*Document)
+	var next SubSortTreeKey
+
+	hash = index.HashKey.Parse(hash)
+	tree, present := index.Data[hash]
+	if !present || tree.Size() == 0 {
+		return result, next
+	}
+
+	if startSortKey.Empty() {
+		startSortKey = tree.Left().Key.(SubSortTreeKey)
+	}
+	if endSortKey.Empty() {
+		endSortKey = tree.Right().Key.(SubSortTreeKey)
+	}
+
+	if tree.Comparator(startSortKey, endSortKey) > 0 {
+		return result, next
+	}
+
+	for it := tree.RFind(endSortKey); it.Present() && len(result) <= limit && tree.Comparator(startSortKey, it.Key()) <= 0; it.Next() {
+		if len(result) == limit {
+			next = it.Key().(SubSortTreeKey)
+			break
+		}
+		result = append(result, it.Key().(SubSortTreeKey).Document)
+	}
+	return result, next
+}
+
 func (index *PrimaryIndex) delete(hash interface{}, sort interface{}) (*Document, bool) {
 	hash = index.HashKey.Parse(hash)
 	sort = index.SortKey.Parse(sort)
