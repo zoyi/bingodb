@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"github.com/zoyi/bingodb/ds/redblacktree"
 )
 
@@ -210,8 +209,6 @@ func (index *SubIndex) Get(hash interface{}, sort interface{}) (*Document, bool)
 	if !present {
 		return nil, false
 	}
-
-	fmt.Print(tree.String())
 
 	node, present := tree.Ceiling(SubSortTreeKey{Key: sort})
 	if !present || node.Key.(SubSortTreeKey).Key != sort {

@@ -55,7 +55,7 @@ func (it *Iterator) Value() interface{} {
 }
 
 func (it *Iterator) Present() bool {
-	return it.node != nil
+	return it.node != nil && it.node.Key != nil
 }
 
 func (it *Iterator) Next() {
@@ -109,24 +109,12 @@ func (it *Iterator) Prev() {
 	it.node = nil
 }
 
-func (it *Iterator) Remove() (value interface{}, removed bool) {
-	target := it.Value()
-	it.Next()
-	return it.tree.Remove(target)
-}
-
 func (it *ReverseIterator) Next() {
 	it.Iterator.Prev()
 }
 
 func (it *ReverseIterator) Prev() {
 	it.Iterator.Next()
-}
-
-func (it *ReverseIterator) Remove() (value interface{}, removed bool) {
-	target := it.Value()
-	it.Next()
-	return it.tree.Remove(target)
 }
 
 // Copyright (c) 2015, Emir Pasic. All rights reserved.

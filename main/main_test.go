@@ -106,6 +106,14 @@ func prepare() {
 	bingo.Keeper.Expire()
 	fmt.Println(bingo.Keeper.String())
 	fmt.Println(bingo.Tables["onlines"].Index("guest").Get("1", "123"))
+
+	fmt.Println("====")
+
+	fmt.Println("expire keeper tree")
+	fmt.Println(bingo.Keeper.String())
+	bingo.Keeper.Expire()
+	fmt.Println(bingo.Keeper.String())
+	fmt.Println(bingo.Tables["onlines"].Index("guest").Get("1", "123"))
 }
 
 func TestLoad(t *testing.T) {

@@ -61,6 +61,9 @@ func NewWithStringComparator() *Tree {
 // Put inserts node into the tree.
 // Key should adhere to the comparator's type assertion, otherwise method panics.
 func (tree *Tree) Put(key interface{}, value interface{}) (removed interface{}, replaced bool) {
+	if key == nil {
+		panic("Key is nil")
+	}
 	insertedNode := &Node{Key: key, Value: value, color: red}
 	if tree.Root == nil {
 		tree.Root = insertedNode
@@ -141,7 +144,9 @@ func (tree *Tree) Remove(key interface{}) (value interface{}, removed bool) {
 	}
 	tree.size--
 
-	return node.Value, true
+	value = node.Value
+	node.clear()
+	return value, true
 }
 
 // Empty returns true if tree does not contain any nodes
@@ -436,6 +441,14 @@ func (node *Node) maximumNode() *Node {
 		node = node.Right
 	}
 	return node
+}
+
+func (node *Node) clear() {
+	node.Key = nil
+	node.Left = nil
+	node.Parent = nil
+	node.Right = nil
+	node.Value = nil
 }
 
 func (tree *Tree) deleteCase1(node *Node) {
