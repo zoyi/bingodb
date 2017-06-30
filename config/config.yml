@@ -8,8 +8,8 @@ tables:
       lastSeen: 'integer'
     expireKey: 'expiresAt'
     hashKey: 'channelId'
-    rangeKey: 'id'
+    sortKey: 'id'
     subIndices:
       guest:
         hashKey: 'channelId'
-        rangeKey: 'lastSeen'
+        sortKey: 'lastSeen'
