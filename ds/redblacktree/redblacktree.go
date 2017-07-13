@@ -112,9 +112,8 @@ func (tree *Tree) Put(key interface{}, value interface{}) (removed interface{}, 
 // Second return parameter is true if key was found, otherwise false.
 // Key should adhere to the comparator's type assertion, otherwise method panics.
 func (tree *Tree) Get(key interface{}) (value interface{}, found bool) {
-	tree.lock.Lock()
 	node := tree.lookup(key)
-	tree.lock.Unlock()
+
 	if node != nil {
 		return node.Value, true
 	}
@@ -125,9 +124,7 @@ func (tree *Tree) Get(key interface{}) (value interface{}, found bool) {
 // Key should adhere to the comparator's type assertion, otherwise method panics.
 func (tree *Tree) Remove(key interface{}) (value interface{}, removed bool) {
 	var child *Node
-	tree.lock.Lock()
 	node := tree.lookup(key)
-	tree.lock.Unlock()
 
 	if node == nil {
 		return nil, false
@@ -322,6 +319,9 @@ func output(node *Node, prefix string, isTail bool, str *string) {
 }
 
 func (tree *Tree) lookup(key interface{}) *Node {
+	tree.lock.Lock()
+	defer tree.lock.Unlock()
+
 	node := tree.Root
 	for node != nil {
 		compare := tree.Comparator(key, node.Key)
