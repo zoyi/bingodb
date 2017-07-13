@@ -13,6 +13,7 @@ package redblacktree
 
 import (
 	"fmt"
+	"sync"
 	"github.com/emirpasic/gods/utils"
 )
 
@@ -31,6 +32,7 @@ type Tree struct {
 	Root       *Node
 	size       int
 	Comparator utils.Comparator
+	lock 	   sync.Mutex
 }
 
 // Node is a single element within the tree
@@ -64,7 +66,11 @@ func (tree *Tree) Put(key interface{}, value interface{}) (removed interface{}, 
 	if key == nil {
 		panic("Key is nil")
 	}
+
 	insertedNode := &Node{Key: key, Value: value, color: red}
+
+	tree.lock.Lock()
+	defer tree.lock.Unlock()
 	if tree.Root == nil {
 		tree.Root = insertedNode
 	} else {
@@ -107,6 +113,7 @@ func (tree *Tree) Put(key interface{}, value interface{}) (removed interface{}, 
 // Key should adhere to the comparator's type assertion, otherwise method panics.
 func (tree *Tree) Get(key interface{}) (value interface{}, found bool) {
 	node := tree.lookup(key)
+
 	if node != nil {
 		return node.Value, true
 	}
@@ -118,9 +125,12 @@ func (tree *Tree) Get(key interface{}) (value interface{}, found bool) {
 func (tree *Tree) Remove(key interface{}) (value interface{}, removed bool) {
 	var child *Node
 	node := tree.lookup(key)
+
 	if node == nil {
 		return nil, false
 	}
+	//entering critical area
+	tree.lock.Lock()
 	if node.Left != nil && node.Right != nil {
 		pred := node.Left.maximumNode()
 		node.Key = pred.Key
@@ -146,6 +156,8 @@ func (tree *Tree) Remove(key interface{}) (value interface{}, removed bool) {
 
 	value = node.Value
 	node.clear()
+	//exit critical area
+	tree.lock.Unlock()
 	return value, true
 }
 
@@ -307,6 +319,9 @@ func output(node *Node, prefix string, isTail bool, str *string) {
 }
 
 func (tree *Tree) lookup(key interface{}) *Node {
+	tree.lock.Lock()
+	defer tree.lock.Unlock()
+
 	node := tree.Root
 	for node != nil {
 		compare := tree.Comparator(key, node.Key)
