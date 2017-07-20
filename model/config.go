@@ -1,12 +1,12 @@
 package model
 
 import (
-	"github.com/zoyi/bingodb/ds/redblacktree"
 	"io/ioutil"
 	"gopkg.in/yaml.v2"
 	"errors"
 	"reflect"
 	"fmt"
+	"sync"
 )
 
 type TableInfo struct {
@@ -97,27 +97,28 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 		primaryKey := &Key{
 			HashKey: fields[tableInfo.HashKey],
 			SortKey: fields[tableInfo.SortKey]}
-
 		schema := &TableSchema{
 			Fields:       fields,
 			PrimaryKey:   primaryKey,
-			SubIndexKeys: make(map[string]*Key),
+			SubIndexKeys: new(sync.Map),
 			ExpireField:  fields[tableInfo.ExpireKey]}
 
 		primaryIndex := &PrimaryIndex{&Index{
-			Data: make(map[interface{}]*redblacktree.Tree),
+			Data: new(sync.Map),
 			Key:  primaryKey}}
 
-		subIndices := make(map[string]*SubIndex)
+		subIndices := new(sync.Map)
+
 		for indexName, indexInfo := range tableInfo.SubIndices {
+
 			subKey := &Key{HashKey: fields[indexInfo.HashKey],
 				SortKey: fields[indexInfo.SortKey]}
 
-			schema.SubIndexKeys[indexName] = subKey
+			schema.SubIndexKeys.Store(indexName, subKey)
 
-			subIndices[indexName] = &SubIndex{&Index{
-				Data: make(map[interface{}]*redblacktree.Tree),
-				Key:  subKey}}
+			subIndices.Store(indexName, &SubIndex{&Index{
+				Data: new(sync.Map),
+				Key:  subKey}})
 		}
 
 		bingo.AddTable(tableName, schema, primaryIndex, subIndices)

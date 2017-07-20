@@ -11,8 +11,8 @@ var config *Bingo
 func prepare() {
 	config = Load("test_config.yml")
 
-	table := config.Tables["onlines"]
-
+	tableData, _ := config.Tables.Load("onlines")
+	table := tableData.(*Table)
 	{
 		var s = `{
 			"channelId": "1",
@@ -91,7 +91,9 @@ func prepare() {
 func TestFetchPrimaryIndex(t *testing.T) {
 	prepare()
 
-	primaryIndex := config.Tables["onlines"].PrimaryIndex
+	tableData, _ := config.Tables.Load("onlines")
+	table := tableData.(*Table)
+	primaryIndex := table.PrimaryIndex
 
 	var result [](*Document)
 	var next interface{}
@@ -127,7 +129,9 @@ func TestFetchPrimaryIndex(t *testing.T) {
 func TestRFetchPrimaryIndex(t *testing.T) {
 	prepare()
 
-	primaryIndex := config.Tables["onlines"].PrimaryIndex
+	tableData, _ := config.Tables.Load("onlines")
+	table := tableData.(*Table)
+	primaryIndex := table.PrimaryIndex
 
 	var result [](*Document)
 	var next interface{}
@@ -166,7 +170,8 @@ func TestRFetchPrimaryIndex(t *testing.T) {
 func TestFetchSubIndex(t *testing.T) {
 	prepare()
 
-	table := config.Tables["onlines"]
+	tableData, _ := config.Tables.Load("onlines")
+	table := tableData.(*Table)
 
 	var result [](*Document)
 	var next SubSortTreeKey
@@ -221,7 +226,8 @@ func TestFetchSubIndex(t *testing.T) {
 func TestRFetchSubIndex(t *testing.T) {
 	prepare()
 
-	table := config.Tables["onlines"]
+	tableData, _ := config.Tables.Load("onlines")
+	table := tableData.(*Table)
 
 	var result [](*Document)
 	var next SubSortTreeKey
