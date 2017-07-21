@@ -1,0 +1,7 @@
+package: github.com/zoyi/bingodb
+import:
+- package: github.com/emirpasic/gods
+  version: ~1.9.0
+  subpackages:
+  - utils
+- package: gopkg.in/yaml.v2

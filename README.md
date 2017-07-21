@@ -21,3 +21,8 @@
 * startkey, stopkey, limit(m) 를 주고 fetch: O(lg(n)*m)
 * startkey, stopkey 를 주고 count: O(lg(n))
 * startkey, stopkey, limit(m), index 정보를 주고 인덱스로 정렬된 fetch: O(lg(n)*m) 
+
+### Dependency manager 
+* install glide via brew (brew install glide)
+* run 'glide up' command in terminal (will install dependencies in vendor folder based on glide.yaml)
+
