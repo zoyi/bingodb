@@ -180,6 +180,7 @@ func (index *PrimaryIndex) delete(hash interface{}, sort interface{}) (*Document
 	sort = index.SortKey.Parse(sort)
 
 	treeData, _ := index.Data.Load(hash)
+
 	if tree, ok := treeData.(*redblacktree.Tree); ok {
 		value, present := tree.Remove(sort)
 		if !present {
@@ -207,6 +208,7 @@ func (index *PrimaryIndex) Get(hash interface{}, sort interface{}) (*Document, b
 	sort = index.SortKey.Parse(sort)
 
 	treeData, _ := index.Data.Load(hash)
+
 	if tree, ok := treeData.(*redblacktree.Tree); ok {
 		value, present := tree.Get(sort)
 		if !present {

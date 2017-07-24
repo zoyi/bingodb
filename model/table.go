@@ -131,14 +131,17 @@ func (table *Table) Get(hash interface{}, sort interface{}) (*Document, bool) {
 }
 
 func (table *Table) Index(name string) *SubIndex {
-	valueData, _ := table.SubIndices.Load(name)
-	value, ok := valueData.(*SubIndex)
+	if valueData, ok := table.SubIndices.Load(name); ok {
+		value, ok := valueData.(*SubIndex)
 
-	if ok {
-		return value
-	} else {
-		return nil
+		if ok {
+			return value
+		} else {
+			return nil
+		}
 	}
+
+	return nil
 }
 
 func (table *Table) Put(data *Data) *Document {
