@@ -77,7 +77,6 @@ func (keeper *Keeper) Expire() {
 		fmt.Println("aaa")
 		expireKey := it.Key().(*ExpireKey)
 		fmt.Println(keeper.tree.String())
-		// it.Next()
 		fmt.Println(expireKey.Document)
 		expireKey.Table.Delete(expireKey.Document.PrimaryKeyValue())
 	}

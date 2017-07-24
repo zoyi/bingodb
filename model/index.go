@@ -188,7 +188,6 @@ func (index *PrimaryIndex) delete(hash interface{}, sort interface{}) (*Document
 
 		return value.(*Document), true
 	}
-
 	return nil, false
 }
 
@@ -247,21 +246,20 @@ func (index *PrimaryIndex) put(doc *Document) (*Document, bool) {
 
 	if !ok {
 		tree = redblacktree.NewWithStringComparator()
-		// &redblacktree.Tree{Comparator: Compare}
 		index.Data.Store(hashValue, tree)
-	}
-
-	if tree, ok = treeData.(*redblacktree.Tree); ok {
-		removed, replaced := tree.Put(sortValue, doc)
-		if replaced {
-			return removed.(*Document), true
-		} else {
+	} else {
+		tree, ok = treeData.(*redblacktree.Tree)
+		if !ok {
 			return nil, false
 		}
+	}
+
+	removed, replaced := tree.Put(sortValue, doc)
+	if replaced {
+		return removed.(*Document), true
 	} else {
 		return nil, false
 	}
-
 }
 
 func (index *SubIndex) put(doc *Document) {
