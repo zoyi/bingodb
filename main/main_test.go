@@ -13,8 +13,8 @@ var bingo *model.Bingo
 func prepare() {
 	bingo = model.Load("test_config.yml")
 
-	table := bingo.Tables["onlines"]
-
+	tableData, _ := bingo.Tables.Load("onlines")
+	table := tableData.(*model.Table)
 	{
 		var s = `{
 			"channelId": "1",
@@ -74,14 +74,11 @@ func prepare() {
 		table.Put(&data)
 	}
 
-	fmt.Println(bingo.Tables["onlines"].Get("1", "test@gmail.com"))
-
-	fmt.Println(bingo.Tables["onlines"].Index("guest").Get("1", "123"))
-	fmt.Println(bingo.Tables["onlines"].Index("guest").Get("1", "144"))
-
-	fmt.Println(bingo.Tables["onlines"].Delete("1", "aaa@gmail.com"))
-
-	fmt.Println(bingo.Tables["onlines"].Index("guest").Get("1", "123"))
+	fmt.Println(table.Get("1", "test@gmail.com"))
+	fmt.Println(table.Index("guest").Get("1", "123"))
+	fmt.Println(table.Index("guest").Get("1", "144"))
+	fmt.Println(table.Delete("1", "aaa@gmail.com"))
+	fmt.Println(table.Index("guest").Get("1", "123"))
 
 	{
 		var s = `{
@@ -98,14 +95,14 @@ func prepare() {
 		table.Put(&data)
 	}
 
-	fmt.Println(bingo.Tables["onlines"].Index("guest").Get("1", "123"))
-	fmt.Println(bingo.Tables["onlines"].Index("guest").Get("1", "100"))
+	fmt.Println(table.Index("guest").Get("1", "123"))
+	fmt.Println(table.Index("guest").Get("1", "100"))
 
 	fmt.Println("expire keeper tree")
 	fmt.Println(bingo.Keeper.String())
 	bingo.Keeper.Expire()
 	fmt.Println(bingo.Keeper.String())
-	fmt.Println(bingo.Tables["onlines"].Index("guest").Get("1", "123"))
+	fmt.Println(table.Index("guest").Get("1", "123"))
 
 	fmt.Println("====")
 
@@ -113,7 +110,7 @@ func prepare() {
 	fmt.Println(bingo.Keeper.String())
 	bingo.Keeper.Expire()
 	fmt.Println(bingo.Keeper.String())
-	fmt.Println(bingo.Tables["onlines"].Index("guest").Get("1", "123"))
+	fmt.Println(table.Index("guest").Get("1", "123"))
 }
 
 func TestLoad(t *testing.T) {
