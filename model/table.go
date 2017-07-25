@@ -5,6 +5,7 @@ import (
 	"github.com/emirpasic/gods/utils"
 	"reflect"
 	"strconv"
+	"sync"
 )
 
 type FieldSchema struct {
@@ -20,7 +21,7 @@ type Key struct {
 type TableSchema struct {
 	Fields       map[string]*FieldSchema
 	PrimaryKey   *Key
-	SubIndexKeys map[string]*Key
+	SubIndexKeys *sync.Map
 	ExpireField  *FieldSchema
 }
 
@@ -28,7 +29,7 @@ type Table struct {
 	Bingo        *Bingo
 	Name         string
 	PrimaryIndex *PrimaryIndex
-	SubIndices   map[string]*SubIndex
+	SubIndices   *sync.Map
 	Schema       *TableSchema
 }
 
@@ -113,9 +114,12 @@ func (table *Table) Delete(hash interface{}, sort interface{}) (*Document, bool)
 		return nil, false
 	}
 
-	for _, index := range table.SubIndices {
-		index.delete(doc)
-	}
+	table.SubIndices.Range(func(key, value interface{}) bool {
+		if index, ok := value.(*SubIndex); ok {
+			index.delete(doc)
+		}
+		return true
+	})
 
 	table.Bingo.Keeper.delete(table, doc)
 
@@ -127,7 +131,12 @@ func (table *Table) Get(hash interface{}, sort interface{}) (*Document, bool) {
 }
 
 func (table *Table) Index(name string) *SubIndex {
-	return table.SubIndices[name]
+	valueData, _ := table.SubIndices.Load(name)
+	if value, ok := valueData.(*SubIndex); ok {
+		return value
+	}
+
+	return nil
 }
 
 func (table *Table) Put(data *Data) *Document {
@@ -137,12 +146,16 @@ func (table *Table) Put(data *Data) *Document {
 	removed, replaced := table.PrimaryIndex.put(doc)
 
 	// Update for sub index
-	for _, index := range table.SubIndices {
-		if replaced {
-			index.delete(removed)
+	table.SubIndices.Range(func(key, value interface{}) bool {
+		if index, ok := value.(*SubIndex); ok {
+			if replaced {
+				index.delete(removed)
+			}
+			index.put(doc)
 		}
-		index.put(doc)
-	}
+
+		return true
+	})
 
 	// Update for event tree
 	keeper := table.Bingo.Keeper

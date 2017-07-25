@@ -74,10 +74,8 @@ func (keeper *Keeper) Expire() {
 	it := keeper.tree.RFind(&ExpireKey{ExpiresAt: util.Now().Millisecond()})
 
 	for it.Present() {
-		fmt.Println("aaa")
 		expireKey := it.Key().(*ExpireKey)
 		fmt.Println(keeper.tree.String())
-		// it.Next()
 		fmt.Println(expireKey.Document)
 		expireKey.Table.Delete(expireKey.Document.PrimaryKeyValue())
 	}

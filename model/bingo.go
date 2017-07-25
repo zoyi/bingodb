@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"path/filepath"
 )
 
 type Bingo struct {
-	Tables map[string]*Table
+	Tables *sync.Map
 	Keeper *Keeper
 }
 
@@ -26,19 +27,19 @@ func Load(filename string) *Bingo {
 }
 
 func newBingo() *Bingo {
-	return &Bingo{Tables: make(map[string]*Table), Keeper: newKeeper()}
+	return &Bingo{Tables: new(sync.Map), Keeper: newKeeper()}
 }
 
 func (bingo *Bingo) AddTable(
 	tableName string,
 	schema *TableSchema,
 	primaryIndex *PrimaryIndex,
-	subIndices map[string]*SubIndex) {
+	subIndices *sync.Map) {
 
-	bingo.Tables[tableName] = &Table{
+	bingo.Tables.Store(tableName, &Table{
 		Bingo:        bingo,
 		Name:         tableName,
 		Schema:       schema,
 		PrimaryIndex: primaryIndex,
-		SubIndices:   subIndices}
+		SubIndices:   subIndices})
 }
