@@ -55,7 +55,6 @@ func (index *PrimaryIndex) Fetch(hash interface{}, startSortKey interface{}, end
 			}
 			result = append(result, it.Value().(*Document))
 		}
-		return result, next
 	}
 
 	return result, next
@@ -98,7 +97,6 @@ func (index *PrimaryIndex) RFetch(hash interface{}, startSortKey interface{}, en
 			}
 			result = append(result, it.Value().(*Document))
 		}
-		return result, next
 	}
 
 	return result, next
@@ -134,7 +132,6 @@ func (index *SubIndex) Fetch(hash interface{}, startSortKey SubSortTreeKey, endS
 			}
 			result = append(result, it.Key().(SubSortTreeKey).Document)
 		}
-		return result, next
 	}
 	return result, next
 }
@@ -169,7 +166,6 @@ func (index *SubIndex) RFetch(hash interface{}, startSortKey SubSortTreeKey, end
 			}
 			result = append(result, it.Key().(SubSortTreeKey).Document)
 		}
-		return result, next
 	}
 
 	return result, next
@@ -244,16 +240,14 @@ func (index *PrimaryIndex) put(doc *Document) (*Document, bool) {
 	sortValue := doc.Get(index.SortKey.Name)
 
 	var tree *redblacktree.Tree
+	var ok bool
 	treeData, ok := index.Data.Load(hashValue)
 
 	if !ok {
 		tree = redblacktree.NewWithStringComparator()
 		index.Data.Store(hashValue, tree)
-	} else {
-		tree, ok = treeData.(*redblacktree.Tree)
-		if !ok {
-			return nil, false
-		}
+	} else if tree, ok = treeData.(*redblacktree.Tree); !ok {
+		return nil, false
 	}
 
 	removed, replaced := tree.Put(sortValue, doc)
@@ -268,11 +262,12 @@ func (index *SubIndex) put(doc *Document) {
 	hashValue := doc.Get(index.HashKey.Name)
 	sortValue := SubSortTreeKey{Key: doc.Get(index.SortKey.Name), Document: doc}
 
+	var tree *redblacktree.Tree
+	var ok bool
+
 	treeData, _ := index.Data.Load(hashValue)
 
-	if tree, ok := treeData.(*redblacktree.Tree); ok {
-		tree.Put(sortValue, nil)
-	} else {
+	if tree, ok = treeData.(*redblacktree.Tree); !ok {
 		tree = &redblacktree.Tree{Comparator: func(a, b interface{}) int {
 			ka := a.(SubSortTreeKey)
 			kb := b.(SubSortTreeKey)
@@ -285,6 +280,7 @@ func (index *SubIndex) put(doc *Document) {
 		},
 		}
 		index.Data.Store(hashValue, tree)
-		tree.Put(sortValue, nil)
 	}
+
+	tree.Put(sortValue, nil)
 }
