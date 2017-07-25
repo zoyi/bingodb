@@ -7,6 +7,7 @@ package redblacktree
 import (
 	"fmt"
 	"github.com/emirpasic/gods/utils"
+	"sync"
 	"testing"
 )
 
@@ -171,7 +172,37 @@ func TestRedBlackTreeRemove(t *testing.T) {
 	fmt.Println(tree.Root.String())
 	fmt.Println(tree.Root.Parent)
 	fmt.Println(tree.String())
+}
 
+func TestSimultaneousPut(t *testing.T) {
+	treeArray := []*Tree{}
+	for e := 0; e < 5; e++ {
+		//for each, create tree instance
+		//and put incremental key 10 times
+		//and see if any of them has different size
+		var wg sync.WaitGroup
+		wg.Add(10)
+		testTree := NewWithIntComparator()
+		treeArray = append(treeArray, testTree)
+
+		insertion := func(key int, value string) {
+			defer wg.Done()
+			testTree.Put(key, value)
+		}
+
+		for i := 0; i < 10; i++ {
+			go insertion(200+i, "aa")
+		}
+		wg.Wait()
+	}
+
+	expectedSize := treeArray[0].Size()
+	for e := 1; e < 5; e++ {
+		tree := treeArray[e]
+		if tree.Size() != expectedSize {
+			t.Error("tree size is different")
+		}
+	}
 }
 
 //

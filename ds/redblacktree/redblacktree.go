@@ -14,6 +14,7 @@ package redblacktree
 import (
 	"fmt"
 	"github.com/emirpasic/gods/utils"
+	"sync"
 )
 
 //func assertTreeImplementation() {
@@ -31,6 +32,7 @@ type Tree struct {
 	Root       *Node
 	size       int
 	Comparator utils.Comparator
+	lock       sync.Mutex
 }
 
 // Node is a single element within the tree
@@ -64,6 +66,10 @@ func (tree *Tree) Put(key interface{}, value interface{}) (removed interface{}, 
 	if key == nil {
 		panic("Key is nil")
 	}
+
+	tree.lock.Lock()
+	defer tree.lock.Unlock()
+
 	insertedNode := &Node{Key: key, Value: value, color: red}
 	if tree.Root == nil {
 		tree.Root = insertedNode
@@ -121,6 +127,10 @@ func (tree *Tree) Remove(key interface{}) (value interface{}, removed bool) {
 	if node == nil {
 		return nil, false
 	}
+
+	tree.lock.Lock()
+	defer tree.lock.Unlock()
+
 	if node.Left != nil && node.Right != nil {
 		pred := node.Left.maximumNode()
 		node.Key = pred.Key
@@ -146,6 +156,7 @@ func (tree *Tree) Remove(key interface{}) (value interface{}, removed bool) {
 
 	value = node.Value
 	node.clear()
+
 	return value, true
 }
 
@@ -307,6 +318,9 @@ func output(node *Node, prefix string, isTail bool, str *string) {
 }
 
 func (tree *Tree) lookup(key interface{}) *Node {
+	tree.lock.Lock()
+	defer tree.lock.Unlock()
+
 	node := tree.Root
 	for node != nil {
 		compare := tree.Comparator(key, node.Key)
