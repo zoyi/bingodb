@@ -27,9 +27,17 @@ func Logging(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 }
 
 // Authenticate ... check if auth token is valid
-func Authenticate(h fasthttp.RequestHandler) fasthttp.RequestHandler {
+func (manager *Manager) Authenticate(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return Logging(fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
-		// Get the Basic Authentication credentials
+		//skip whitelist
+		for _, path := range manager.Whitelist {
+			if string(ctx.Path()) == path {
+				h(ctx)
+				return
+			}
+		}
+
+		// TBD
 		isValid := validateAuthToken(ctx)
 
 		if isValid {
@@ -43,6 +51,7 @@ func Authenticate(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 
 func (manager *Manager) Get(ctx *fasthttp.RequestCtx) {
 	//get request params
+	//tablename, id
 	//look up in bingodb
 	//table, ok := manager.BingoDB.Tables.Load("somekey")
 	//return value
@@ -50,12 +59,15 @@ func (manager *Manager) Get(ctx *fasthttp.RequestCtx) {
 
 func (manager *Manager) GetMultiples(ctx *fasthttp.RequestCtx) {
 	//get request params
+	//tablename, limit, range, secondarykey, sort
 	//look up in bingodb
 	//return values
 }
 
 func (manager *Manager) Update(ctx *fasthttp.RequestCtx) {
 	//get post data
+	//json body = { }
+	//validate body
 	//insert into bingodb
 	//return result code
 }

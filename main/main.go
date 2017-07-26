@@ -24,13 +24,11 @@ func Protect(ctx *fasthttp.RequestCtx) {
 	fmt.Fprint(ctx, "Not protected!\n")
 }
 
-func main() {
-	banner.Print("bingodb")
-	fmt.Printf("									by ZOYI\n")
-
-	bingo := model.Load(*config)
-	fmt.Printf("* Loaded configration file..\n")
+func DefaultServer() *fasthttprouter.Router {
 	flag.Parse()
+
+	fmt.Printf("* Loaded configration file..\n")
+	bingo := model.Load(*config)
 
 	fmt.Printf("* Preparing resources..\n")
 	rs := &api.Resource{
@@ -51,11 +49,20 @@ func main() {
 	//example
 	router.GET("/", Index)
 	//middleware example
-	router.GET("/get", api.Authenticate(Protect))
+	router.GET("/get", m.Authenticate(Protect))
 	router.GET("/m", m.Get)
 	router.GET("/d", m.GetMultiples)
 	router.POST("/m", m.Update)
 	router.DELETE("/m", m.Delete)
+
+	return router
+}
+
+func main() {
+	banner.Print("bingodb")
+	fmt.Printf("									by ZOYI\n")
+
+	router := DefaultServer()
 
 	fmt.Printf("* Ready to serve on %s\n", *addr)
 	fasthttp.ListenAndServe(*addr, router.Handler)
