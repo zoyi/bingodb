@@ -9,3 +9,4 @@ import:
 - package: github.com/valyala/fasthttp
   version: ~20160617.0.0
 - package: gopkg.in/yaml.v2
+- package: github.com/CrowdSurge/banner
