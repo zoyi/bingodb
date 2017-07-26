@@ -18,9 +18,17 @@ func validateAuthToken(ctx *fasthttp.RequestCtx) bool {
 	return true
 }
 
+// Logging ... simple logging middleware
+func Logging(h fasthttp.RequestHandler) fasthttp.RequestHandler {
+	return fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
+		ctx.Logger().Printf("%s at %s\n", ctx.Method(), ctx.Path())
+		h(ctx)
+	})
+}
+
 // Authenticate ... check if auth token is valid
 func Authenticate(h fasthttp.RequestHandler) fasthttp.RequestHandler {
-	return fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
+	return Logging(fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
 		// Get the Basic Authentication credentials
 		isValid := validateAuthToken(ctx)
 
@@ -30,7 +38,7 @@ func Authenticate(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 		}
 		// otherwise error
 		ctx.Error(fasthttp.StatusMessage(fasthttp.StatusUnauthorized), fasthttp.StatusUnauthorized)
-	})
+	}))
 }
 
 func (manager *Manager) Get(ctx *fasthttp.RequestCtx) {
