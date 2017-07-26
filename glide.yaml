@@ -1,7 +1,11 @@
 package: github.com/zoyi/bingodb
 import:
+- package: github.com/buaazp/fasthttprouter
+  version: ~0.1.1
 - package: github.com/emirpasic/gods
   version: ~1.9.0
   subpackages:
   - utils
+- package: github.com/valyala/fasthttp
+  version: ~20160617.0.0
 - package: gopkg.in/yaml.v2
