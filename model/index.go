@@ -18,7 +18,11 @@ type SubIndex struct {
 	*Index
 }
 
-func (index *PrimaryIndex) Fetch(hash interface{}, startSortKey interface{}, endSortKey interface{}, limit int) ([](*Document), interface{}) {
+func (index *PrimaryIndex) Fetch(
+	hash interface{},
+	startSortKey interface{},
+	endSortKey interface{},
+	limit int) ([](*Document), interface{}) {
 	var result [](*Document)
 	var next interface{} = nil
 
@@ -48,7 +52,8 @@ func (index *PrimaryIndex) Fetch(hash interface{}, startSortKey interface{}, end
 			return result, next
 		}
 
-		for it := tree.Find(start); it.Present() && len(result) <= limit && tree.Comparator(it.Key(), end) <= 0; it.Next() {
+		for it := tree.Find(start);
+			it.Present() && len(result) <= limit && tree.Comparator(it.Key(), end) <= 0; it.Next() {
 			if len(result) == limit {
 				next = it.Key()
 				break
@@ -60,7 +65,12 @@ func (index *PrimaryIndex) Fetch(hash interface{}, startSortKey interface{}, end
 	return result, next
 }
 
-func (index *PrimaryIndex) RFetch(hash interface{}, startSortKey interface{}, endSortKey interface{}, limit int) ([](*Document), interface{}) {
+func (index *PrimaryIndex) RFetch(
+	hash interface{},
+	startSortKey interface{},
+	endSortKey interface{},
+	limit int) ([](*Document), interface{}) {
+
 	var result [](*Document)
 	var next interface{} = nil
 
@@ -90,7 +100,8 @@ func (index *PrimaryIndex) RFetch(hash interface{}, startSortKey interface{}, en
 			return result, next
 		}
 
-		for it := tree.RFind(end); it.Present() && len(result) <= limit && tree.Comparator(start, it.Key()) <= 0; it.Next() {
+		for it := tree.RFind(end);
+			it.Present() && len(result) <= limit && tree.Comparator(start, it.Key()) <= 0; it.Next() {
 			if len(result) == limit {
 				next = it.Key()
 				break
@@ -102,7 +113,11 @@ func (index *PrimaryIndex) RFetch(hash interface{}, startSortKey interface{}, en
 	return result, next
 }
 
-func (index *SubIndex) Fetch(hash interface{}, startSortKey SubSortTreeKey, endSortKey SubSortTreeKey, limit int) ([](*Document), SubSortTreeKey) {
+func (index *SubIndex) Fetch(
+	hash interface{},
+	startSortKey SubSortTreeKey,
+	endSortKey SubSortTreeKey,
+	limit int) ([](*Document), SubSortTreeKey) {
 	var result [](*Document)
 	var next SubSortTreeKey
 
@@ -125,7 +140,8 @@ func (index *SubIndex) Fetch(hash interface{}, startSortKey SubSortTreeKey, endS
 			return result, next
 		}
 
-		for it := tree.Find(startSortKey); it.Present() && len(result) <= limit && tree.Comparator(it.Key(), endSortKey) <= 0; it.Next() {
+		for it := tree.Find(startSortKey);
+			it.Present() && len(result) <= limit && tree.Comparator(it.Key(), endSortKey) <= 0; it.Next() {
 			if len(result) == limit {
 				next = it.Key().(SubSortTreeKey)
 				break
@@ -136,7 +152,12 @@ func (index *SubIndex) Fetch(hash interface{}, startSortKey SubSortTreeKey, endS
 	return result, next
 }
 
-func (index *SubIndex) RFetch(hash interface{}, startSortKey SubSortTreeKey, endSortKey SubSortTreeKey, limit int) ([](*Document), SubSortTreeKey) {
+func (index *SubIndex) RFetch(
+	hash interface{},
+	startSortKey SubSortTreeKey,
+	endSortKey SubSortTreeKey,
+	limit int) ([](*Document), SubSortTreeKey) {
+
 	var result [](*Document)
 	var next SubSortTreeKey
 
@@ -171,7 +192,10 @@ func (index *SubIndex) RFetch(hash interface{}, startSortKey SubSortTreeKey, end
 	return result, next
 }
 
-func (index *PrimaryIndex) delete(hash interface{}, sort interface{}) (*Document, bool) {
+func (index *PrimaryIndex) delete(
+	hash interface{},
+	sort interface{}) (*Document, bool) {
+
 	hash = index.HashKey.Parse(hash)
 	sort = index.SortKey.Parse(sort)
 
@@ -199,7 +223,10 @@ func (index *SubIndex) delete(doc *Document) {
 	}
 }
 
-func (index *PrimaryIndex) Get(hash interface{}, sort interface{}) (*Document, bool) {
+func (index *PrimaryIndex) Get(
+	hash interface{},
+	sort interface{}) (*Document, bool) {
+
 	hash = index.HashKey.Parse(hash)
 	sort = index.SortKey.Parse(sort)
 
@@ -217,7 +244,10 @@ func (index *PrimaryIndex) Get(hash interface{}, sort interface{}) (*Document, b
 	return nil, false
 }
 
-func (index *SubIndex) Get(hash interface{}, sort interface{}) (*Document, bool) {
+func (index *SubIndex) Get(
+	hash interface{},
+	sort interface{}) (*Document, bool) {
+
 	hash = index.HashKey.Parse(hash)
 	sort = index.SortKey.Parse(sort)
 

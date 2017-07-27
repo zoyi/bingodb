@@ -49,19 +49,31 @@ func (manager *Manager) Authenticate(h fasthttp.RequestHandler) fasthttp.Request
 	}))
 }
 
-func (manager *Manager) Get(ctx *fasthttp.RequestCtx) {
-	//get request params
-	//tablename, id
-	//look up in bingodb
-	//table, ok := manager.BingoDB.Tables.Load("somekey")
-	//return value
+func (m *Manager) Get(ctx *fasthttp.RequestCtx) {
+	tableName, hashKey, sortKey, valid := m.Resource.ValidateGetParams(ctx)
+	//validate if any of param is not present
+	if !valid {
+		ctx.Error(fasthttp.StatusMessage(fasthttp.StatusBadRequest), fasthttp.StatusBadRequest)
+		return
+	}
+
+	data := m.Resource.Get(tableName, hashKey, sortKey)
+	ctx.SetContentType("application/json")
+	ctx.SetStatusCode(fasthttp.StatusOK)
+	ctx.Write(data)
 }
 
-func (manager *Manager) GetMultiples(ctx *fasthttp.RequestCtx) {
-	//get request params
-	//tablename, limit, range, secondarykey, sort
-	//look up in bingodb
-	//return values
+func (m *Manager) GetMultiples(ctx *fasthttp.RequestCtx) {
+	params, valid := m.Resource.ValidateGetListParams(ctx)
+	if !valid {
+		ctx.Error(fasthttp.StatusMessage(fasthttp.StatusBadRequest), fasthttp.StatusBadRequest)
+		return
+	}
+
+	data := m.Resource.GetMultiple(params)
+	ctx.SetContentType("application/json")
+	ctx.SetStatusCode(fasthttp.StatusOK)
+	ctx.Write(data)
 }
 
 func (manager *Manager) Update(ctx *fasthttp.RequestCtx) {

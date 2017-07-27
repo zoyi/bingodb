@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/CrowdSurge/banner"
@@ -8,6 +9,7 @@ import (
 	"github.com/valyala/fasthttp"
 	"github.com/zoyi/bingodb/api"
 	"github.com/zoyi/bingodb/model"
+	"strings"
 )
 
 var (
@@ -15,24 +17,64 @@ var (
 	config = flag.String("file", "config.yml", "import config file")
 )
 
-// examples
-func Index(ctx *fasthttp.RequestCtx) {
-	fmt.Fprint(ctx, "Not protected!\n")
+func initSeedData(bingo *model.Bingo) {
+	tableData, _ := bingo.Tables.Load("onlines")
+	table := tableData.(*model.Table)
+	{
+		var s = `{
+			"channelId": "1",
+			"id": "test",
+			"lastSeen": 123,
+			"expiresAt": 200
+		}`
+
+		dec := json.NewDecoder(strings.NewReader(s))
+		dec.UseNumber()
+		var data model.Data
+		dec.Decode(&data)
+		table.Put(&data)
+	}
+	{
+		var s = `{
+			"channelId": "1",
+			"id": "what",
+			"lastSeen": 129,
+			"expiresAt": 201
+		}`
+
+		dec := json.NewDecoder(strings.NewReader(s))
+		dec.UseNumber()
+		var data model.Data
+		dec.Decode(&data)
+		table.Put(&data)
+	}
+	{
+		var s = `{
+			"channelId": "1",
+			"id": "ddd",
+			"lastSeen": 132,
+			"expiresAt": 201
+		}`
+
+		dec := json.NewDecoder(strings.NewReader(s))
+		dec.UseNumber()
+		var data model.Data
+		dec.Decode(&data)
+		table.Put(&data)
+	}
 }
 
-func Protect(ctx *fasthttp.RequestCtx) {
-	fmt.Fprint(ctx, "Not protected!\n")
-}
-
-func DefaultServer() *fasthttprouter.Router {
+func DefaultRouter() *fasthttprouter.Router {
 	flag.Parse()
 
 	fmt.Printf("* Loaded configration file..\n")
 	bingo := model.Load(*config)
 
+	initSeedData(bingo)
+
 	fmt.Printf("* Preparing resources..\n")
 	rs := &api.Resource{
-		BingoDB:     bingo,
+		Db:          bingo,
 		AccessToken: "",
 	}
 
@@ -47,13 +89,13 @@ func DefaultServer() *fasthttprouter.Router {
 
 	router := fasthttprouter.New()
 	//example
-	router.GET("/", Index)
+	//router.GET("/", Index)
 	//middleware example
-	router.GET("/get", m.Authenticate(Protect))
-	router.GET("/m", m.Get)
-	router.GET("/d", m.GetMultiples)
-	router.POST("/m", m.Update)
-	router.DELETE("/m", m.Delete)
+	//router.GET("/get", m.Authenticate(Protect))
+	router.GET("/m", api.Logging(m.Get))
+	router.GET("/d", api.Logging(m.GetMultiples))
+	router.POST("/m", api.Logging(m.Update))
+	router.DELETE("/m", api.Logging(m.Delete))
 
 	return router
 }
@@ -62,8 +104,8 @@ func main() {
 	banner.Print("bingodb")
 	fmt.Printf("									by ZOYI\n")
 
-	router := DefaultServer()
+	router := DefaultRouter()
 
-	fmt.Printf("* Ready to serve on %s\n", *addr)
+	fmt.Printf("* Bingo is ready on %s\n", *addr)
 	fasthttp.ListenAndServe(*addr, router.Handler)
 }

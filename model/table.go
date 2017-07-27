@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/emirpasic/gods/utils"
 	"reflect"
 	"strconv"
@@ -43,6 +44,7 @@ func (key *SubSortTreeKey) Empty() bool {
 }
 
 func (field *FieldSchema) Parse(raw interface{}) interface{} {
+	fmt.Printf("rawValue: %v\n", raw)
 	switch field.Type {
 	case "integer":
 		switch raw.(type) {
