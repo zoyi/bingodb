@@ -1,8 +1,8 @@
 package model
 
 import (
-	"sync"
 	"github.com/zoyi/bingodb/ds/redblacktree"
+	"sync"
 )
 
 type Index struct {
@@ -52,8 +52,7 @@ func (index *PrimaryIndex) Fetch(
 			return result, next
 		}
 
-		for it := tree.Find(start);
-			it.Present() && len(result) <= limit && tree.Comparator(it.Key(), end) <= 0; it.Next() {
+		for it := tree.Find(start); it.Present() && len(result) <= limit && tree.Comparator(it.Key(), end) <= 0; it.Next() {
 			if len(result) == limit {
 				next = it.Key()
 				break
@@ -100,8 +99,7 @@ func (index *PrimaryIndex) RFetch(
 			return result, next
 		}
 
-		for it := tree.RFind(end);
-			it.Present() && len(result) <= limit && tree.Comparator(start, it.Key()) <= 0; it.Next() {
+		for it := tree.RFind(end); it.Present() && len(result) <= limit && tree.Comparator(start, it.Key()) <= 0; it.Next() {
 			if len(result) == limit {
 				next = it.Key()
 				break
@@ -140,8 +138,7 @@ func (index *SubIndex) Fetch(
 			return result, next
 		}
 
-		for it := tree.Find(startSortKey);
-			it.Present() && len(result) <= limit && tree.Comparator(it.Key(), endSortKey) <= 0; it.Next() {
+		for it := tree.Find(startSortKey); it.Present() && len(result) <= limit && tree.Comparator(it.Key(), endSortKey) <= 0; it.Next() {
 			if len(result) == limit {
 				next = it.Key().(SubSortTreeKey)
 				break

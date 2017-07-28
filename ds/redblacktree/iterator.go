@@ -1,6 +1,6 @@
 package redblacktree
 
-import "fmt"
+//import "fmt"
 
 type BaseIterator interface {
 	Present() bool
@@ -81,11 +81,11 @@ func (it *Iterator) Next() {
 }
 
 func (it *Iterator) Prev() {
-	fmt.Println(it.node.String())
+	//fmt.Println(it.node.String())
 
 	if it.node.Left != nil {
-		fmt.Println(it.node.Left)
-		fmt.Println("left is not nil")
+		//fmt.Println(it.node.Left)
+		//fmt.Println("left is not nil")
 		it.node = it.node.Left
 		for it.node.Right != nil {
 			it.node = it.node.Right
@@ -94,8 +94,8 @@ func (it *Iterator) Prev() {
 	}
 
 	if it.node.Parent != nil {
-		fmt.Println(it.node.Parent)
-		fmt.Println("Parent is not nil")
+		//fmt.Println(it.node.Parent)
+		//fmt.Println("Parent is not nil")
 		node := it.node
 		for it.node.Parent != nil {
 			it.node = it.node.Parent
@@ -105,7 +105,7 @@ func (it *Iterator) Prev() {
 		}
 	}
 
-	fmt.Println("empty tree!!!")
+	//fmt.Println("empty tree!!!")
 	it.node = nil
 }
 
