@@ -80,10 +80,10 @@ func DefaultRouter() *fasthttprouter.Router {
 
 	fmt.Printf("* Get manager ready to serve..\n")
 	m := api.Manager{
-		Whitelist: []string{
-			"/health_check",
-			"/something",
-		},
+		//Whitelist: []string{
+		//	"/health_check",
+		//	"/something",
+		//},
 		Resource: rs,
 	}
 

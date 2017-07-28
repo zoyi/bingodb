@@ -1,22 +1,24 @@
 package api
 
 import (
+	"encoding/json"
 	"github.com/valyala/fasthttp"
+	"github.com/zoyi/bingodb/model"
 )
 
 type Manager struct {
-	Whitelist []string
+	//Whitelist []string
 	*Resource
 }
 
-func validateAuthToken(ctx *fasthttp.RequestCtx) bool {
-	auth := ctx.Request.Header.Peek("Authorization")
-	if auth == nil {
-		return false
-	}
-	//validate auth token here
-	return true
-}
+//func validateAuthToken(ctx *fasthttp.RequestCtx) bool {
+//	auth := ctx.Request.Header.Peek("Authorization")
+//	if auth == nil {
+//		return false
+//	}
+//	//validate auth token here
+//	return true
+//}
 
 // Logging ... simple logging middleware
 func Logging(h fasthttp.RequestHandler) fasthttp.RequestHandler {
@@ -27,40 +29,44 @@ func Logging(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 }
 
 // Authenticate ... check if auth token is valid
-func (manager *Manager) Authenticate(h fasthttp.RequestHandler) fasthttp.RequestHandler {
-	return Logging(fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
-		//skip whitelist
-		for _, path := range manager.Whitelist {
-			if string(ctx.Path()) == path {
-				h(ctx)
-				return
-			}
-		}
-
-		// TBD
-		isValid := validateAuthToken(ctx)
-
-		if isValid {
-			h(ctx)
-			return
-		}
-		// otherwise error
-		ctx.Error(fasthttp.StatusMessage(fasthttp.StatusUnauthorized), fasthttp.StatusUnauthorized)
-	}))
-}
+//func (m *Manager) Authenticate(h fasthttp.RequestHandler) fasthttp.RequestHandler {
+//	return Logging(fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
+//		//skip whitelist
+//		for _, path := range m.Whitelist {
+//			if string(ctx.Path()) == path {
+//				h(ctx)
+//				return
+//			}
+//		}
+//
+//		// TBD
+//		isValid := validateAuthToken(ctx)
+//
+//		if isValid {
+//			h(ctx)
+//			return
+//		}
+//		// otherwise error
+//		ctx.Error(fasthttp.StatusMessage(fasthttp.StatusUnauthorized), fasthttp.StatusUnauthorized)
+//	}))
+//}
 
 func (m *Manager) Get(ctx *fasthttp.RequestCtx) {
 	tableName, hashKey, sortKey, valid := m.Resource.ValidateGetParams(ctx)
-	//validate if any of param is not present
 	if !valid {
 		ctx.Error(fasthttp.StatusMessage(fasthttp.StatusBadRequest), fasthttp.StatusBadRequest)
 		return
 	}
 
 	data := m.Resource.Get(tableName, hashKey, sortKey)
+
 	ctx.SetContentType("application/json")
 	ctx.SetStatusCode(fasthttp.StatusOK)
 	ctx.Write(data)
+
+	response := model.Data{}
+	json.Unmarshal(data, &response)
+	ctx.Logger().Printf("response: %v\n", response)
 }
 
 func (m *Manager) GetMultiples(ctx *fasthttp.RequestCtx) {
@@ -74,9 +80,13 @@ func (m *Manager) GetMultiples(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json")
 	ctx.SetStatusCode(fasthttp.StatusOK)
 	ctx.Write(data)
+
+	response := []model.Data{}
+	json.Unmarshal(data, &response)
+	ctx.Logger().Printf("response: %v\n", response)
 }
 
-func (manager *Manager) Update(ctx *fasthttp.RequestCtx) {
+func (m *Manager) Update(ctx *fasthttp.RequestCtx) {
 	//get post data
 	//json body = { }
 	//validate body
@@ -84,7 +94,7 @@ func (manager *Manager) Update(ctx *fasthttp.RequestCtx) {
 	//return result code
 }
 
-func (manager *Manager) Delete(ctx *fasthttp.RequestCtx) {
+func (m *Manager) Delete(ctx *fasthttp.RequestCtx) {
 	//get post data
 	//delete from bingodb
 	//return result code
