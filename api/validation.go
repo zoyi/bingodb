@@ -1,9 +1,11 @@
 package api
 
 import (
+	//"fmt"
 	"github.com/valyala/fasthttp"
 	"github.com/zoyi/bingodb/model"
 	"strconv"
+	"strings"
 )
 
 func (rs *Resource) GetKeysForPrimary(
@@ -43,12 +45,12 @@ func (rs *Resource) GetKeysForSubIndex(
 	return nil, nil, nil, false
 }
 
-func (rs *Resource) IsValidTableName(data []byte) *model.Table {
-	if len(data) == 0 {
+func (rs *Resource) IsValidTableName(tableNameData []byte) *model.Table {
+	if len(tableNameData) == 0 {
 		return nil
 	}
 
-	tableData, ok := rs.Db.Tables.Load(string(data))
+	tableData, ok := rs.Db.Tables.Load(string(tableNameData))
 	if !ok {
 		return nil
 	}
@@ -61,39 +63,46 @@ func (rs *Resource) IsValidTableName(data []byte) *model.Table {
 	return table
 }
 
-func (rs *Resource) IsValidLimit(data []byte) (int, bool) {
-	var limit int
+func (rs *Resource) IsValidLimit(limitData []byte) (int, bool) {
+	var result int
 	var error error
-	if len(data) == 0 {
-		limit = 20
+	if len(limitData) == 0 {
+		result = 20
 	} else {
-		limit, error = strconv.Atoi(string(data))
+		result, error = strconv.Atoi(string(limitData))
 		if error != nil {
 			return 0, false
 		}
 	}
 
-	return limit, true
+	return result, true
 }
 
-func (rs *Resource) IsValidOrder(data []byte) (string, bool) {
-	if len(data) == 0 {
+func (rs *Resource) IsValidOrder(orderData []byte) (string, bool) {
+	if len(orderData) == 0 {
 		return "DESC", true
 	}
 
-	order := string(data)
-	if order != "DESC" && order != "ASC" {
+	orderString := strings.ToUpper(string(orderData))
+	if orderString != "DESC" && orderString != "ASC" {
 		return "", false
 	}
 
-	return order, true
+	return orderString, true
 }
 
-func (rs *Resource) IsValidIndexName(data []byte) *string {
-	var indexName *string
-	if len(data) != 0 {
-		*indexName = string(data)
+func (rs *Resource) IsValidIndexName(table *model.Table, indexNameData []byte) *string {
+	var indexName *string = new(string)
+	if len(indexNameData) == 0 {
+		return nil
 	}
+
+	nameString := string(indexNameData)
+	subIndexData, _ := table.SubIndices.Load(nameString)
+	if _, ok := subIndexData.(*model.SubIndex); !ok {
+		return nil
+	}
+	*indexName = nameString
 
 	return indexName
 }
@@ -109,9 +118,10 @@ func (rs *Resource) ValidateGetParams(
 		return "", nil, nil, false
 	}
 
-	tableName = string(tableNameData)
-	tableData, _ := rs.Db.Tables.Load(tableName)
-	if table, ok := tableData.(*model.Table); ok {
+	table := rs.IsValidTableName(tableNameData)
+	if table == nil {
+		ok = false
+	} else {
 		hashKey = table.PrimaryIndex.HashKey.Parse(string(hashKeyData))
 		sortKey = table.PrimaryIndex.SortKey.Parse(string(sortKeyData))
 	}
@@ -152,7 +162,7 @@ func (rs *Resource) ValidateGetListParams(ctx *fasthttp.RequestCtx) (*GetParams,
 	}
 
 	var subIndexName *string
-	if subIndexName = rs.IsValidIndexName(indexNameData); subIndexName != nil {
+	if subIndexName = rs.IsValidIndexName(table, indexNameData); subIndexName != nil {
 		hashKey, startKey, endKey, ok = rs.GetKeysForSubIndex(
 			table, hashKeyData, startKeyData, endKeyData, *subIndexName)
 		if !ok {
