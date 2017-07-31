@@ -18,9 +18,21 @@ jobs:
     ####   /go/src/github.com/circleci/go-tool
     ####   /go/src/bitbucket.org/circleci/go-tool
     working_directory: /go/src/github.com/zoyi/bingodb
+
     steps:
       - checkout
-
-      # specify any bash command here prefixed with `run: `
+      #install golang/dep and all dependencies
+      - run:
+          name: install go dep
+          command: go get -u github.com/golang/dep/cmd/dep
+      - run: dep init
+      #run test
       - run: go get -v -t -d ./...
       - run: go test -v ./...
+      #cache vendor directory
+      - save_cache:
+          when: on_success
+          key: dependency-cache
+          paths:
+            - /go/src/github.com/zoyi/bingodb/vendor/
+
