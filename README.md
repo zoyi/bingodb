@@ -1,4 +1,5 @@
 # bingodb
+[![CircleCI](https://circleci.com/gh/zoyi/bingodb/tree/master.svg?style=shield)](https://circleci.com/gh/zoyi/bingodb/tree/master)
 
 ### 설계 방향
 * In-memory 디비로 persistence 지원되지 않음
