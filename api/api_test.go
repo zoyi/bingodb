@@ -1,9 +1,9 @@
 package api
 
 import (
-	"testing"
-	"net/http"
 	"github.com/gavv/httpexpect"
+	"net/http"
+	"testing"
 )
 
 var (
@@ -27,8 +27,7 @@ func getExpector(t *testing.T) *httpexpect.Expect {
 
 func TestGetWithValidParams(t *testing.T) {
 	getExpector(t).
-		GET("/get").
-		WithQuery("tableName", "onlines").
+		GET("/get/onlines").
 		WithQuery("hashKey", "1").
 		WithQuery("sortKey", "what").
 		Expect().Status(http.StatusOK).
@@ -41,16 +40,14 @@ func TestGetWithValidParams(t *testing.T) {
 
 func TestGetWithInvalidParams(t *testing.T) {
 	getExpector(t).
-		GET("get").
-		WithQuery("tableName", "onlines").
+		GET("get/onlines").
 		WithQuery("hashKey", "1").
 		Expect().Status(http.StatusBadRequest)
 }
 
 func TestGetWithValidParamEmptyResult(t *testing.T) {
 	getExpector(t).
-		GET("/get").
-		WithQuery("tableName", "onlines").
+		GET("/get/onlines").
 		WithQuery("hashKey", "1").
 		WithQuery("sortKey", "red").
 		Expect().Status(http.StatusOK).
@@ -59,8 +56,7 @@ func TestGetWithValidParamEmptyResult(t *testing.T) {
 
 func TestGetsWithValidParams(t *testing.T) {
 	getExpector(t).
-		GET("gets").
-		WithQuery("tableName", "onlines").
+		GET("gets/onlines").
 		WithQuery("indexName", "guest").
 		WithQuery("hashKey", "1").
 		WithQuery("startKey", "120").
@@ -74,10 +70,8 @@ func TestGetsWithValidParams(t *testing.T) {
 
 func TestGetsWithInvalidParams(t *testing.T) {
 	getExpector(t).
-		GET("gets").
-		WithQuery("tableName", "onlines").
+		GET("gets/onlines").
 		WithQuery("indexName", "guest").
-
 		WithQuery("startKey", "120").
 		WithQuery("endKey", "130").
 		WithQuery("limit", "20").

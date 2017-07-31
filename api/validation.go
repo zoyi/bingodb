@@ -45,12 +45,12 @@ func (rs *Resource) GetKeysForSubIndex(
 	return nil, nil, nil, false
 }
 
-func (rs *Resource) IsValidTableName(tableNameData []byte) *model.Table {
+func (rs *Resource) IsValidTableName(tableNameData string) *model.Table {
 	if len(tableNameData) == 0 {
 		return nil
 	}
 
-	tableData, ok := rs.Db.Tables.Load(string(tableNameData))
+	tableData, ok := rs.Db.Tables.Load(tableNameData)
 	if !ok {
 		return nil
 	}
@@ -110,19 +110,18 @@ func (rs *Resource) IsValidIndexName(table *model.Table, indexNameData []byte) *
 func (rs *Resource) ValidateGetParams(
 	ctx *fasthttp.RequestCtx) (tableName string, hashKey, sortKey interface{}, ok bool) {
 
-	tableNameData := ctx.QueryArgs().Peek("tableName")
+	tableName = ctx.UserValue("tableName").(string)
 	sortKeyData := ctx.QueryArgs().Peek("sortKey")
 	hashKeyData := ctx.QueryArgs().Peek("hashKey")
 
-	if len(tableNameData) == 0 || len(sortKeyData) == 0 || len(hashKeyData) == 0 {
+	if len(tableName) == 0 || len(sortKeyData) == 0 || len(hashKeyData) == 0 {
 		return "", nil, nil, false
 	}
 
-	table := rs.IsValidTableName(tableNameData)
+	table := rs.IsValidTableName(tableName)
 	if table == nil {
 		ok = false
 	} else {
-		tableName = string(tableNameData)
 		hashKey = table.PrimaryIndex.HashKey.Parse(string(hashKeyData))
 		sortKey = table.PrimaryIndex.SortKey.Parse(string(sortKeyData))
 	}
@@ -135,7 +134,7 @@ func (rs *Resource) ValidateGetListParams(ctx *fasthttp.RequestCtx) (*GetParams,
 	var table *model.Table
 	var ok bool
 
-	tableName := ctx.QueryArgs().Peek("tableName")
+	tableName := ctx.UserValue("tableName").(string)
 	indexNameData := ctx.QueryArgs().Peek("indexName")
 	hashKeyData := ctx.QueryArgs().Peek("hashKey")
 	startKeyData := ctx.QueryArgs().Peek("startKey")
@@ -175,7 +174,7 @@ func (rs *Resource) ValidateGetListParams(ctx *fasthttp.RequestCtx) (*GetParams,
 	}
 
 	params := &GetParams{
-		TableName:    string(tableName),
+		TableName:    tableName,
 		SubIndexName: subIndexName,
 		HashKey:      hashKey,
 		StartKey:     startKey,

@@ -99,17 +99,17 @@ func TestResource_IsValidIndexName(t *testing.T) {
 func TestResource_IsValidTableName(t *testing.T) {
 	validationPrepare()
 
-	table := resource.IsValidTableName([]byte("onlines"))
+	table := resource.IsValidTableName("onlines")
 	if table == nil {
 		t.Error("onlines table should be valid")
 	}
 
-	table = resource.IsValidTableName([]byte("test"))
+	table = resource.IsValidTableName("test")
 	if table != nil {
 		t.Error("test table should be invalid")
 	}
 
-	table = resource.IsValidTableName([]byte("123"))
+	table = resource.IsValidTableName("123")
 	if table != nil {
 		t.Error("test table should be invalid")
 	}

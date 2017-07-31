@@ -142,8 +142,8 @@
 [[projects]]
   name = "github.com/yudai/gojsondiff"
   packages = [".","formatter"]
-  revision = "7b1b7adf999dab73a6eb02669c3d82dbb27a3dd6"
-  version = "1.0.0"
+  revision = "d53dddaf16b9f5b19737f4722943e7e1f289af13"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"

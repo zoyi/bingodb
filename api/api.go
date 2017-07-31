@@ -2,12 +2,12 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/valyala/fasthttp"
-	"github.com/zoyi/bingodb/model"
+	"flag"
 	"fmt"
 	"github.com/buaazp/fasthttprouter"
+	"github.com/valyala/fasthttp"
 	"github.com/zoyi/bingodb/mock"
-	"flag"
+	"github.com/zoyi/bingodb/model"
 )
 
 type Manager struct {
@@ -41,10 +41,10 @@ func DefaultRouter(configFileName string) *fasthttprouter.Router {
 
 	router := fasthttprouter.New()
 
-	router.GET("/get", Logging(m.Get))
-	router.GET("/gets", Logging(m.GetMultiples))
-	router.POST("/update", Logging(m.Update))
-	router.DELETE("/delete", Logging(m.Delete))
+	router.GET("/get/:tableName", Logging(m.Get))
+	router.GET("/gets/:tableName", Logging(m.GetMultiples))
+	router.POST("/update/:tableName", Logging(m.Update))
+	router.DELETE("/delete/:tableName", Logging(m.Delete))
 
 	return router
 }
@@ -116,6 +116,7 @@ func (m *Manager) GetMultiples(ctx *fasthttp.RequestCtx) {
 }
 
 func (m *Manager) Update(ctx *fasthttp.RequestCtx) {
+	//tableName := m.Resource.ValidatePostParams(ctx)
 	//get post data
 	//json body = { }
 	//validate body
