@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"github.com/valyala/fasthttp"
 	"github.com/zoyi/bingodb/model"
+	"fmt"
+	"github.com/buaazp/fasthttprouter"
+	"github.com/zoyi/bingodb/mock"
+	"flag"
 )
 
 type Manager struct {
@@ -11,14 +15,39 @@ type Manager struct {
 	*Resource
 }
 
-//func validateAuthToken(ctx *fasthttp.RequestCtx) bool {
-//	auth := ctx.Request.Header.Peek("Authorization")
-//	if auth == nil {
-//		return false
-//	}
-//	//validate auth token here
-//	return true
-//}
+func DefaultRouter(configFileName string) *fasthttprouter.Router {
+	flag.Parse()
+
+	fmt.Printf("* Loaded configration file..\n")
+	bingo := model.Load(configFileName)
+
+	//for test purpose
+	mock.InitDefaultSeedData(bingo)
+
+	fmt.Printf("* Preparing resources..\n")
+	rs := &Resource{
+		Db:          bingo,
+		AccessToken: "",
+	}
+
+	fmt.Printf("* Get manager ready to serve..\n")
+	m := Manager{
+		//Whitelist: []string{
+		//	"/health_check",
+		//	"/something",
+		//},
+		Resource: rs,
+	}
+
+	router := fasthttprouter.New()
+
+	router.GET("/get", Logging(m.Get))
+	router.GET("/gets", Logging(m.GetMultiples))
+	router.POST("/update", Logging(m.Update))
+	router.DELETE("/delete", Logging(m.Delete))
+
+	return router
+}
 
 // Logging ... simple logging middleware
 func Logging(h fasthttp.RequestHandler) fasthttp.RequestHandler {

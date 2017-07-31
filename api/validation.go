@@ -122,6 +122,7 @@ func (rs *Resource) ValidateGetParams(
 	if table == nil {
 		ok = false
 	} else {
+		tableName = string(tableNameData)
 		hashKey = table.PrimaryIndex.HashKey.Parse(string(hashKeyData))
 		sortKey = table.PrimaryIndex.SortKey.Parse(string(sortKeyData))
 	}
