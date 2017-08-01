@@ -60,44 +60,11 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 	}
 
 	for tableName, tableInfo := range configInfo.Tables {
-		fields := make(map[string]*FieldSchema)
-
-		// Validate declared fields
-		t := reflect.TypeOf(tableInfo)
-		v := reflect.ValueOf(tableInfo)
-
-		for i := 0; i < t.NumField(); i++ {
-			sf := t.Field(i)
-
-			switch sf.Name {
-			case "Fields":
-				for fieldName, fieldType := range tableInfo.Fields {
-					if ok := isAllowedFieldType(fieldType); !ok {
-						return errors.New(
-							fmt.Sprintf("Table configuration error - unknown field type '%v' in '%v'", fieldType, fieldName))
-					}
-				}
-			case "SubIndices":
-				for _, indexInfo := range tableInfo.SubIndices {
-					iit := reflect.TypeOf(indexInfo)
-					iiv := reflect.ValueOf(indexInfo)
-					for s := 0; s < iit.NumField(); s++ {
-						ssf := iit.Field(s)
-						sfv := iiv.Field(s).String()
-						if _, ok := tableInfo.Fields[sfv]; !ok {
-							return errors.New(
-								fmt.Sprintf("Table configuration error - undefined field '%v' for SubIndices '%v'", sfv, ssf.Name))
-						}
-					}
-				}
-			default:
-				fv := v.Field(i).String()
-				if _, ok := tableInfo.Fields[fv]; !ok {
-					return errors.New(
-						fmt.Sprintf("Table configuration error - undefined field '%v' for '%v'", fv, sf.Name))
-				}
-			}
+		if err := validateFields(tableInfo); err != nil {
+			return err
 		}
+
+		fields := make(map[string]*FieldSchema)
 
 		for fieldKey, fieldType := range tableInfo.Fields {
 			field := &FieldSchema{Name: fieldKey, Type: fieldType}
@@ -119,11 +86,6 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 
 		subIndices := new(sync.Map)
 
-		if ok := schema.ExpireField.Type == INTEGER; !ok {
-			return errors.New(
-				fmt.Sprintf("Table configuration error - Only integer type can be used for expireKey. Current key '%v' is a '%v'", schema.ExpireField.Name, schema.ExpireField.Type))
-		}
-
 		for indexName, indexInfo := range tableInfo.SubIndices {
 
 			subKey := &Key{HashKey: fields[indexInfo.HashKey],
@@ -137,6 +99,68 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 		}
 
 		bingo.AddTable(tableName, schema, primaryIndex, subIndices)
+	}
+
+	return nil
+}
+
+func validateFields(tableInfo TableInfo) error {
+	// check fields
+	if len(tableInfo.Fields) == 0 {
+		return errors.New(
+			fmt.Sprintf("Table configuration error - fields cannot be empty"))
+	}
+	for fieldName, fieldType := range tableInfo.Fields {
+		if ok := isAllowedFieldType(fieldType); !ok {
+			return errors.New(
+				fmt.Sprintf("Table configuration error - unknown field type '%v' in '%v'", fieldType, fieldName))
+		}
+	}
+
+	// check subIndices
+	for _, indexInfo := range tableInfo.SubIndices {
+		fields := reflect.TypeOf(indexInfo)
+		values := reflect.ValueOf(indexInfo)
+
+		for i := 0; i < fields.NumField(); i++ {
+			field := fields.Field(i)
+			value := values.Field(i).String()
+			if _, ok := tableInfo.Fields[value]; !ok {
+				return errors.New(
+					fmt.Sprintf("Table configuration error - undefined field '%v' for subIndices '%v'", value, field.Name))
+			}
+		}
+	}
+
+	// check valid field
+	fields := reflect.TypeOf(tableInfo)
+	values := reflect.ValueOf(tableInfo)
+
+	for i := 0; i < fields.NumField(); i++ {
+		field := fields.Field(i)
+		switch field.Name {
+		case
+			"Fields",
+			"SubIndices":
+			continue
+
+		default:
+			value := values.Field(i).String()
+			if _, ok := tableInfo.Fields[value]; !ok {
+				return errors.New(
+					fmt.Sprintf("Table configuration error - undefined field '%v' for '%v'", value, field.Name))
+			}
+		}
+	}
+
+	// check expireKey
+	if tableInfo.ExpireKey == "" {
+		return errors.New(
+			fmt.Sprintf("Table configuration error - expireKey cannot be empty"))
+	}
+	if tableInfo.Fields[tableInfo.ExpireKey] != INTEGER {
+		return errors.New(
+			fmt.Sprintf("Table configuration error - Only integer type can be used for expireKey. Current key '%v' is '%v'", tableInfo.ExpireKey, tableInfo.Fields[tableInfo.ExpireKey]))
 	}
 
 	return nil

@@ -72,6 +72,55 @@ tables:
 	}
 }
 
+func TestErrorWhenFieldsIsEmpty(t *testing.T)  {
+	weirdFieldConfig := `
+tables:
+  weird:
+    expireKey: 'expiresAt'
+    hashKey: 'name'
+    sortKey: 'id'
+    subIndices:
+      friends:
+        hashKey: 'email'
+        sortKey: 'name'
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
+func TestErrorWhenSubIndicesHasWrongField(t *testing.T)  {
+	weirdFieldConfig := `
+tables:
+  weired:
+    fields:
+      id: 'string'
+      name: 'string'
+      email: 'string'
+      expiresAt: 'integer'
+    expireKey: 'expiresAt'
+    hashKey: 'name'
+    sortKey: 'id'
+    subIndices:
+      friends:
+        hashKey: 'email'
+        sortKey2: 'name'
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
 func TestErrorWhenExpireKeyTypeIsNotInteger(t *testing.T)  {
 	weirdFieldConfig := `
 tables:
