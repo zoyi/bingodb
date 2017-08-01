@@ -140,11 +140,9 @@ func validateFields(tableInfo TableInfo) error {
 		field := fields.Field(i)
 		switch field.Name {
 		case
-			"Fields",
-			"SubIndices":
-			continue
-
-		default:
+			"HashKey",
+			"SortKey",
+			"ExpireKey":
 			value := values.Field(i).String()
 			if _, ok := tableInfo.Fields[value]; !ok {
 				return errors.New(
