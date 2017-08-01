@@ -119,6 +119,11 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 
 		subIndices := new(sync.Map)
 
+		if ok := schema.ExpireField.Type == INTEGER; !ok {
+			return errors.New(
+				fmt.Sprintf("Table configuration error - Only integer type can be used for expireKey. Current key '%v' is a '%v'", schema.ExpireField.Name, schema.ExpireField.Type))
+		}
+
 		for indexName, indexInfo := range tableInfo.SubIndices {
 
 			subKey := &Key{HashKey: fields[indexInfo.HashKey],
