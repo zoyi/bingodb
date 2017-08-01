@@ -66,7 +66,13 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 			sf := t.Field(i)
 
 			switch sf.Name {
-			case "Fields": continue
+			case "Fields":
+				for fieldName, fieldType := range tableInfo.Fields {
+					if ok := isAllowedFieldType(fieldType); !ok {
+						return errors.New(
+							fmt.Sprintf("Table configuration error - unknown field type '%v' in '%v'", fieldType, fieldName))
+					}
+				}
 			case "SubIndices":
 				for _, indexInfo := range tableInfo.SubIndices {
 					iit := reflect.TypeOf(indexInfo)
@@ -125,4 +131,14 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 	}
 
 	return nil
+}
+
+func isAllowedFieldType(fieldType string) bool {
+	switch fieldType {
+	case
+		"string",
+		"integer":
+		return true
+	}
+	return false
 }
