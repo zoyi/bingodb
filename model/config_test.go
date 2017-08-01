@@ -23,7 +23,7 @@ func TestParseConfig(t *testing.T) {
 func TestParseConfigString(t *testing.T) {
 	configString := `
 tables:
-  weired:
+  weird:
     fields:
       id: 'string'
       name: 'string'
@@ -97,7 +97,7 @@ tables:
 func TestErrorWhenExpireKeyIsEmpty(t *testing.T)  {
 	weirdFieldConfig := `
 tables:
-  weired:
+  weird:
     fields:
       id: 'string'
       name: 'string'
@@ -123,7 +123,7 @@ tables:
 func TestErrorWhenHashKeyIsEmpty(t *testing.T)  {
 	weirdFieldConfig := `
 tables:
-  weired:
+  weird:
     fields:
       id: 'string'
       name: 'string'
@@ -149,7 +149,7 @@ tables:
 func TestErrorWhenSortKeyIsEmpty(t *testing.T)  {
 	weirdFieldConfig := `
 tables:
-  weired:
+  weird:
     fields:
       id: 'string'
       name: 'string'
@@ -175,7 +175,7 @@ tables:
 func TestErrorWhenSubIndicesHasWrongField(t *testing.T)  {
 	weirdFieldConfig := `
 tables:
-  weired:
+  weird:
     fields:
       id: 'string'
       name: 'string'
@@ -227,16 +227,16 @@ tables:
 }
 
 func TestErrorWhenUndefinedField(t *testing.T) {
-	// tables > weired > expireKey is invalid
-	weiredFieldConfig1 := `
+	// tables > weird > expireKey is invalid
+	weirdFieldConfig1 := `
 tables:
-  weired:
+  weird:
     fields:
       id: 'string'
       name: 'string'
       email: 'string'
       expiresAt: 'integer'
-    expireKey: 'weired'
+    expireKey: 'weird'
     hashKey: 'name'
     sortKey: 'id'
     subIndices:
@@ -247,23 +247,23 @@ tables:
 
 	bingo := newBingo()
 
-	if err := ParseConfigString(bingo, weiredFieldConfig1); err != nil {
+	if err := ParseConfigString(bingo, weirdFieldConfig1); err != nil {
 		fmt.Printf("Error occurred: [%v] - ok \n", err)
 	} else {
 		t.Fail()
 	}
 
-	// tables > weired > hashKey is invalid
-	weiredFieldConfig2 := `
+	// tables > weird > hashKey is invalid
+	weirdFieldConfig2 := `
 tables:
-  weired:
+  weird:
     fields:
       id: 'string'
       name: 'string'
       email: 'string'
       expiresAt: 'integer'
     expireKey: 'expiresAt'
-    hashKey: 'weired'
+    hashKey: 'weird'
     sortKey: 'id'
     subIndices:
       friends:
@@ -271,16 +271,16 @@ tables:
         sortKey: 'name'
 `
 
-	if err := ParseConfigString(bingo, weiredFieldConfig2); err != nil {
+	if err := ParseConfigString(bingo, weirdFieldConfig2); err != nil {
 		fmt.Printf("Error occurred: [%v] - ok \n", err)
 	} else {
 		t.Fail()
 	}
 
-	// tables > weired > sortKey is invalid
-	weiredFieldConfig3 := `
+	// tables > weird > sortKey is invalid
+	weirdFieldConfig3 := `
 tables:
-  weired:
+  weird:
     fields:
       id: 'string'
       name: 'string'
@@ -288,14 +288,14 @@ tables:
       expiresAt: 'integer'
     expireKey: 'expiresAt'
     hashKey: 'name'
-    sortKey: 'weired'
+    sortKey: 'weird'
     subIndices:
       friends:
         hashKey: 'email'
         sortKey: 'name'
 `
 
-	if err := ParseConfigString(bingo, weiredFieldConfig3); err != nil {
+	if err := ParseConfigString(bingo, weirdFieldConfig3); err != nil {
 		fmt.Printf("Error occurred: [%v] - ok \n", err)
 	} else {
 		t.Fail()
@@ -303,10 +303,10 @@ tables:
 }
 
 func TestErrorWhenUndefinedFieldOfSubIndices(t *testing.T) {
-	// tables >> weired >> subIndices >> friends >> hashKey is invalid
-	weiredSubIndicesConfig1 := `
+	// tables >> weird >> subIndices >> friends >> hashKey is invalid
+	weirdSubIndicesConfig1 := `
 tables:
-  weired:
+  weird:
     fields:
       id: 'string'
       name: 'string'
@@ -317,22 +317,22 @@ tables:
     sortKey: 'id'
     subIndices:
       friends:
-        hashKey: 'weired'
+        hashKey: 'weird'
         sortKey: 'name'
 `
 
 	bingo := newBingo()
 
-	if err := ParseConfigString(bingo, weiredSubIndicesConfig1); err != nil {
+	if err := ParseConfigString(bingo, weirdSubIndicesConfig1); err != nil {
 		fmt.Printf("Error occurred: [%v] - ok \n", err)
 	} else {
 		t.Fail()
 	}
 
-	// tables >> weired >> subIndices >> friends >> sortKey is invalid
-	weiredSubIndicesConfig2 := `
+	// tables >> weird >> subIndices >> friends >> sortKey is invalid
+	weirdSubIndicesConfig2 := `
 tables:
-  weired:
+  weird:
     fields:
       id: 'string'
       name: 'string'
@@ -344,10 +344,10 @@ tables:
     subIndices:
       friends:
         hashKey: 'email'
-        sortKey: 'weired'
+        sortKey: 'weird'
 `
 
-	if err := ParseConfigString(bingo, weiredSubIndicesConfig2); err != nil {
+	if err := ParseConfigString(bingo, weirdSubIndicesConfig2); err != nil {
 		fmt.Printf("Error occurred: [%v] - ok \n", err)
 	} else {
 		t.Fail()
