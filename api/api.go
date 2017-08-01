@@ -81,7 +81,7 @@ func Logging(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 //}
 
 func (m *Manager) Get(ctx *fasthttp.RequestCtx) {
-	tableName, hashKey, sortKey, valid := m.Resource.ValidateGetParams(ctx)
+	tableName, hashKey, sortKey, valid := m.Resource.ValidateParams(ctx)
 	if !valid {
 		ctx.Error(fasthttp.StatusMessage(fasthttp.StatusBadRequest), fasthttp.StatusBadRequest)
 		return
@@ -93,7 +93,7 @@ func (m *Manager) Get(ctx *fasthttp.RequestCtx) {
 	ctx.SetStatusCode(fasthttp.StatusOK)
 	ctx.Write(data)
 
-	response := model.Data{}
+	var response model.Data
 	json.Unmarshal(data, &response)
 	ctx.Logger().Printf("response: %v\n", response)
 }
@@ -110,22 +110,36 @@ func (m *Manager) GetMultiples(ctx *fasthttp.RequestCtx) {
 	ctx.SetStatusCode(fasthttp.StatusOK)
 	ctx.Write(data)
 
-	response := []model.Data{}
+	var response []model.Data
 	json.Unmarshal(data, &response)
 	ctx.Logger().Printf("response: %v\n", response)
 }
 
 func (m *Manager) Update(ctx *fasthttp.RequestCtx) {
-	//tableName := m.Resource.ValidatePostParams(ctx)
-	//get post data
-	//json body = { }
-	//validate body
-	//insert into bingodb
-	//return result code
+	tableName, body, valid := m.Resource.ValidatePostParams(ctx)
+	if !valid {
+		ctx.Error(fasthttp.StatusMessage(fasthttp.StatusBadRequest), fasthttp.StatusBadRequest)
+		return
+	}
+
+	data := m.Resource.Update(tableName, &body)
+	ctx.SetContentType("application/json")
+	ctx.SetStatusCode(fasthttp.StatusOK)
+	ctx.Write(data)
+
+	var response model.Data
+	json.Unmarshal(data, &response)
+	ctx.Logger().Printf("response: %v\n", response)
 }
 
 func (m *Manager) Delete(ctx *fasthttp.RequestCtx) {
-	//get post data
-	//delete from bingodb
-	//return result code
+	tableName, hashKey, sortKey, valid := m.Resource.ValidateParams(ctx)
+	if !valid {
+		ctx.Error(fasthttp.StatusMessage(fasthttp.StatusBadRequest), fasthttp.StatusBadRequest)
+		return
+	}
+
+	m.Resource.Delete(tableName, hashKey, sortKey)
+
+	ctx.SetStatusCode(fasthttp.StatusOK)
 }

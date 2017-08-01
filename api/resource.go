@@ -28,7 +28,7 @@ func (rs *Resource) Get(
 	tableData, _ := rs.Db.Tables.Load(tableName)
 
 	if table, ok := tableData.(*model.Table); ok {
-		if doc, ok := table.PrimaryIndex.Get(hashKey, sortKey); ok {
+		if doc, ok := table.Get(hashKey, sortKey); ok {
 			if json, ok := doc.ToJSON(); ok {
 				return json
 			}
@@ -58,6 +58,29 @@ func (rs *Resource) GetMultiple(params *GetParams) []byte {
 	}
 
 	return nil
+}
+
+func (rs *Resource) Update(tableName string, data *model.Data) []byte {
+	tableData, _ := rs.Db.Tables.Load(tableName)
+
+	if table, ok := tableData.(*model.Table); ok {
+		doc := table.Put(data)
+		if json, ok := doc.ToJSON(); ok {
+			return json
+		}
+	}
+
+	return []byte("{}") //empty result
+}
+
+func (rs *Resource) Delete(
+	tableName string,
+	hashKey, sortKey interface{}) {
+	tableData, _ := rs.Db.Tables.Load(tableName)
+
+	if table, ok := tableData.(*model.Table); ok {
+		table.Delete(hashKey, sortKey)
+	}
 }
 
 func (rs *Resource) Fetch(

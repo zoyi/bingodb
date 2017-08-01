@@ -1,7 +1,7 @@
 package api
 
 import (
-	//"fmt"
+	"encoding/json"
 	"github.com/valyala/fasthttp"
 	"github.com/zoyi/bingodb/model"
 	"strconv"
@@ -107,7 +107,7 @@ func (rs *Resource) IsValidIndexName(table *model.Table, indexNameData []byte) *
 	return indexName
 }
 
-func (rs *Resource) ValidateGetParams(
+func (rs *Resource) ValidateParams(
 	ctx *fasthttp.RequestCtx) (tableName string, hashKey, sortKey interface{}, ok bool) {
 
 	tableName = ctx.UserValue("tableName").(string)
@@ -119,6 +119,7 @@ func (rs *Resource) ValidateGetParams(
 	}
 
 	table := rs.IsValidTableName(tableName)
+	ok = true
 	if table == nil {
 		ok = false
 	} else {
@@ -126,7 +127,7 @@ func (rs *Resource) ValidateGetParams(
 		sortKey = table.PrimaryIndex.SortKey.Parse(string(sortKeyData))
 	}
 
-	return tableName, hashKey, sortKey, true
+	return tableName, hashKey, sortKey, ok
 }
 
 func (rs *Resource) ValidateGetListParams(ctx *fasthttp.RequestCtx) (*GetParams, bool) {
@@ -162,15 +163,19 @@ func (rs *Resource) ValidateGetListParams(ctx *fasthttp.RequestCtx) (*GetParams,
 	}
 
 	var subIndexName *string
-	if subIndexName = rs.IsValidIndexName(table, indexNameData); subIndexName != nil {
-		hashKey, startKey, endKey, ok = rs.GetKeysForSubIndex(
-			table, hashKeyData, startKeyData, endKeyData, *subIndexName)
-		if !ok {
-			return nil, false
-		}
-	} else {
+	if len(indexNameData) == 0 {
 		hashKey, startKey, endKey = rs.GetKeysForPrimary(
 			table, hashKeyData, startKeyData, endKeyData)
+	} else {
+		if subIndexName = rs.IsValidIndexName(table, indexNameData); subIndexName != nil {
+			hashKey, startKey, endKey, ok = rs.GetKeysForSubIndex(
+				table, hashKeyData, startKeyData, endKeyData, *subIndexName)
+			if !ok {
+				return nil, false
+			}
+		} else {
+			return nil, false
+		}
 	}
 
 	params := &GetParams{
@@ -184,4 +189,30 @@ func (rs *Resource) ValidateGetListParams(ctx *fasthttp.RequestCtx) (*GetParams,
 	}
 
 	return params, true
+}
+
+func (rs *Resource) ValidatePostParams(
+	ctx *fasthttp.RequestCtx) (tableName string, data model.Data, ok bool) {
+	ok = true
+
+	tableName = ctx.UserValue("tableName").(string)
+
+	if len(tableName) == 0 {
+		return "", nil, false
+	}
+
+	table := rs.IsValidTableName(tableName)
+	if table == nil {
+		ok = false
+	}
+
+	if err := json.Unmarshal(ctx.PostBody(), &data); err != nil {
+		return "", nil, false
+	}
+
+	if !table.Schema.IsValidData(data) {
+		return "", nil, false
+	}
+
+	return tableName, data, ok
 }
