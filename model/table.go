@@ -56,7 +56,10 @@ func (field *FieldSchema) Parse(raw interface{}) interface{} {
 
 		case int:
 			return int64(raw.(int))
+		case float64:
+			return int64(raw.(float64))
 		}
+
 	}
 	return raw
 }
