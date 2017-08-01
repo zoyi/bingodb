@@ -26,6 +26,10 @@ type ConfigInfo struct {
 	Tables map[string]TableInfo `yaml:"tables"`
 }
 
+const (
+	STRING = "string"
+	INTEGER = "integer"
+)
 
 // Load configuration file with specified path and
 // parse it to create table schema to prepare Bingo.
@@ -136,8 +140,8 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 func isAllowedFieldType(fieldType string) bool {
 	switch fieldType {
 	case
-		"string",
-		"integer":
+		STRING,
+		INTEGER:
 		return true
 	}
 	return false
