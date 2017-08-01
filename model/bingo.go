@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sync"
 	"path/filepath"
+	"sync"
 )
 
 type Bingo struct {

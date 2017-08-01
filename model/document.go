@@ -1,5 +1,9 @@
 package model
 
+import (
+	"encoding/json"
+)
+
 type Data map[string]interface{}
 
 type Document struct {
@@ -16,6 +20,18 @@ func ParseDoc(data Data, schema *TableSchema) *Document {
 	}
 
 	return &Document{data: data, schema: schema}
+}
+
+func (doc *Document) GetData() Data {
+	return doc.data
+}
+
+func (doc *Document) ToJSON() ([]byte, bool) {
+	json, err := json.Marshal(doc.data)
+	if err != nil {
+		return nil, false
+	}
+	return json, true
 }
 
 func (doc *Document) Get(field string) interface{} {

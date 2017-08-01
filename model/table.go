@@ -56,7 +56,10 @@ func (field *FieldSchema) Parse(raw interface{}) interface{} {
 
 		case int:
 			return int64(raw.(int))
+		case float64:
+			return int64(raw.(float64))
 		}
+
 	}
 	return raw
 }
@@ -106,6 +109,29 @@ func (key *Key) Compare(a, b *Document) int {
 	}
 
 	return GeneralCompare(a.Get(key.SortKey.Name), b.Get(key.SortKey.Name))
+}
+
+func (schema *TableSchema) IsValidData(data Data) (ok bool) {
+	if _, exists := data[schema.PrimaryKey.HashKey.Name]; !exists {
+		return false
+	}
+	if _, exists := data[schema.PrimaryKey.SortKey.Name]; !exists {
+		return false
+	}
+	if _, exists := data[schema.ExpireField.Name]; !exists {
+		return false
+	}
+
+	ok = true
+	schema.SubIndexKeys.Range(func(key, value interface{}) bool {
+		if subIndexKey, exists := value.(*Key); exists {
+			if _, exists := data[subIndexKey.HashKey.Name]; !exists {
+				ok = false
+			}
+		}
+		return true
+	})
+	return ok
 }
 
 func (table *Table) Delete(hash interface{}, sort interface{}) (*Document, bool) {

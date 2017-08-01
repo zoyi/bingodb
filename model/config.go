@@ -1,11 +1,11 @@
 package model
 
 import (
-	"io/ioutil"
-	"gopkg.in/yaml.v2"
 	"errors"
-	"reflect"
 	"fmt"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"reflect"
 	"sync"
 )
 
@@ -25,7 +25,6 @@ type IndexInfo struct {
 type ConfigInfo struct {
 	Tables map[string]TableInfo `yaml:"tables"`
 }
-
 
 // Load configuration file with specified path and
 // parse it to create table schema to prepare Bingo.
@@ -66,7 +65,8 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 			sf := t.Field(i)
 
 			switch sf.Name {
-			case "Fields": continue
+			case "Fields":
+				continue
 			case "SubIndices":
 				for _, indexInfo := range tableInfo.SubIndices {
 					iit := reflect.TypeOf(indexInfo)
