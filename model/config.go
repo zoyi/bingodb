@@ -60,7 +60,7 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 	}
 
 	for tableName, tableInfo := range configInfo.Tables {
-		if err := validateFields(tableInfo); err != nil {
+		if err := validateFields(tableName, tableInfo); err != nil {
 			return err
 		}
 
@@ -104,16 +104,16 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 	return nil
 }
 
-func validateFields(tableInfo TableInfo) error {
+func validateFields(tableName string, tableInfo TableInfo) error {
 	// check fields
 	if len(tableInfo.Fields) == 0 {
 		return errors.New(
-			fmt.Sprintf("Table configuration error - fields cannot be empty"))
+			fmt.Sprintf("Table configuration error (Table '%v') - fields cannot be empty", tableName))
 	}
 	for fieldName, fieldType := range tableInfo.Fields {
 		if ok := isAllowedFieldType(fieldType); !ok {
 			return errors.New(
-				fmt.Sprintf("Table configuration error - unknown field type '%v' in '%v'", fieldType, fieldName))
+				fmt.Sprintf("Table configuration error (Table '%v') - unknown field type '%v' in '%v'", tableName, fieldType, fieldName))
 		}
 	}
 
@@ -127,7 +127,7 @@ func validateFields(tableInfo TableInfo) error {
 			value := values.Field(i).String()
 			if _, ok := tableInfo.Fields[value]; !ok {
 				return errors.New(
-					fmt.Sprintf("Table configuration error - undefined field '%v' for subIndices '%v'", value, field.Name))
+					fmt.Sprintf("Table configuration error (Table '%v') - undefined field '%v' for subIndices '%v'", tableName, value, field.Name))
 			}
 		}
 	}
@@ -146,7 +146,7 @@ func validateFields(tableInfo TableInfo) error {
 			value := values.Field(i).String()
 			if _, ok := tableInfo.Fields[value]; !ok {
 				return errors.New(
-					fmt.Sprintf("Table configuration error - undefined field '%v' for '%v'", value, field.Name))
+					fmt.Sprintf("Table configuration error (Table '%v') - undefined field '%v' for '%v'", tableName, value, field.Name))
 			}
 		}
 	}
@@ -154,11 +154,11 @@ func validateFields(tableInfo TableInfo) error {
 	// check expireKey
 	if tableInfo.ExpireKey == "" {
 		return errors.New(
-			fmt.Sprintf("Table configuration error - expireKey cannot be empty"))
+			fmt.Sprintf("Table configuration error (Table '%v') - expireKey cannot be empty", tableName))
 	}
 	if tableInfo.Fields[tableInfo.ExpireKey] != INTEGER {
 		return errors.New(
-			fmt.Sprintf("Table configuration error - Only integer type can be used for expireKey. Current key '%v' is '%v'", tableInfo.ExpireKey, tableInfo.Fields[tableInfo.ExpireKey]))
+			fmt.Sprintf("Table configuration error (Table '%v') - Only integer type can be used for expireKey. Current key '%v' is '%v'", tableName, tableInfo.ExpireKey, tableInfo.Fields[tableInfo.ExpireKey]))
 	}
 
 	return nil
