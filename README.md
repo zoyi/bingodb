@@ -1,29 +1,71 @@
-# bingodb
+# BingoDB
 [![CircleCI](https://circleci.com/gh/zoyi/bingodb/tree/master.svg?style=shield)](https://circleci.com/gh/zoyi/bingodb/tree/master)
+BingoDB is light-weight and linearly scalable pre-defined (for now) in-memory database. BingoDB provides callback function when TTL expires.
 
-### 설계 방향
-* In-memory 디비로 persistence 지원되지 않음
-* 하나의 빙고디비는 여러개의 테이블로 구성된다
-* 하나의 테이블은 논리적인 데이터를 저장하는 단위로 key, value 페어 데이터를 저장한다
-* value는 편의성을 위해 JSON 형태를 지원한다
-* 테이블의 설정 정보는 우선 config 파일로 처리하고 추후 동적으로 업데이트 할 수 있게 개선할 것이다
-* value에 만료 시간을 정할 수 있고, 만료 시간이 지난 데이터는 db에 의해 자동 만료 처리(삭제) 된다
-* 여러 key에 대해 만료 시간은 같을 수 있다 
-* 만료된 데이터는 config 속성을 통해 AMQP 등에게 정보가 전달 된다
-* 하나의 테이블에 대해 복수개의 세컨더리 인덱스를 지원한다
-* 추후 분산 컴퓨팅이 지원될 것이다
-* 추후 Fast concurrent lock-free binary search tree 개념이 도입될 것이다
+##Motivation
+DynamoDB is fast but it does not provide callback feature, and other SQL-based services are not fast enough (since accessing disk is slow relative to accessing memory). We specifically wanted to have two features: a database notifies after a event expires in certain period of time, and be able to search with certain index name with high performance. However, we could not find a solid service that satisfied our needs. So we decided to create our own database which provides two key features.
 
+##Installation
+Install go 1.9 from official website. We only supports 1.9 and higher version of go. Get package manager [dep](https://github.com/golang/dep) by using command
 
-### 테이블 API (사이즈가 n 일 때)
-* key, value에 대한 put: O(lg(n))
-* key에 대한 lookup: O(lg(n))
-* key에 대한 delete: O(lg(n))
-* startkey, stopkey, limit(m) 를 주고 fetch: O(lg(n)*m)
-* startkey, stopkey 를 주고 count: O(lg(n))
-* startkey, stopkey, limit(m), index 정보를 주고 인덱스로 정렬된 fetch: O(lg(n)*m) 
+```sh
+ go get github.com/golang/dep
+```
+and run the following from the project root directory to install dependencies:
+```sh
+dep ensure
+```
 
-### Dependency manager 
-* install glide via brew (brew install glide)
-* run 'glide up' command in terminal (will install dependencies in vendor folder based on glide.yaml)
+##Usage
+To use BingoDB, you first need to create a `{filename}.yml` and define of your tables (see example.yml below). Once you've done this, you can simply run a server with following command:
+```sh
+go run main/main.go -config /path/to/config.yml -addr address:port`
+```
 
+```
+#example.yml
+tables:
+  #your table name
+  onlines:
+    fields:
+	  #define your fields
+	  #we support string/integer only for now
+      id: 'string'
+      guestKey: 'string'
+      channelId: 'string'
+      expiresAt: 'integer'
+      lastSeen: 'integer'
+    expireKey: 'expiresAt'
+    hashKey: 'channelId'
+    sortKey: 'id'
+    subIndices:
+      #name of index you want to search for a particular case
+      guest:
+        #these fields' value suppose to be in fields
+        hashKey: 'channelId'
+        sortKey: 'lastSeen'
+```
+
+##Performance
+* put: O(lg(n))
+* lookup: O(lg(n))
+* delete: O(lg(n))
+* fetch with startkey, stopkey, limit(m): O(lg(n)*m)
+* count with startkey, stopkey: O(lg(n))
+* sorted fetch by index with startkey, stopkey, limit(m), index: O(lg(n)*m)
+
+##Milestones
+* Support distributed computing
+* Support Fast concurrent lock-free binary search tree
+* In-memory database and do not support persistency (**completed**)
+* One bingoDB contains multiple tables (**completed**)
+* A table is structure to store data which contains key/value pair  (**completed**)
+* Support JSON format for value type (**completed**)
+* Support dynamic table configuration like NoSQL
+* Support pre-define table configuration with config file (**completed**)
+* Provide time to live feature on a value, and the value suppose to be deleted after expired
+* Support duplicated TTL value for keys (**completed**)
+* Expired data transits to Message Queue (AMQP, RabbitMQ, etc)
+* One table can have multiple secondary indexes (**completed**)
+
+##Benchmarks
