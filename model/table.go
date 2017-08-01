@@ -29,7 +29,7 @@ type Table struct {
 	Bingo        *Bingo
 	Name         string
 	PrimaryIndex *PrimaryIndex
-	SubIndices   *sync.Map
+	SubIndices   *sync.Map //map of Subindicies
 	Schema       *TableSchema
 }
 

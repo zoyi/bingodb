@@ -123,6 +123,9 @@ func (rs *Resource) FetchFromPrimary(
 func (rs *Resource) FetchFromSubIndices(
 	table *model.Table,
 	params GetParams) ([]*model.Document, bool) {
+	if params.SubIndexName == nil {
+		return nil, false
+	}
 
 	subIndexData, _ := table.SubIndices.Load(*params.SubIndexName)
 	if subIndex, ok := subIndexData.(*model.SubIndex); ok {
