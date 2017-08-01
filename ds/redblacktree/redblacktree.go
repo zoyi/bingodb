@@ -130,6 +130,7 @@ func (tree *Tree) Remove(key interface{}) (value interface{}, removed bool) {
 
 	tree.lock.Lock()
 	defer tree.lock.Unlock()
+	value = node.Value
 
 	if node.Left != nil && node.Right != nil {
 		pred := node.Left.maximumNode()
@@ -153,8 +154,6 @@ func (tree *Tree) Remove(key interface{}) (value interface{}, removed bool) {
 		}
 	}
 	tree.size--
-
-	value = node.Value
 	node.clear()
 
 	return value, true
