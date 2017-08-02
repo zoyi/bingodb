@@ -26,11 +26,28 @@ jobs:
           name: install go dep
           command: go get -u github.com/golang/dep/cmd/dep
       - run: dep ensure
+      - run:
+          name: install gocovmerge
+          command: go get -u github.com/wadey/gocovmerge
       #run test
       - run: go get -v -t -d ./...
-      - run: go test -v -race -coverprofile=coverage.txt -covermode=atomic
-
-      - run: bash <(curl -s https://codecov.io/bash) -t 24babe8f-2e48-4775-b1c4-7324bb264ef6
+      - run:
+          name: Run API tests and generating coverage
+          command: go test -v ./api -race -cover -coverprofile=api-cov.out
+      - run:
+          name: Run model tests and generating coverage
+          command: go test -v ./model -race -cover -coverprofile=model-cov.out
+      - run:
+          name: Run ds tests and generating coverage
+          command: go test -v ./ds/redblacktree -race -cover -coverprofile=ds-cov.out
+      #merge coverage
+      - run:
+          name: Merging all coverages
+          command: gocovmerge api-cov.out model-cov.out ds-cov.out > coverage.txt
+      #codecov
+      - run:
+          name: Reporting to Codecov
+          command: bash <(curl -s https://codecov.io/bash) -t 24babe8f-2e48-4775-b1c4-7324bb264ef6
       #cache vendor directory
       - save_cache:
           when: on_success
