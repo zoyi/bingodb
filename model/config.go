@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	"reflect"
 	"sync"
 )
 
@@ -59,8 +58,12 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 		return err
 	}
 
+	if len(configInfo.Tables) == 0 {
+		return errors.New("Table cannot be empty")
+	}
+
 	for tableName, tableInfo := range configInfo.Tables {
-		if err := validateFields(tableName, tableInfo); err != nil {
+		if err := validate(tableName, tableInfo); err != nil {
 			return err
 		}
 
@@ -104,83 +107,88 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 	return nil
 }
 
-func validateFields(tableName string, tableInfo TableInfo) error {
-	// check HashKey, SortKey, ExpireKey has value and it's value contains in fields map
-	fields := reflect.TypeOf(tableInfo)
-	values := reflect.ValueOf(tableInfo)
+func validate(tableName string, tableInfo TableInfo) error {
+	format := fmt.Sprintf("Table configuration error (Table '%v')", tableName)
 
-	for i := 0; i < fields.NumField(); i++ {
-		field := fields.Field(i)
-		switch field.Name {
-		case
-			"HashKey",
-			"SortKey",
-			"ExpireKey":
-			value := values.Field(i).String()
-			if value == "" {
-				return errors.New(
-					fmt.Sprintf("Table configuration error (Table '%v') - field '%v' cannot be empty", tableName, field.Name))
-			}
-			if _, ok := tableInfo.Fields[value]; !ok {
-				return errors.New(
-					fmt.Sprintf("Table configuration error (Table '%v') - undefined field '%v' for '%v'", tableName, value, field.Name))
-			}
-		}
+	if err := validateFields(tableInfo.Fields); err != "" {
+		return errors.New(fmt.Sprintf("%v - %v", format, err))
 	}
 
-	// check fields is not empty and field's value type is valid
-	if len(tableInfo.Fields) == 0 {
-		return errors.New(
-			fmt.Sprintf("Table configuration error (Table '%v') - fields cannot be empty", tableName))
-	}
-	for fieldName, fieldType := range tableInfo.Fields {
-		if ok := isAllowedFieldType(fieldType); !ok {
-			return errors.New(
-				fmt.Sprintf("Table configuration error (Table '%v') - unknown field type '%v' in '%v'", tableName, fieldType, fieldName))
-		}
+	if err := validateSubIndices(tableInfo.SubIndices, tableInfo.Fields); err != "" {
+		return errors.New(fmt.Sprintf("%v - %v", format, err))
 	}
 
-	// check subIndices
-	for indexName, indexInfo := range tableInfo.SubIndices {
-		// check hashKey empty
-		if indexInfo.HashKey == "" {
-			return errors.New(
-				fmt.Sprintf("Table configuration error (Table '%v') - hashKey caannot be empty in index '%v' for subIndices", tableName, indexName))
-		}
-
-		// check sortKey empty
-		if indexInfo.SortKey == "" {
-			return errors.New(
-				fmt.Sprintf("Table configuration error (Table '%v') - sortKey caannot be empty in index '%v' for subIndices", tableName, indexName))
-		}
-
-		// check hashKey and sortKey's value containes in fields
-		fields := reflect.TypeOf(indexInfo)
-		values := reflect.ValueOf(indexInfo)
-
-		for i := 0; i < fields.NumField(); i++ {
-			field := fields.Field(i)
-			value := values.Field(i).String()
-			if _, ok := tableInfo.Fields[value]; !ok {
-				return errors.New(
-					fmt.Sprintf("Table configuration error (Table '%v') - undefined field '%v' for subIndices '%v'", tableName, value, field.Name))
-			}
-		}
-
-		// check hashKey and sortKey is different
-		if indexInfo.HashKey == indexInfo.SortKey {
-			return errors.New(
-				fmt.Sprintf("Table configuration error (Table '%v') - hashKey and sortKey must be different in index '%v' for subIndices", tableName, indexName))
-		}
+	if err := validateKeySet(tableInfo.HashKey, tableInfo.SortKey, tableInfo.Fields); err != "" {
+		return errors.New(fmt.Sprintf("%v - %v", format, err))
 	}
 
-	// check expireKey's value type is integer
-	if tableInfo.Fields[tableInfo.ExpireKey] != INTEGER {
-		return errors.New(
-			fmt.Sprintf("Table configuration error (Table '%v') - Only integer type can be used for expireKey. Current key '%v' is '%v'", tableName, tableInfo.ExpireKey, tableInfo.Fields[tableInfo.ExpireKey]))
+	if err := validateExpireKey(tableInfo.ExpireKey, tableInfo.Fields); err != "" {
+		return errors.New(fmt.Sprintf("%v - %v", format, err))
 	}
 
 	return nil
+}
+
+// check fields is not empty and field's value type is valid
+func validateFields(fields map[string]string) string {
+	if len(fields) == 0 {
+		return "fields cannot be empty"
+	}
+	for fieldName, fieldType := range fields {
+		if ok := isAllowedFieldType(fieldType); !ok {
+			return fmt.Sprintf("unknown field type '%v' in '%v'", fieldType, fieldName)
+		}
+	}
+
+	return ""
+}
+
+// check subIndices empty, hashKey and SortKey's difference, value is contains in fields
+func validateSubIndices(subIndices map[string]IndexInfo, fields map[string]string) string {
+	for indexName, indexInfo := range subIndices {
+		if err := validateKeySet(indexInfo.HashKey, indexInfo.SortKey, fields); err != "" {
+			return fmt.Sprintf("%v in index '%v' for subIndices", err, indexName)
+		}
+	}
+
+	return ""
+}
+
+func validateKeySet(hashKey string, sortKey string, fields map[string]string) string {
+	if err := validateReferenceField(hashKey, "hashKey", fields); err != "" {
+		return err
+	}
+	if err := validateReferenceField(sortKey, "sortKey", fields); err != "" {
+		return err
+	}
+	if hashKey == sortKey {
+		return "hashKey and sortKey must be different"
+	}
+
+	return ""
+}
+
+func validateExpireKey(expireKey string, fields map[string]string) string {
+	if err := validateReferenceField(expireKey, "expireKey", fields); err != "" {
+		return err
+	}
+
+	if fields[expireKey] != INTEGER {
+		return fmt.Sprintf("Only integer type can be used for expireKey. Current key '%v' is '%v'", expireKey, fields[expireKey])
+	}
+
+	return ""
+}
+
+func validateReferenceField(key string, name string, fields map[string]string) string {
+	if key == "" {
+		return fmt.Sprintf("%v cannot be empty", name)
+	}
+	if _, ok := fields[key]; !ok {
+		return fmt.Sprintf("undefined field '%v' for %v", key, name)
+	}
+
+	return ""
 }
 
 func isAllowedFieldType(fieldType string) bool {
