@@ -17,7 +17,7 @@ type ExpireKey struct {
 	*Document
 }
 
-func comparator(aRaw, bRaw interface{}) int {
+func Comparator(aRaw, bRaw interface{}) int {
 	a := aRaw.(*ExpireKey)
 	b := bRaw.(*ExpireKey)
 
@@ -51,7 +51,7 @@ func comparator(aRaw, bRaw interface{}) int {
 }
 
 func newKeeper() *Keeper {
-	return &Keeper{tree: &redblacktree.Tree{Comparator: comparator}}
+	return &Keeper{tree: &redblacktree.Tree{Comparator: Comparator}}
 }
 
 func (keeper *Keeper) put(table *Table, doc *Document) {
