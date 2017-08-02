@@ -74,28 +74,6 @@ func TestResource_IsValidOrder(t *testing.T) {
 	}
 }
 
-func TestResource_IsValidIndexName(t *testing.T) {
-	validationPrepare()
-
-	tableData, _ := resource.Db.Tables.Load("onlines")
-	table, _ := tableData.(*model.Table)
-
-	result := resource.IsValidIndexName(table, []byte("guest"))
-	if result == nil {
-		t.Error("guest should be valid index name")
-	}
-
-	result = resource.IsValidIndexName(table, []byte("test"))
-	if result != nil {
-		t.Error("test should be invalid index name")
-	}
-
-	result = resource.IsValidIndexName(table, []byte("11"))
-	if result != nil {
-		t.Error("11 should be invalid index name")
-	}
-}
-
 func TestResource_IsValidTableName(t *testing.T) {
 	validationPrepare()
 

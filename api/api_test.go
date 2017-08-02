@@ -43,6 +43,12 @@ func TestGetWithInvalidParams(t *testing.T) {
 		GET("/get/onlines").
 		WithQuery("hashKey", "1").
 		Expect().Status(http.StatusBadRequest)
+
+	getExpector(t).
+		GET("/get/invalid").
+		WithQuery("hashKey", "1").
+		WithQuery("sortKey", "what").
+		Expect().Status(http.StatusNotFound)
 }
 
 func TestGetWithValidParamEmptyResult(t *testing.T) {
@@ -66,12 +72,73 @@ func TestGetsWithValidParams(t *testing.T) {
 		Expect().Status(http.StatusOK).
 		JSON().Array().
 		Length().Equal(2)
+
+	getExpector(t).
+		GET("/gets/onlines").
+		WithQuery("indexName", "guest").
+		WithQuery("hashKey", "1").
+		WithQuery("startKey", "120").
+		WithQuery("endKey", "130").
+		Expect().Status(http.StatusOK).
+		JSON().Array().
+		Length().Equal(2)
+
+	getExpector(t).
+		GET("/gets/onlines").
+		WithQuery("hashKey", "1").
+		WithQuery("startKey", "ddd").
+		WithQuery("endKey","test").
+		WithQuery("limit", "20").
+		WithQuery("order", "DESC").
+		Expect().Status(http.StatusOK).
+		JSON().Array().
+		Length().Equal(2)
 }
 
 func TestGetsWithInvalidParams(t *testing.T) {
 	getExpector(t).
 		GET("/gets/onlines").
 		WithQuery("indexName", "guest").
+		WithQuery("startKey", "120").
+		WithQuery("endKey", "130").
+		WithQuery("limit", "20").
+		WithQuery("order", "DESC").
+		Expect().Status(http.StatusBadRequest)
+
+	getExpector(t).
+		GET("/gets/invalid").
+		WithQuery("indexName", "guest").
+		WithQuery("hashKey", "1").
+		WithQuery("startKey", "120").
+		WithQuery("endKey", "130").
+		WithQuery("limit", "20").
+		WithQuery("order", "DESC").
+		Expect().Status(http.StatusNotFound)
+
+	getExpector(t).
+		GET("/gets/onlines").
+		WithQuery("indexName", "guest").
+		WithQuery("hashKey", "1").
+		WithQuery("startKey", "120").
+		WithQuery("endKey", "130").
+		WithQuery("limit", "invalid").
+		WithQuery("order", "DESC").
+		Expect().Status(http.StatusBadRequest)
+
+	getExpector(t).
+		GET("/gets/onlines").
+		WithQuery("indexName", "guest").
+		WithQuery("hashKey", "1").
+		WithQuery("startKey", "120").
+		WithQuery("endKey", "130").
+		WithQuery("limit", "20").
+		WithQuery("order", "INVALID").
+		Expect().Status(http.StatusBadRequest)
+
+	getExpector(t).
+		GET("/gets/onlines").
+		WithQuery("indexName", "invalid").
+		WithQuery("hashKey", "1").
 		WithQuery("startKey", "120").
 		WithQuery("endKey", "130").
 		WithQuery("limit", "20").
@@ -111,6 +178,17 @@ func TestUpdateWithInValidParams(t *testing.T) {
 		POST("/update/onlines").
 		WithJSON(body).
 		Expect().Status(http.StatusBadRequest)
+
+	getExpector(t).
+		POST("/update/invalid").
+		WithJSON(body).
+		Expect().Status(http.StatusNotFound)
+
+	invalidBody := [2]string{"Penn", "Teller"}
+	getExpector(t).
+		POST("/update/	").
+		WithJSON(invalidBody).
+		Expect().Status(http.StatusNotFound)
 }
 
 func TestDeleteWithValidParams(t *testing.T) {

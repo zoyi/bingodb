@@ -44,7 +44,7 @@ func (rs *Resource) GetMultiple(params *GetParams) []byte {
 	if table, ok := tableData.(*model.Table); ok {
 		docs, ok := rs.Fetch(table, *params)
 		if !ok {
-			return nil
+			return []byte("{}") //empty result
 		}
 
 		dataList := []model.Data{}
@@ -57,7 +57,7 @@ func (rs *Resource) GetMultiple(params *GetParams) []byte {
 		}
 	}
 
-	return nil
+	return []byte("{}") //empty result
 }
 
 func (rs *Resource) Update(tableName string, data *model.Data) []byte {

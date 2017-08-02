@@ -81,9 +81,9 @@ func Logging(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 //}
 
 func (m *Manager) Get(ctx *fasthttp.RequestCtx) {
-	tableName, hashKey, sortKey, valid := m.Resource.ValidateParams(ctx)
-	if !valid {
-		ctx.Error(fasthttp.StatusMessage(fasthttp.StatusBadRequest), fasthttp.StatusBadRequest)
+	tableName, hashKey, sortKey, status := m.Resource.ValidateParams(ctx)
+	if status != fasthttp.StatusOK {
+		ctx.Error(fasthttp.StatusMessage(status), status)
 		return
 	}
 
@@ -99,9 +99,9 @@ func (m *Manager) Get(ctx *fasthttp.RequestCtx) {
 }
 
 func (m *Manager) GetMultiples(ctx *fasthttp.RequestCtx) {
-	params, valid := m.Resource.ValidateGetListParams(ctx)
-	if !valid {
-		ctx.Error(fasthttp.StatusMessage(fasthttp.StatusBadRequest), fasthttp.StatusBadRequest)
+	params, status := m.Resource.ValidateGetListParams(ctx)
+	if status != fasthttp.StatusOK {
+		ctx.Error(fasthttp.StatusMessage(status), status)
 		return
 	}
 
@@ -116,9 +116,9 @@ func (m *Manager) GetMultiples(ctx *fasthttp.RequestCtx) {
 }
 
 func (m *Manager) Update(ctx *fasthttp.RequestCtx) {
-	tableName, body, valid := m.Resource.ValidatePostParams(ctx)
-	if !valid {
-		ctx.Error(fasthttp.StatusMessage(fasthttp.StatusBadRequest), fasthttp.StatusBadRequest)
+	tableName, body, status := m.Resource.ValidatePostParams(ctx)
+	if status != fasthttp.StatusOK {
+		ctx.Error(fasthttp.StatusMessage(status), status)
 		return
 	}
 
@@ -133,9 +133,9 @@ func (m *Manager) Update(ctx *fasthttp.RequestCtx) {
 }
 
 func (m *Manager) Delete(ctx *fasthttp.RequestCtx) {
-	tableName, hashKey, sortKey, valid := m.Resource.ValidateParams(ctx)
-	if !valid {
-		ctx.Error(fasthttp.StatusMessage(fasthttp.StatusBadRequest), fasthttp.StatusBadRequest)
+	tableName, hashKey, sortKey, status := m.Resource.ValidateParams(ctx)
+	if status != fasthttp.StatusOK {
+		ctx.Error(fasthttp.StatusMessage(status), status)
 		return
 	}
 

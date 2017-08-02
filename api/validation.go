@@ -46,10 +46,6 @@ func (rs *Resource) GetKeysForSubIndex(
 }
 
 func (rs *Resource) IsValidTableName(tableNameData string) *model.Table {
-	if len(tableNameData) == 0 {
-		return nil
-	}
-
 	tableData, ok := rs.Db.Tables.Load(tableNameData)
 	if !ok {
 		return nil
@@ -91,46 +87,30 @@ func (rs *Resource) IsValidOrder(orderData []byte) (string, bool) {
 	return orderString, true
 }
 
-func (rs *Resource) IsValidIndexName(table *model.Table, indexNameData []byte) *string {
-	var indexName *string = new(string)
-	if len(indexNameData) == 0 {
-		return nil
-	}
-
-	nameString := string(indexNameData)
-	subIndexData, _ := table.SubIndices.Load(nameString)
-	if _, ok := subIndexData.(*model.SubIndex); !ok {
-		return nil
-	}
-	*indexName = nameString
-
-	return indexName
-}
-
 func (rs *Resource) ValidateParams(
-	ctx *fasthttp.RequestCtx) (tableName string, hashKey, sortKey interface{}, ok bool) {
+	ctx *fasthttp.RequestCtx) (string, interface{}, interface{}, int) {
 
-	tableName = ctx.UserValue("tableName").(string)
+	tableName := ctx.UserValue("tableName").(string)
 	sortKeyData := ctx.QueryArgs().Peek("sortKey")
 	hashKeyData := ctx.QueryArgs().Peek("hashKey")
 
-	if len(tableName) == 0 || len(sortKeyData) == 0 || len(hashKeyData) == 0 {
-		return "", nil, nil, false
+	if len(sortKeyData) == 0 || len(hashKeyData) == 0 {
+		return "", nil, nil, fasthttp.StatusBadRequest
 	}
 
 	table := rs.IsValidTableName(tableName)
-	ok = true
+
 	if table == nil {
-		ok = false
-	} else {
-		hashKey = table.PrimaryIndex.HashKey.Parse(string(hashKeyData))
-		sortKey = table.PrimaryIndex.SortKey.Parse(string(sortKeyData))
+		return "", nil, nil, fasthttp.StatusNotFound
 	}
 
-	return tableName, hashKey, sortKey, ok
+	hashKey := table.PrimaryIndex.HashKey.Parse(string(hashKeyData))
+	sortKey := table.PrimaryIndex.SortKey.Parse(string(sortKeyData))
+
+	return tableName, hashKey, sortKey, fasthttp.StatusOK
 }
 
-func (rs *Resource) ValidateGetListParams(ctx *fasthttp.RequestCtx) (*GetParams, bool) {
+func (rs *Resource) ValidateGetListParams(ctx *fasthttp.RequestCtx) (*GetParams, int) {
 	var hashKey, startKey, endKey interface{}
 	var table *model.Table
 	var ok bool
@@ -143,23 +123,23 @@ func (rs *Resource) ValidateGetListParams(ctx *fasthttp.RequestCtx) (*GetParams,
 	limitData := ctx.QueryArgs().Peek("limit")
 	orderData := ctx.QueryArgs().Peek("order")
 
-	if len(tableName) == 0 || len(hashKeyData) == 0 {
-		return nil, false
+	if len(hashKeyData) == 0 {
+		return nil, fasthttp.StatusBadRequest
 	}
 
 	table = rs.IsValidTableName(tableName)
 	if table == nil {
-		return nil, false
+		return nil, fasthttp.StatusNotFound
 	}
 
 	limit, ok := rs.IsValidLimit(limitData)
 	if !ok {
-		return nil, false
+		return nil, fasthttp.StatusBadRequest
 	}
 
 	order, ok := rs.IsValidOrder(orderData)
 	if !ok {
-		return nil, false
+		return nil, fasthttp.StatusBadRequest
 	}
 
 	var subIndexName *string
@@ -167,14 +147,12 @@ func (rs *Resource) ValidateGetListParams(ctx *fasthttp.RequestCtx) (*GetParams,
 		hashKey, startKey, endKey = rs.GetKeysForPrimary(
 			table, hashKeyData, startKeyData, endKeyData)
 	} else {
-		if subIndexName = rs.IsValidIndexName(table, indexNameData); subIndexName != nil {
-			hashKey, startKey, endKey, ok = rs.GetKeysForSubIndex(
-				table, hashKeyData, startKeyData, endKeyData, *subIndexName)
-			if !ok {
-				return nil, false
-			}
-		} else {
-			return nil, false
+		subIndexName = new(string)
+		*subIndexName = string(indexNameData)
+		hashKey, startKey, endKey, ok = rs.GetKeysForSubIndex(
+			table, hashKeyData, startKeyData, endKeyData, *subIndexName)
+		if !ok {
+			return nil, fasthttp.StatusBadRequest
 		}
 	}
 
@@ -188,31 +166,27 @@ func (rs *Resource) ValidateGetListParams(ctx *fasthttp.RequestCtx) (*GetParams,
 		Order:        order,
 	}
 
-	return params, true
+	return params, fasthttp.StatusOK
 }
 
 func (rs *Resource) ValidatePostParams(
-	ctx *fasthttp.RequestCtx) (tableName string, data model.Data, ok bool) {
-	ok = true
+	ctx *fasthttp.RequestCtx) (tableName string, data model.Data, status int) {
 
 	tableName = ctx.UserValue("tableName").(string)
-
-	if len(tableName) == 0 {
-		return "", nil, false
-	}
+	status = fasthttp.StatusOK
 
 	table := rs.IsValidTableName(tableName)
 	if table == nil {
-		ok = false
+		return "", nil, fasthttp.StatusNotFound
 	}
 
 	if err := json.Unmarshal(ctx.PostBody(), &data); err != nil {
-		return "", nil, false
+		return "", nil, fasthttp.StatusBadRequest
 	}
 
 	if !table.Schema.IsValidData(data) {
-		return "", nil, false
+		return "", nil, fasthttp.StatusBadRequest
 	}
 
-	return tableName, data, ok
+	return tableName, data, status
 }
