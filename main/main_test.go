@@ -11,7 +11,7 @@ import (
 var bingo *model.Bingo
 
 func prepare() {
-	bingo = model.Load("test_config.yml")
+	bingo, _ = model.Load("test_config.yml")
 
 	tableData, _ := bingo.Tables.Load("onlines")
 	table := tableData.(*model.Table)

@@ -19,7 +19,7 @@ func DefaultRouter(configFileName string) *fasthttprouter.Router {
 	flag.Parse()
 
 	fmt.Printf("* Loaded configration file..\n")
-	bingo := model.Load(configFileName)
+	bingo, _ := model.Load(configFileName)
 
 	//for test purpose
 	mock.InitDefaultSeedData(bingo)

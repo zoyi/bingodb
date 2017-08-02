@@ -12,7 +12,7 @@ import (
 var response *Resource
 
 func resourcePrepare() {
-	bingo := model.Load("config.yml")
+	bingo, _ := model.Load("config.yml")
 	mock.InitDefaultSeedData(bingo)
 	resource = &Resource{
 		Db:          bingo,

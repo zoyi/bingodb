@@ -8,7 +8,7 @@ import (
 var resource *Resource
 
 func validationPrepare() {
-	bingo := model.Load("config.yml")
+	bingo, _ := model.Load("config.yml")
 	resource = &Resource{
 		Db:          bingo,
 		AccessToken: "",

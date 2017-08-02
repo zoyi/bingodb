@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -13,17 +12,17 @@ type Bingo struct {
 	Keeper *Keeper
 }
 
-func Load(filename string) *Bingo {
+func Load(filename string) (*Bingo, error) {
 	projectPath := filepath.Join(os.Getenv("GOPATH"), "/src/github.com/zoyi/bingodb/")
 	absPath, _ := filepath.Abs(filepath.Join(projectPath, "/config", filename))
 
 	bingo := newBingo()
 	err := ParseConfig(bingo, absPath)
 	if err != nil {
-		fmt.Println(err)
 		log.Fatalf("error: %v", err)
+		return nil, err
 	}
-	return bingo
+	return bingo, nil
 }
 
 func newBingo() *Bingo {

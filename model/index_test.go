@@ -9,7 +9,7 @@ import (
 var config *Bingo
 
 func prepare() {
-	config = Load("test_config.yml")
+	config, _ = Load("test_config.yml")
 
 	tableData, _ := config.Tables.Load("onlines")
 	table := tableData.(*Table)
