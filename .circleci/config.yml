@@ -29,10 +29,13 @@ jobs:
       #run test
       - run: go get -v -t -d ./...
       - run: go test -v ./...
+
+      - run: bash <(curl -s https://codecov.io/bash) -t 24babe8f-2e48-4775-b1c4-7324bb264ef6
       #cache vendor directory
       - save_cache:
           when: on_success
           key: dependency-cache
           paths:
             - /go/src/github.com/zoyi/bingodb/vendor/
+
 
