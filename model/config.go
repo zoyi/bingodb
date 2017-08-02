@@ -55,7 +55,7 @@ func ParseConfigString(bingo *Bingo, configString string) error {
 func ParseConfigBytes(bingo *Bingo, config []byte) error {
 	configInfo := &ConfigInfo{}
 
-	if err := yaml.Unmarshal(config, configInfo); err != nil {
+	if err := yaml.UnmarshalStrict(config, configInfo); err != nil {
 		return err
 	}
 

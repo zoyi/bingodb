@@ -45,6 +45,34 @@ tables:
 	}
 }
 
+func TestErrorWhenUnknownField(t *testing.T)  {
+	weirdFieldConfig := `
+tables:
+  weird:
+    hello: 'world'
+    fields:
+      id: 'string'
+      name: 'string'
+      email: 'string'
+      expiresAt: 'integer'
+    expireKey: 'expiresAt'
+    hashKey: 'name'
+    sortKey: 'id'
+    subIndices:
+      friends:
+        hashKey: 'email'
+        sortKey: 'name'
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
 func TestErrorWhenUnknownFieldType(t *testing.T)  {
 	weirdFieldConfig := `
 tables:
