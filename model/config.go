@@ -144,6 +144,10 @@ func validateFields(tableName string, tableInfo TableInfo) error {
 			"SortKey",
 			"ExpireKey":
 			value := values.Field(i).String()
+			if value == "" {
+				return errors.New(
+					fmt.Sprintf("Table configuration error (Table '%v') - field '%v' cannot be empty", tableName, field.Name))
+			}
 			if _, ok := tableInfo.Fields[value]; !ok {
 				return errors.New(
 					fmt.Sprintf("Table configuration error (Table '%v') - undefined field '%v' for '%v'", tableName, value, field.Name))
@@ -152,10 +156,6 @@ func validateFields(tableName string, tableInfo TableInfo) error {
 	}
 
 	// check expireKey
-	if tableInfo.ExpireKey == "" {
-		return errors.New(
-			fmt.Sprintf("Table configuration error (Table '%v') - expireKey cannot be empty", tableName))
-	}
 	if tableInfo.Fields[tableInfo.ExpireKey] != INTEGER {
 		return errors.New(
 			fmt.Sprintf("Table configuration error (Table '%v') - Only integer type can be used for expireKey. Current key '%v' is '%v'", tableName, tableInfo.ExpireKey, tableInfo.Fields[tableInfo.ExpireKey]))
