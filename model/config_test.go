@@ -1,10 +1,10 @@
 package model
 
 import (
-	"testing"
-	"path/filepath"
-	"os"
 	"fmt"
+	"os"
+	"path/filepath"
+	"testing"
 )
 
 var (

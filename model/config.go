@@ -1,11 +1,11 @@
 package model
 
 import (
-	"io/ioutil"
-	"gopkg.in/yaml.v2"
 	"errors"
-	"reflect"
 	"fmt"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"reflect"
 	"sync"
 )
 
