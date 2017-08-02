@@ -1,7 +1,7 @@
 # BingoDB
 [![CircleCI](https://circleci.com/gh/zoyi/bingodb/tree/master.svg?style=shield)](https://circleci.com/gh/zoyi/bingodb/tree/master)
 BingoDB is light-weight and linearly scalable pre-defined (for now) in-memory database. BingoDB provides callback function when TTL expires.
-
+[![codecov](https://codecov.io/gh/zoyi/bingodb/branch/master/graph/badge.svg?token=n78FlqQZC7)](https://codecov.io/gh/zoyi/bingodb)
 ##Motivation
 DynamoDB is fast but it does not provide callback feature, and other SQL-based services are not fast enough (since accessing disk is slow relative to accessing memory). We specifically wanted to have two features: a database notifies after a event expires in certain period of time, and be able to search with certain index name with high performance. However, we could not find a solid service that satisfied our needs. So we decided to create our own database which provides two key features.
 

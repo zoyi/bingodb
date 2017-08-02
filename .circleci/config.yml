@@ -28,7 +28,7 @@ jobs:
       - run: dep ensure
       #run test
       - run: go get -v -t -d ./...
-      - run: go test -v ./...
+      - run: go test -v -race -coverprofile=coverage.txt -covermode=atomic
 
       - run: bash <(curl -s https://codecov.io/bash) -t 24babe8f-2e48-4775-b1c4-7324bb264ef6
       #cache vendor directory
