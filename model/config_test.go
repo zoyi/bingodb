@@ -11,6 +11,17 @@ var (
 	projectPath = filepath.Join(os.Getenv("GOPATH"), "/src/github.com/zoyi/bingodb/")
 )
 
+func TestErrorParseConfigByWrongPath(t *testing.T) {
+	bingo := newBingo()
+	absPath, _ := filepath.Abs(filepath.Join(projectPath, "/config", "werid_path_config.yml"))
+
+	if err := ParseConfig(bingo, absPath); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
 func TestParseConfig(t *testing.T) {
 	bingo := newBingo()
 	absPath, _ := filepath.Abs(filepath.Join(projectPath, "/config", "test_config.yml"))
