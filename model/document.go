@@ -26,12 +26,8 @@ func (doc *Document) GetData() Data {
 	return doc.data
 }
 
-func (doc *Document) ToJSON() ([]byte, bool) {
-	json, err := json.Marshal(doc.data)
-	if err != nil {
-		return nil, false
-	}
-	return json, true
+func (doc *Document) ToJSON() ([]byte, error) {
+	return json.Marshal(doc.data)
 }
 
 func (doc *Document) Get(field string) interface{} {

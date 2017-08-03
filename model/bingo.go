@@ -14,14 +14,10 @@ type Bingo struct {
 
 func Load(filename string) (*Bingo, error) {
 	projectPath := filepath.Join(os.Getenv("GOPATH"), "/src/github.com/zoyi/bingodb/")
-	absPath, err := filepath.Abs(filepath.Join(projectPath, "/config", filename))
-	if err != nil {
-		fmt.Printf("error: %v\n", err)
-		return nil, err
-	}
+	absPath, _ := filepath.Abs(filepath.Join(projectPath, "/config", filename))
 
 	bingo := newBingo()
-	err = ParseConfig(bingo, absPath)
+	err := ParseConfig(bingo, absPath)
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 		return nil, err
