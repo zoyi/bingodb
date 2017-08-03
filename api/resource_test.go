@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/zoyi/bingodb/mock"
 	"github.com/zoyi/bingodb/model"
 	"strings"
 	"testing"
@@ -13,7 +12,7 @@ var response *Resource
 
 func resourcePrepare() {
 	bingo, _ := model.Load("config.yml")
-	mock.InitDefaultSeedData(bingo)
+	model.InitDefaultSeedData(bingo)
 	resource = &Resource{
 		Db:          bingo,
 		AccessToken: "",

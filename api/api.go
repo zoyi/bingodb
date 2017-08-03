@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
-	"github.com/zoyi/bingodb/mock"
 	"github.com/zoyi/bingodb/model"
 )
 
@@ -22,7 +21,7 @@ func DefaultRouter(configFileName string) *fasthttprouter.Router {
 	bingo, _ := model.Load(configFileName)
 
 	//for test purpose
-	mock.InitDefaultSeedData(bingo)
+	model.InitDefaultSeedData(bingo)
 
 	fmt.Printf("* Preparing resources..\n")
 	rs := &Resource{
