@@ -11,6 +11,17 @@ var (
 	projectPath = filepath.Join(os.Getenv("GOPATH"), "/src/github.com/zoyi/bingodb/")
 )
 
+func TestErrorParseConfigByWrongPath(t *testing.T) {
+	bingo := newBingo()
+	absPath, _ := filepath.Abs(filepath.Join(projectPath, "/config", "werid_path_config.yml"))
+
+	if err := ParseConfig(bingo, absPath); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
 func TestParseConfig(t *testing.T) {
 	bingo := newBingo()
 	absPath, _ := filepath.Abs(filepath.Join(projectPath, "/config", "test_config.yml"))
@@ -23,7 +34,7 @@ func TestParseConfig(t *testing.T) {
 func TestParseConfigString(t *testing.T) {
 	configString := `
 tables:
-  weired:
+  weird:
     fields:
       id: 'string'
       name: 'string'
@@ -45,128 +56,477 @@ tables:
 	}
 }
 
-func TestErrorWhenUndefinedField(t *testing.T) {
-	// tables > weired > expireKey is invalid
-	weiredFieldConfig1 := `
-tables:
-  weired:
-    fields:
-      id: 'string'
-      name: 'string'
-      email: 'string'
-      expiresAt: 'integer'
-    expireKey: 'weired'
-    hashKey: 'name'
-    sortKey: 'id'
-    subIndices:
-      friends:
-        hashKey: 'email'
-        sortKey: 'name'
+func TestErrorForEmptyConfig(t *testing.T)  {
+	weirdFieldConfig := `
 `
 
 	bingo := newBingo()
 
-	if err := ParseConfigString(bingo, weiredFieldConfig1); err != nil {
-		fmt.Printf("Error occurred: [%v] - ok \n", err)
-	} else {
-		t.Fail()
-	}
-
-	// tables > weired > hashKey is invalid
-	weiredFieldConfig2 := `
-tables:
-  weired:
-    fields:
-      id: 'string'
-      name: 'string'
-      email: 'string'
-      expiresAt: 'integer'
-    expireKey: 'expiresAt'
-    hashKey: 'weired'
-    sortKey: 'id'
-    subIndices:
-      friends:
-        hashKey: 'email'
-        sortKey: 'name'
-`
-
-	if err := ParseConfigString(bingo, weiredFieldConfig2); err != nil {
-		fmt.Printf("Error occurred: [%v] - ok \n", err)
-	} else {
-		t.Fail()
-	}
-
-	// tables > weired > sortKey is invalid
-	weiredFieldConfig3 := `
-tables:
-  weired:
-    fields:
-      id: 'string'
-      name: 'string'
-      email: 'string'
-      expiresAt: 'integer'
-    expireKey: 'expiresAt'
-    hashKey: 'name'
-    sortKey: 'weired'
-    subIndices:
-      friends:
-        hashKey: 'email'
-        sortKey: 'name'
-`
-
-	if err := ParseConfigString(bingo, weiredFieldConfig3); err != nil {
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
 		fmt.Printf("Error occurred: [%v] - ok \n", err)
 	} else {
 		t.Fail()
 	}
 }
 
-func TestErrorWhenUndefinedFieldOfSubIndices(t *testing.T) {
-	// tables >> weired >> subIndices >> friends >> hashKey is invalid
-	weiredSubIndicesConfig1 := `
+func TestErrorForEmptyTable(t *testing.T)  {
+	weirdFieldConfig := `
 tables:
-  weired:
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
+func TestErrorForUnknownField(t *testing.T)  {
+	weirdFieldConfig := `
+tables:
+  weird:
+    weird: 'weird'
     fields:
       id: 'string'
       name: 'string'
       email: 'string'
       expiresAt: 'integer'
     expireKey: 'expiresAt'
-    hashKey: 'email'
+    hashKey: 'name'
     sortKey: 'id'
     subIndices:
       friends:
-        hashKey: 'weired'
+        hashKey: 'email'
         sortKey: 'name'
 `
 
 	bingo := newBingo()
 
-	if err := ParseConfigString(bingo, weiredSubIndicesConfig1); err != nil {
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
 		fmt.Printf("Error occurred: [%v] - ok \n", err)
 	} else {
 		t.Fail()
 	}
+}
 
-	// tables >> weired >> subIndices >> friends >> sortKey is invalid
-	weiredSubIndicesConfig2 := `
+func TestErrorWhenFieldsIsEmpty(t *testing.T)  {
+	weirdFieldConfig := `
 tables:
-  weired:
+  weird:
+    expireKey: 'expiresAt'
+    hashKey: 'name'
+    sortKey: 'id'
+    subIndices:
+      friends:
+        hashKey: 'email'
+        sortKey: 'name'
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
+func TestErrorForUnknownFieldType(t *testing.T)  {
+	weirdFieldConfig := `
+tables:
+  weird:
+    fields:
+      id: 'string'
+      name: 'string'
+      email: 'weird'
+      expiresAt: 'integer'
+    expireKey: 'expiresAt'
+    hashKey: 'name'
+    sortKey: 'id'
+    subIndices:
+      friends:
+        hashKey: 'email'
+        sortKey: 'name'
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
+func TestErrorWhenHashKeyIsEmpty(t *testing.T)  {
+	weirdFieldConfig := `
+tables:
+  weird:
     fields:
       id: 'string'
       name: 'string'
       email: 'string'
       expiresAt: 'integer'
     expireKey: 'expiresAt'
-    hashKey: 'email'
     sortKey: 'id'
     subIndices:
       friends:
         hashKey: 'email'
-        sortKey: 'weired'
+        sortKey: 'name'
 `
 
-	if err := ParseConfigString(bingo, weiredSubIndicesConfig2); err != nil {
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
+func TestErrorWhenHashKeyIsNotInField(t *testing.T)  {
+	weirdFieldConfig := `
+tables:
+  weird:
+    fields:
+      id: 'string'
+      name: 'string'
+      email: 'string'
+      expiresAt: 'integer'
+    expireKey: 'expiresAt'
+    hashKey: 'weird'
+    sortKey: 'name'
+    subIndices:
+      friends:
+        hashKey: 'email'
+        sortKey: 'name'
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
+func TestErrorWhenSortKeyIsEmpty(t *testing.T)  {
+	weirdFieldConfig := `
+tables:
+  weird:
+    fields:
+      id: 'string'
+      name: 'string'
+      email: 'string'
+      expiresAt: 'integer'
+    expireKey: 'expiresAt'
+    hashKey: 'name'
+    subIndices:
+      friends:
+        hashKey: 'email'
+        sortKey: 'name'
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
+func TestErrorWhenSortKeyIsNotInField(t *testing.T)  {
+	weirdFieldConfig := `
+tables:
+  weird:
+    fields:
+      id: 'string'
+      name: 'string'
+      email: 'string'
+      expiresAt: 'integer'
+    expireKey: 'expiresAt'
+    hashKey: 'id'
+    sortKey: 'weird'
+    subIndices:
+      friends:
+        hashKey: 'email'
+        sortKey: 'name'
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
+func TestErrorWhenHashKeySortKeyIsSame(t *testing.T)  {
+	weirdFieldConfig := `
+tables:
+  weird:
+    fields:
+      id: 'string'
+      name: 'string'
+      email: 'string'
+      expiresAt: 'integer'
+    expireKey: 'expiresAt'
+    hashKey: 'id'
+    sortKey: 'id'
+    subIndices:
+      friends:
+        hashKey: 'email'
+        sortKey: 'name'
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
+func TestErrorWhenExpireKeyIsEmpty(t *testing.T)  {
+	weirdFieldConfig := `
+tables:
+  weird:
+    fields:
+      id: 'string'
+      name: 'string'
+      email: 'string'
+      expiresAt: 'integer'
+    hashKey: 'name'
+    sortKey: 'id'
+    subIndices:
+      friends:
+        hashKey: 'email'
+        sortKey: 'name'
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
+func TestErrorWhenExpireKeyIsNotInField(t *testing.T)  {
+	weirdFieldConfig := `
+tables:
+  weird:
+    fields:
+      id: 'string'
+      name: 'string'
+      email: 'string'
+      expiresAt: 'integer'
+    expireKey: 'weird'
+    hashKey: 'id'
+    sortKey: 'name'
+    subIndices:
+      friends:
+        hashKey: 'email'
+        sortKey: 'name'
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
+func TestErrorWhenExpireKeyTypeIsNotInteger(t *testing.T)  {
+	weirdFieldConfig := `
+tables:
+  weird:
+    fields:
+      id: 'string'
+      name: 'string'
+      email: 'string'
+      expiresAt: 'string'
+    expireKey: 'expiresAt'
+    hashKey: 'name'
+    sortKey: 'id'
+    subIndices:
+      friends:
+        hashKey: 'email'
+        sortKey: 'name'
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
+func TestErrorWhenSubIndicesHasWrongField(t *testing.T)  {
+	weirdFieldConfig := `
+tables:
+  weird:
+    fields:
+      id: 'string'
+      name: 'string'
+      email: 'string'
+      expiresAt: 'integer'
+    expireKey: 'expiresAt'
+    hashKey: 'name'
+    sortKey: 'id'
+    subIndices:
+      friends:
+        hashKey: 'email'
+        weird: 'name'
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
+func TestErrorWhenSubIndicesHashKeyEmpty(t *testing.T)  {
+	weirdFieldConfig := `
+tables:
+  weird:
+    fields:
+      id: 'string'
+      name: 'string'
+      email: 'string'
+      expiresAt: 'integer'
+    expireKey: 'expiresAt'
+    hashKey: 'name'
+    sortKey: 'id'
+    subIndices:
+      friends:
+        sortKey: 'name'
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
+func TestErrorWhenSubIndicesSortKeyEmpty(t *testing.T)  {
+	weirdFieldConfig := `
+tables:
+  weird:
+    fields:
+      id: 'string'
+      name: 'string'
+      email: 'string'
+      expiresAt: 'integer'
+    expireKey: 'expiresAt'
+    hashKey: 'name'
+    sortKey: 'id'
+    subIndices:
+      friends:
+        hashKey: 'email'
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
+func TestErrorWhenSubIndicesSameHashKeySortKey(t *testing.T)  {
+	weirdFieldConfig := `
+tables:
+  weird:
+    fields:
+      id: 'string'
+      name: 'string'
+      email: 'string'
+      expiresAt: 'integer'
+    expireKey: 'expiresAt'
+    hashKey: 'name'
+    sortKey: 'id'
+    subIndices:
+      friends:
+        hashKey: 'email'
+        sortKey: 'email'
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
+func TestErrorWhenSubIndicesHashKeyWrongValue(t *testing.T)  {
+	weirdFieldConfig := `
+tables:
+  weird:
+    fields:
+      id: 'string'
+      name: 'string'
+      email: 'string'
+      expiresAt: 'integer'
+    expireKey: 'expiresAt'
+    hashKey: 'name'
+    sortKey: 'id'
+    subIndices:
+      friends:
+        hashKey: 'weird'
+        sortKey: 'email'
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
+func TestErrorWhenSubIndicesSortKeyWrongValue(t *testing.T)  {
+	weirdFieldConfig := `
+tables:
+  weird:
+    fields:
+      id: 'string'
+      name: 'string'
+      email: 'string'
+      expiresAt: 'integer'
+    expireKey: 'expiresAt'
+    hashKey: 'name'
+    sortKey: 'id'
+    subIndices:
+      friends:
+        hashKey: 'id'
+        sortKey: 'weird'
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
 		fmt.Printf("Error occurred: [%v] - ok \n", err)
 	} else {
 		t.Fail()
