@@ -155,10 +155,10 @@ func isValidSubIndices(subIndices map[string]IndexInfo, fields map[string]string
 }
 
 func isValidKeySet(hashKey string, sortKey string, fields map[string]string) (string, bool) {
-	if err, ok := validateReferenceField(hashKey, "hashKey", fields); !ok {
+	if err, ok := isValidReferenceField(hashKey, "hashKey", fields); !ok {
 		return err, false
 	}
-	if err, ok := validateReferenceField(sortKey, "sortKey", fields); !ok {
+	if err, ok := isValidReferenceField(sortKey, "sortKey", fields); !ok {
 		return err, false
 	}
 	if hashKey == sortKey {
@@ -169,7 +169,7 @@ func isValidKeySet(hashKey string, sortKey string, fields map[string]string) (st
 }
 
 func isValidExpireKey(expireKey string, fields map[string]string) (string, bool) {
-	if err, ok := validateReferenceField(expireKey, "expireKey", fields); !ok {
+	if err, ok := isValidReferenceField(expireKey, "expireKey", fields); !ok {
 		return err, false
 	}
 
@@ -180,7 +180,7 @@ func isValidExpireKey(expireKey string, fields map[string]string) (string, bool)
 	return "", true
 }
 
-func validateReferenceField(key string, name string, fields map[string]string) (string, bool) {
+func isValidReferenceField(key string, name string, fields map[string]string) (string, bool) {
 	if key == "" {
 		return fmt.Sprintf("%v cannot be empty", name), false
 	}
