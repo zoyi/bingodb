@@ -99,11 +99,12 @@ func TestDocument_GetExpiresAt(t *testing.T) {
 		t.Error("empty expires at field should return error")
 	}
 
-	//doc = ParseDoc(Data{"channelId": "1", "id": "doc_test", "expiresAt":"invalid"}, table.Schema)
-	//exp, ok = doc.GetExpiresAt()
-	//if ok {
-	//	t.Error("invalid expiresAt field value should return error")
-	//}
+	invalidSchema := TableSchema{}
+	emptyDoc := Document{Data{}, &invalidSchema}
+	_, ok = emptyDoc.GetExpiresAt()
+	if ok {
+		t.Error("Unspecified schema for expireKey should return error")
+	}
 }
 
 func TestDocument_PrimaryKeyValue(t *testing.T) {
