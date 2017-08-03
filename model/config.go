@@ -110,19 +110,19 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 func isValidTable(tableName string, tableInfo TableInfo) error {
 	format := fmt.Sprintf("Table configuration error (Table '%v')", tableName)
 
-	if err := isValidFields(tableInfo.Fields); err != "" {
+	if err, ok := isValidFields(tableInfo.Fields); !ok {
 		return errors.New(fmt.Sprintf("%v - %v", format, err))
 	}
 
-	if err := isValidSubIndices(tableInfo.SubIndices, tableInfo.Fields); err != "" {
+	if err, ok := isValidSubIndices(tableInfo.SubIndices, tableInfo.Fields); !ok {
 		return errors.New(fmt.Sprintf("%v - %v", format, err))
 	}
 
-	if err := isValidKeySet(tableInfo.HashKey, tableInfo.SortKey, tableInfo.Fields); err != "" {
+	if err, ok := isValidKeySet(tableInfo.HashKey, tableInfo.SortKey, tableInfo.Fields); !ok {
 		return errors.New(fmt.Sprintf("%v - %v", format, err))
 	}
 
-	if err := isValidExpireKey(tableInfo.ExpireKey, tableInfo.Fields); err != "" {
+	if err, ok := isValidExpireKey(tableInfo.ExpireKey, tableInfo.Fields); !ok {
 		return errors.New(fmt.Sprintf("%v - %v", format, err))
 	}
 
@@ -130,65 +130,65 @@ func isValidTable(tableName string, tableInfo TableInfo) error {
 }
 
 // check fields is not empty and field's value type is valid
-func isValidFields(fields map[string]string) string {
+func isValidFields(fields map[string]string) (string, bool) {
 	if len(fields) == 0 {
-		return "fields cannot be empty"
+		return "fields cannot be empty", false
 	}
 	for fieldName, fieldType := range fields {
 		if ok := isAllowedFieldType(fieldType); !ok {
-			return fmt.Sprintf("unknown field type '%v' in '%v'", fieldType, fieldName)
+			return fmt.Sprintf("unknown field type '%v' in '%v'", fieldType, fieldName), false
 		}
 	}
 
-	return ""
+	return "", true
 }
 
 // check subIndices empty, hashKey and SortKey's difference, value is contains in fields
-func isValidSubIndices(subIndices map[string]IndexInfo, fields map[string]string) string {
+func isValidSubIndices(subIndices map[string]IndexInfo, fields map[string]string) (string, bool) {
 	for indexName, indexInfo := range subIndices {
-		if err := isValidKeySet(indexInfo.HashKey, indexInfo.SortKey, fields); err != "" {
-			return fmt.Sprintf("%v in index '%v' for subIndices", err, indexName)
+		if err, ok := isValidKeySet(indexInfo.HashKey, indexInfo.SortKey, fields); !ok {
+			return fmt.Sprintf("%v in index '%v' for subIndices", err, indexName), false
 		}
 	}
 
-	return ""
+	return "", true
 }
 
-func isValidKeySet(hashKey string, sortKey string, fields map[string]string) string {
-	if err := validateReferenceField(hashKey, "hashKey", fields); err != "" {
-		return err
+func isValidKeySet(hashKey string, sortKey string, fields map[string]string) (string, bool) {
+	if err, ok := validateReferenceField(hashKey, "hashKey", fields); !ok {
+		return err, false
 	}
-	if err := validateReferenceField(sortKey, "sortKey", fields); err != "" {
-		return err
+	if err, ok := validateReferenceField(sortKey, "sortKey", fields); !ok {
+		return err, false
 	}
 	if hashKey == sortKey {
-		return "hashKey and sortKey must be different"
+		return "hashKey and sortKey must be different", false
 	}
 
-	return ""
+	return "", true
 }
 
-func isValidExpireKey(expireKey string, fields map[string]string) string {
-	if err := validateReferenceField(expireKey, "expireKey", fields); err != "" {
-		return err
+func isValidExpireKey(expireKey string, fields map[string]string) (string, bool) {
+	if err, ok := validateReferenceField(expireKey, "expireKey", fields); !ok {
+		return err, false
 	}
 
 	if fields[expireKey] != INTEGER {
-		return fmt.Sprintf("Only integer type can be used for expireKey. Current key '%v' is '%v'", expireKey, fields[expireKey])
+		return fmt.Sprintf("Only integer type can be used for expireKey. Current key '%v' is '%v'", expireKey, fields[expireKey]), false
 	}
 
-	return ""
+	return "", true
 }
 
-func validateReferenceField(key string, name string, fields map[string]string) string {
+func validateReferenceField(key string, name string, fields map[string]string) (string, bool) {
 	if key == "" {
-		return fmt.Sprintf("%v cannot be empty", name)
+		return fmt.Sprintf("%v cannot be empty", name), false
 	}
 	if _, ok := fields[key]; !ok {
-		return fmt.Sprintf("undefined field '%v' for %v", key, name)
+		return fmt.Sprintf("undefined field '%v' for %v", key, name), false
 	}
 
-	return ""
+	return "", true
 }
 
 func isAllowedFieldType(fieldType string) bool {
