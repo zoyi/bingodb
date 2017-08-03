@@ -63,7 +63,7 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 	}
 
 	for tableName, tableInfo := range configInfo.Tables {
-		if err := validate(tableName, tableInfo); err != nil {
+		if err := isValidTable(tableName, tableInfo); err != nil {
 			return err
 		}
 
@@ -107,22 +107,22 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 	return nil
 }
 
-func validate(tableName string, tableInfo TableInfo) error {
+func isValidTable(tableName string, tableInfo TableInfo) error {
 	format := fmt.Sprintf("Table configuration error (Table '%v')", tableName)
 
-	if err := validateFields(tableInfo.Fields); err != "" {
+	if err := isValidFields(tableInfo.Fields); err != "" {
 		return errors.New(fmt.Sprintf("%v - %v", format, err))
 	}
 
-	if err := validateSubIndices(tableInfo.SubIndices, tableInfo.Fields); err != "" {
+	if err := isValidSubIndices(tableInfo.SubIndices, tableInfo.Fields); err != "" {
 		return errors.New(fmt.Sprintf("%v - %v", format, err))
 	}
 
-	if err := validateKeySet(tableInfo.HashKey, tableInfo.SortKey, tableInfo.Fields); err != "" {
+	if err := isValidKeySet(tableInfo.HashKey, tableInfo.SortKey, tableInfo.Fields); err != "" {
 		return errors.New(fmt.Sprintf("%v - %v", format, err))
 	}
 
-	if err := validateExpireKey(tableInfo.ExpireKey, tableInfo.Fields); err != "" {
+	if err := isValidExpireKey(tableInfo.ExpireKey, tableInfo.Fields); err != "" {
 		return errors.New(fmt.Sprintf("%v - %v", format, err))
 	}
 
@@ -130,7 +130,7 @@ func validate(tableName string, tableInfo TableInfo) error {
 }
 
 // check fields is not empty and field's value type is valid
-func validateFields(fields map[string]string) string {
+func isValidFields(fields map[string]string) string {
 	if len(fields) == 0 {
 		return "fields cannot be empty"
 	}
@@ -144,9 +144,9 @@ func validateFields(fields map[string]string) string {
 }
 
 // check subIndices empty, hashKey and SortKey's difference, value is contains in fields
-func validateSubIndices(subIndices map[string]IndexInfo, fields map[string]string) string {
+func isValidSubIndices(subIndices map[string]IndexInfo, fields map[string]string) string {
 	for indexName, indexInfo := range subIndices {
-		if err := validateKeySet(indexInfo.HashKey, indexInfo.SortKey, fields); err != "" {
+		if err := isValidKeySet(indexInfo.HashKey, indexInfo.SortKey, fields); err != "" {
 			return fmt.Sprintf("%v in index '%v' for subIndices", err, indexName)
 		}
 	}
@@ -154,7 +154,7 @@ func validateSubIndices(subIndices map[string]IndexInfo, fields map[string]strin
 	return ""
 }
 
-func validateKeySet(hashKey string, sortKey string, fields map[string]string) string {
+func isValidKeySet(hashKey string, sortKey string, fields map[string]string) string {
 	if err := validateReferenceField(hashKey, "hashKey", fields); err != "" {
 		return err
 	}
@@ -168,7 +168,7 @@ func validateKeySet(hashKey string, sortKey string, fields map[string]string) st
 	return ""
 }
 
-func validateExpireKey(expireKey string, fields map[string]string) string {
+func isValidExpireKey(expireKey string, fields map[string]string) string {
 	if err := validateReferenceField(expireKey, "expireKey", fields); err != "" {
 		return err
 	}

@@ -45,7 +45,20 @@ tables:
 	}
 }
 
-func TestErrorWhenTableEmpty(t *testing.T)  {
+func TestErrorForEmptyConfig(t *testing.T)  {
+	weirdFieldConfig := `
+`
+
+	bingo := newBingo()
+
+	if err := ParseConfigString(bingo, weirdFieldConfig); err != nil {
+		fmt.Printf("Error occurred: [%v] - ok \n", err)
+	} else {
+		t.Fail()
+	}
+}
+
+func TestErrorForEmptyTable(t *testing.T)  {
 	weirdFieldConfig := `
 tables:
 `
@@ -59,7 +72,7 @@ tables:
 	}
 }
 
-func TestErrorWhenUnknownField(t *testing.T)  {
+func TestErrorForUnknownField(t *testing.T)  {
 	weirdFieldConfig := `
 tables:
   weird:
@@ -109,7 +122,7 @@ tables:
 	}
 }
 
-func TestErrorWhenUnknownFieldType(t *testing.T)  {
+func TestErrorForUnknownFieldType(t *testing.T)  {
 	weirdFieldConfig := `
 tables:
   weird:
