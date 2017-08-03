@@ -267,14 +267,11 @@ func (index *PrimaryIndex) put(doc *Document) (*Document, bool) {
 	sortValue := doc.Get(index.SortKey.Name)
 
 	var tree *redblacktree.Tree
-	var ok bool
-	treeData, ok := index.Data.Load(hashValue)
-
-	if !ok {
+	if treeData, ok := index.Data.Load(hashValue); !ok {
 		tree = redblacktree.NewWithStringComparator()
 		index.Data.Store(hashValue, tree)
-	} else if tree, ok = treeData.(*redblacktree.Tree); !ok {
-		return nil, false
+	} else {
+		tree, _ = treeData.(*redblacktree.Tree)
 	}
 
 	removed, replaced := tree.Put(sortValue, doc)

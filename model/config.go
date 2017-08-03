@@ -26,7 +26,7 @@ type ConfigInfo struct {
 }
 
 const (
-	STRING = "string"
+	STRING  = "string"
 	INTEGER = "integer"
 )
 
