@@ -2,10 +2,10 @@ package api
 
 import (
 	"encoding/json"
+	"github.com/zoyi/bingodb/mock"
 	"github.com/zoyi/bingodb/model"
 	"strings"
 	"testing"
-	"github.com/zoyi/bingodb/mock"
 )
 
 var response *Resource

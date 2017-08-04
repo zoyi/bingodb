@@ -169,7 +169,7 @@ func (table *Table) Put(data *Data) *Document {
 	doc := ParseDoc(*data, table.Schema)
 
 	// Insert doc into primary index
-	_ = table.PrimaryIndex.put(doc)
+	table.PrimaryIndex.put(doc)
 
 	// Update for sub index
 	table.SubIndices.Range(func(key, value interface{}) bool {

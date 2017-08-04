@@ -20,5 +20,11 @@ func main() {
 	router := api.DefaultRouter(*config)
 
 	fmt.Printf("* Bingo is ready on %s\n", *addr)
-	fasthttp.ListenAndServe(*addr, router.Handler)
+
+	s := &fasthttp.Server {
+		Handler: router.Handler,
+		Name: "bingodb",
+	}
+
+	s.ListenAndServe(*addr)
 }

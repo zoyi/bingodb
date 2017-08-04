@@ -56,8 +56,8 @@ func (index *PrimaryIndex) Fetch(
 		//add first element if limit is greater than 0
 		result = append(result, boundIterator.Value().(*Document))
 		for boundIterator.Next() {
-			lessThanOrNotEqual := !list.LessThan(boundIterator.Key(), end) && boundIterator.Key() != end
-			if len(result) == limit || lessThanOrNotEqual {
+			didReachToEnd := !list.LessThan(boundIterator.Key(), end) && boundIterator.Key() != end
+			if len(result) == limit || didReachToEnd {
 				if boundIterator.Next() {
 					next = boundIterator.Key()
 				}
@@ -103,14 +103,14 @@ func (index *PrimaryIndex) RFetch(
 
 		//greater or equal - less than
 		boundIterator := list.Seek(start)
-		if boundIterator == nil || 0 >= limit  {
+		if boundIterator == nil || 0 >= limit {
 			return result, next
 		}
 		//add first element if limit is greater than 0
 		result = append(result, boundIterator.Value().(*Document))
 		for boundIterator.Previous() {
-			greaterThanOrNotEqual := list.LessThan(boundIterator.Key(), end) && boundIterator.Key() != end
-			if len(result) == limit || greaterThanOrNotEqual {
+			didReachToEnd := list.LessThan(boundIterator.Key(), end) && boundIterator.Key() != end
+			if len(result) == limit || didReachToEnd {
 				if boundIterator.Previous() {
 					next = boundIterator.Key()
 				}
@@ -135,9 +135,6 @@ func (index *SubIndex) Fetch(
 	listData, _ := index.Data.Load(hash)
 
 	if list, ok := listData.(*skiplist.SkipList); ok {
-		//if tree.Size() == 0 {
-		//	return result, next
-		//}
 		if list.Len() == 0 {
 			return result, next
 		}
@@ -151,15 +148,15 @@ func (index *SubIndex) Fetch(
 
 		//greater or equal - less than
 		boundIterator := list.Seek(startSortKey)
-		if boundIterator == nil || 0 >= limit{
+		if boundIterator == nil || 0 >= limit {
 			return result, next
 		}
 		//add first element
 		result = append(result, boundIterator.Key().(SubSortTreeKey).Document)
 		for boundIterator.Next() {
-			lessThanOrNotEqual := !list.LessThan(boundIterator.Key().(SubSortTreeKey), endSortKey) &&
+			didReachToEnd := !list.LessThan(boundIterator.Key().(SubSortTreeKey), endSortKey) &&
 				boundIterator.Key() != endSortKey
-			if len(result) == limit || lessThanOrNotEqual {
+			if len(result) == limit || didReachToEnd {
 				if boundIterator.Next() {
 					next = boundIterator.Key().(SubSortTreeKey)
 				}
@@ -203,9 +200,9 @@ func (index *SubIndex) RFetch(
 		//add first element if limit is greater than 0
 		result = append(result, boundIterator.Key().(SubSortTreeKey).Document)
 		for boundIterator.Previous() {
-			greaterThanOrNotEqual := list.LessThan(boundIterator.Key().(SubSortTreeKey), endSortKey) &&
+			didReachToEnd := list.LessThan(boundIterator.Key().(SubSortTreeKey), endSortKey) &&
 				boundIterator.Key() != endSortKey
-			if len(result) == limit || greaterThanOrNotEqual {
+			if len(result) == limit || didReachToEnd {
 				if boundIterator.Previous() {
 					next = boundIterator.Key().(SubSortTreeKey)
 				}
@@ -256,9 +253,9 @@ func (index *PrimaryIndex) Get(
 	hash = index.HashKey.Parse(hash)
 	sort = index.SortKey.Parse(sort)
 
-	treeData, _ := index.Data.Load(hash)
+	listData, _ := index.Data.Load(hash)
 
-	if list, ok := treeData.(*skiplist.SkipList); ok {
+	if list, ok := listData.(*skiplist.SkipList); ok {
 		value, present := list.Get(sort)
 		if !present {
 			return nil, false
@@ -296,14 +293,12 @@ func (index *PrimaryIndex) put(doc *Document) *Document {
 	sortValue := doc.Get(index.SortKey.Name)
 
 	var list *skiplist.SkipList
-	var ok bool
-	listData, ok := index.Data.Load(hashValue)
 
-	if !ok {
+	if listData, ok := index.Data.Load(hashValue); ok {
+		list, _ = listData.(*skiplist.SkipList)
+	} else {
 		list = skiplist.NewStringMap()
 		index.Data.Store(hashValue, list)
-	} else {
-		list, _ = listData.(*skiplist.SkipList)
 	}
 
 	list.Set(sortValue, doc)
