@@ -29,8 +29,8 @@ func (rs *Resource) Get(
 
 	if table, ok := tableData.(*model.Table); ok {
 		if doc, ok := table.Get(hashKey, sortKey); ok {
-			if json, ok := doc.ToJSON(); ok {
-				return json
+			if bytes, ok := doc.ToJSON(); ok {
+				return bytes
 			}
 		}
 	}
@@ -65,8 +65,8 @@ func (rs *Resource) Update(tableName string, data *model.Data) []byte {
 
 	if table, ok := tableData.(*model.Table); ok {
 		doc := table.Put(data)
-		if json, ok := doc.ToJSON(); ok {
-			return json
+		if bytes, ok := doc.ToJSON(); ok {
+			return bytes
 		}
 	}
 
