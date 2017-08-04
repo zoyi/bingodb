@@ -18,6 +18,7 @@ package skiplist
 import (
 	"fmt"
 	"math/rand"
+	"sync"
 )
 
 // TODO(ryszard):
@@ -91,6 +92,7 @@ type SkipList struct {
 	// standard linked list and will not have any of the nice
 	// properties of skip lists (probably not what you want).
 	MaxLevel int
+	lock     sync.RWMutex
 }
 
 // Len returns the length of s.
@@ -366,6 +368,9 @@ func (s SkipList) randomLevel() (n int) {
 // not present in s). The second return value is true when the key is
 // present.
 func (s *SkipList) Get(key interface{}) (value interface{}, ok bool) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	candidate := s.getPath(s.header, nil, key)
 
 	if candidate == nil || candidate.key != key {
@@ -411,6 +416,10 @@ func (s *SkipList) Set(key, value interface{}) {
 	if key == nil {
 		panic("goskiplist: nil keys are not supported")
 	}
+
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
 	// s.level starts from 0, so we need to allocate one.
 	update := make([]*node, s.level()+1, s.effectiveMaxLevel()+1)
 	candidate := s.getPath(s.header, update, key)
@@ -467,6 +476,10 @@ func (s *SkipList) Delete(key interface{}) (value interface{}, ok bool) {
 	if key == nil {
 		panic("goskiplist: nil keys are not supported")
 	}
+
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
 	update := make([]*node, s.level()+1, s.effectiveMaxLevel())
 	candidate := s.getPath(s.header, update, key)
 
