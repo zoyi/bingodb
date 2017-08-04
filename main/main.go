@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	addr   = flag.String("addr", ":8080", "TCP address to listen to")
+	addr   = flag.String("addr", ":8090", "TCP address to listen to")
 	config = flag.String("file", "config.yml", "import config file")
 )
 

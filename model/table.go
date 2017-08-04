@@ -169,14 +169,11 @@ func (table *Table) Put(data *Data) *Document {
 	doc := ParseDoc(*data, table.Schema)
 
 	// Insert doc into primary index
-	removed, replaced := table.PrimaryIndex.put(doc)
+	_ = table.PrimaryIndex.put(doc)
 
 	// Update for sub index
 	table.SubIndices.Range(func(key, value interface{}) bool {
 		if index, ok := value.(*SubIndex); ok {
-			if replaced {
-				index.delete(removed)
-			}
 			index.put(doc)
 		}
 
@@ -185,9 +182,6 @@ func (table *Table) Put(data *Data) *Document {
 
 	// Update for event tree
 	keeper := table.Bingo.Keeper
-	if replaced {
-		keeper.delete(table, removed)
-	}
 	keeper.put(table, doc)
 
 	return doc

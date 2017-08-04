@@ -16,7 +16,8 @@ package skiplist
 // trees". Communications of the ACM 33 (6): 668–676
 
 import (
-"math/rand"
+	"fmt"
+	"math/rand"
 )
 
 // TODO(ryszard):
@@ -73,7 +74,7 @@ func (n *node) hasPrevious() bool {
 //		// do something with i.Key() and i.Value()
 //	}
 type SkipList struct {
-	lessThan func(l, r interface{}) bool
+	LessThan func(l, r interface{}) bool
 	header   *node
 	footer   *node
 	length   int
@@ -176,7 +177,7 @@ func (i *iter) Seek(key interface{}) (ok bool) {
 	// If the target key occurs before the current key, we cannot take advantage
 	// of the heretofore spent traversal cost to find it; resetting back to the
 	// beginning is the safest choice.
-	if current.key != nil && list.lessThan(key, current.key) {
+	if current.key != nil && list.LessThan(key, current.key) {
 		current = list.header
 	}
 
@@ -221,7 +222,7 @@ func (i *rangeIterator) Next() bool {
 
 	next := i.current.next()
 
-	if !i.list.lessThan(next.key, i.upperLimit) {
+	if !i.list.LessThan(next.key, i.upperLimit) {
 		return false
 	}
 
@@ -238,7 +239,7 @@ func (i *rangeIterator) Previous() bool {
 
 	previous := i.current.previous()
 
-	if i.list.lessThan(previous.key, i.lowerLimit) {
+	if i.list.LessThan(previous.key, i.lowerLimit) {
 		return false
 	}
 
@@ -249,9 +250,9 @@ func (i *rangeIterator) Previous() bool {
 }
 
 func (i *rangeIterator) Seek(key interface{}) (ok bool) {
-	if i.list.lessThan(key, i.lowerLimit) {
+	if i.list.LessThan(key, i.lowerLimit) {
 		return
-	} else if !i.list.lessThan(key, i.upperLimit) {
+	} else if !i.list.LessThan(key, i.upperLimit) {
 		return
 	}
 
@@ -395,7 +396,7 @@ func (s *SkipList) getPath(current *node, update []*node, key interface{}) *node
 	depth := len(current.forward) - 1
 
 	for i := depth; i >= 0; i-- {
-		for current.forward[i] != nil && s.lessThan(current.forward[i].key, key) {
+		for current.forward[i] != nil && s.LessThan(current.forward[i].key, key) {
 			current = current.forward[i]
 		}
 		if update != nil {
@@ -454,7 +455,7 @@ func (s *SkipList) Set(key, value interface{}) {
 		}
 	}
 
-	if s.footer == nil || s.lessThan(s.footer.key, key) {
+	if s.footer == nil || s.LessThan(s.footer.key, key) {
 		s.footer = newNode
 	}
 }
@@ -500,7 +501,7 @@ func (s *SkipList) Delete(key interface{}) (value interface{}, ok bool) {
 // you intend to use with the SkipList.
 func NewCustomMap(lessThan func(l, r interface{}) bool) *SkipList {
 	return &SkipList{
-		lessThan: lessThan,
+		LessThan: lessThan,
 		header: &node{
 			forward: []*node{nil},
 		},
@@ -570,7 +571,7 @@ func NewSet() *Set {
 // elements you intend to use with the Set.
 func NewCustomSet(lessThan func(l, r interface{}) bool) *Set {
 	return &Set{skiplist: SkipList{
-		lessThan: lessThan,
+		LessThan: lessThan,
 		header: &node{
 			forward: []*node{nil},
 		},
@@ -636,5 +637,10 @@ func (s *Set) GetMaxLevel() int {
 }
 
 func (s *SkipList) String() string {
-	return ""
+	boundIterator := s.Iterator()
+	listString := ""
+	for boundIterator.Next() {
+		listString = listString + fmt.Sprintf("key:%v value:%v\n", boundIterator.Key(), boundIterator.Value())
+	}
+	return listString
 }

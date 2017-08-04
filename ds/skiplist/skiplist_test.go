@@ -49,7 +49,7 @@ func TestInitialization(t *testing.T) {
 	s := NewCustomMap(func(l, r interface{}) bool {
 		return l.(int) < r.(int)
 	})
-	if !s.lessThan(1, 2) {
+	if !s.LessThan(1, 2) {
 		t.Errorf("Less than doesn't work correctly.")
 	}
 }
@@ -921,4 +921,17 @@ func BenchmarkForwardSeekReusedIterator(b *testing.B) {
 			}
 		}
 	}
+}
+
+func TestSkipList_String(t *testing.T) {
+	s := NewIntMap()
+	values := []int{}
+
+	for i := 0; i < 5; i++ {
+		r := rand.Int()
+		values = append(values, r)
+		s.Set(r, r)
+	}
+
+	s.String()
 }

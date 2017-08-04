@@ -62,7 +62,7 @@ func TestGetsWithValidParams(t *testing.T) {
 		WithQuery("startKey", "120").
 		WithQuery("endKey", "130").
 		WithQuery("limit", "20").
-		WithQuery("order", "DESC").
+		WithQuery("order", "ASC").
 		Expect().Status(http.StatusOK).
 		JSON().Array().
 		Length().Equal(2)

@@ -101,7 +101,6 @@ func (rs *Resource) Fetch(
 func (rs *Resource) FetchFromPrimary(
 	table *model.Table,
 	params GetParams) ([]*model.Document, bool) {
-
 	var docs []*model.Document
 
 	if params.Order == "DESC" {
