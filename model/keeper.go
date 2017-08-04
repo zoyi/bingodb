@@ -78,6 +78,10 @@ func (keeper *Keeper) Expire() {
 		fmt.Println(keeper.tree.String())
 		fmt.Println(expireKey.Document)
 		expireKey.Table.Delete(expireKey.Document.PrimaryKeyValue())
+
+		if stream := expireKey.Table.Stream; stream != nil {
+			stream.Emit(&Event{Event: "expired", Ts: util.Now().Millisecond(), Doc: expireKey.Document.GetData()})
+		}
 	}
 }
 

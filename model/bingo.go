@@ -9,8 +9,9 @@ import (
 )
 
 type Bingo struct {
-	Tables *sync.Map
-	Keeper *Keeper
+	Tables   *sync.Map
+	Keeper   *Keeper
+	Adaptors Adaptors
 }
 
 func Load(filename string) *Bingo {
@@ -30,16 +31,18 @@ func newBingo() *Bingo {
 	return &Bingo{Tables: new(sync.Map), Keeper: newKeeper()}
 }
 
-func (bingo *Bingo) AddTable(
+func (bingo *Bingo) addTable(
 	tableName string,
 	schema *TableSchema,
 	primaryIndex *PrimaryIndex,
-	subIndices *sync.Map) {
+	subIndices *sync.Map,
+	stream *Stream) {
 
 	bingo.Tables.Store(tableName, &Table{
 		Bingo:        bingo,
 		Name:         tableName,
 		Schema:       schema,
 		PrimaryIndex: primaryIndex,
-		SubIndices:   subIndices})
+		SubIndices:   subIndices,
+		Stream:       stream})
 }

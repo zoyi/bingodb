@@ -14,6 +14,7 @@ type TableInfo struct {
 	SortKey    string               `yaml:"sortKey"`
 	SubIndices map[string]IndexInfo `yaml:"subIndices"`
 	ExpireKey  string               `yaml:"expireKey"`
+	Stream     StreamInfo           `yaml:"stream"`
 }
 
 type IndexInfo struct {
@@ -22,11 +23,12 @@ type IndexInfo struct {
 }
 
 type ConfigInfo struct {
-	Tables map[string]TableInfo `yaml:"tables"`
+	Tables   map[string]TableInfo   `yaml:"tables"`
+	Adaptors map[string]AdaptorInfo `yaml:"adaptors"`
 }
 
 const (
-	STRING = "string"
+	STRING  = "string"
 	INTEGER = "integer"
 )
 
@@ -60,6 +62,14 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 
 	if len(configInfo.Tables) == 0 {
 		return errors.New("Table cannot be empty")
+	}
+
+	if err := bingo.loadAdaptors(configInfo); err != nil {
+		return err
+	}
+
+	for k, v := range bingo.Adaptors {
+		fmt.Println(k, v)
 	}
 
 	for tableName, tableInfo := range configInfo.Tables {
@@ -101,7 +111,9 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 				Key:  subKey}})
 		}
 
-		bingo.AddTable(tableName, schema, primaryIndex, subIndices)
+		stream := makeStream(bingo.Adaptors, tableInfo.Stream)
+
+		bingo.addTable(tableName, schema, primaryIndex, subIndices, stream)
 	}
 
 	return nil
@@ -110,8 +122,8 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 func isValidTable(tableName string, tableInfo TableInfo) error {
 	format := fmt.Sprintf("Table configuration error (Table '%v')", tableName)
 
-	if err, ok := isValidFields(tableInfo.Fields); !ok {
-		return errors.New(fmt.Sprintf("%v - %v", format, err))
+	if err := isValidFields(tableInfo.Fields); err != nil {
+		return errors.New(fmt.Sprintf("%v - %v", format, err.Error()))
 	}
 
 	if err, ok := isValidSubIndices(tableInfo.SubIndices, tableInfo.Fields); !ok {
@@ -130,17 +142,17 @@ func isValidTable(tableName string, tableInfo TableInfo) error {
 }
 
 // check fields is not empty and field's value type is valid
-func isValidFields(fields map[string]string) (string, bool) {
+func isValidFields(fields map[string]string) error {
 	if len(fields) == 0 {
-		return "fields cannot be empty", false
+		return errors.New("fields cannot be empty")
 	}
 	for fieldName, fieldType := range fields {
 		if ok := isAllowedFieldType(fieldType); !ok {
-			return fmt.Sprintf("unknown field type '%v' in '%v'", fieldType, fieldName), false
+			return errors.New(fmt.Sprintf("unknown field type '%v' in '%v'", fieldType, fieldName))
 		}
 	}
 
-	return "", true
+	return nil
 }
 
 // check subIndices empty, hashKey and SortKey's difference, value is contains in fields

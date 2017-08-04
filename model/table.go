@@ -31,6 +31,7 @@ type Table struct {
 	PrimaryIndex *PrimaryIndex
 	SubIndices   *sync.Map //map of Subindicies
 	Schema       *TableSchema
+	Stream       *Stream
 }
 
 type SubSortTreeKey struct {

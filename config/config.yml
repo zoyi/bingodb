@@ -13,3 +13,11 @@ tables:
       guest:
         hashKey: 'channelId'
         sortKey: 'lastSeen'
+    stream:
+      adaptor: 'amqp'
+      queue: 'online'
+
+adaptors:
+  amqp:
+    driver: 'rabbitmq'
+    url: 'amqp://guest:guest@localhost:5672/'
