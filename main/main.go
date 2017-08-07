@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	addr   = flag.String("addr", ":8080", "TCP address to listen to")
+	addr   = flag.String("addr", ":8090", "TCP address to listen to")
 	config = flag.String("file", "config.yml", "import config file")
 )
 
@@ -20,5 +20,11 @@ func main() {
 	router := api.DefaultRouter(*config)
 
 	fmt.Printf("* Bingo is ready on %s\n", *addr)
-	fasthttp.ListenAndServe(*addr, router.Handler)
+
+	s := &fasthttp.Server {
+		Handler: router.Handler,
+		Name: "bingodb",
+	}
+
+	s.ListenAndServe(*addr)
 }

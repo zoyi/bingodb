@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/zoyi/bingodb/mock"
 	"github.com/zoyi/bingodb/model"
 	"strings"
@@ -24,12 +23,12 @@ func TestResource_Fetch(t *testing.T) {
 	resourcePrepare()
 	tableData, _ := resource.Db.Tables.Load("onlines")
 	table, _ := tableData.(*model.Table)
-	fmt.Printf("tree :%v\n", resource.Db.Keeper.String())
+
 	indexName := new(string)
 	*indexName = "guest"
 
 	hashKey := table.PrimaryIndex.HashKey.Parse("1")
-	startKey := table.PrimaryIndex.SortKey.Parse("test")
+	startKey := table.PrimaryIndex.SortKey.Parse("what")
 
 	params := GetParams{
 		TableName:    "onlines",
@@ -46,8 +45,28 @@ func TestResource_Fetch(t *testing.T) {
 		t.Error("should return ok")
 	}
 
-	if len(docs) != 2 {
-		t.Error("should return length 2: ", len(docs))
+	if len(docs) != 3 {
+		t.Error("should return length 3: ", len(docs))
+	}
+
+	startKey = table.PrimaryIndex.SortKey.Parse("ddd")
+	params = GetParams{
+		TableName:    "onlines",
+		SubIndexName: nil,
+		HashKey:      hashKey,
+		StartKey:     startKey,
+		EndKey:       nil,
+		Limit:        20,
+		Order:        "ASC",
+	}
+
+	docs, ok = resource.Fetch(table, params)
+	if !ok {
+		t.Error("should return ok")
+	}
+
+	if len(docs) != 3 {
+		t.Error("should return length 3: ", len(docs))
 	}
 }
 
@@ -63,7 +82,7 @@ func TestResource_FetchFromPrimary(t *testing.T) {
 		StartKey:     table.PrimaryIndex.SortKey.Parse("ddd"),
 		EndKey:       nil,
 		Limit:        20,
-		Order:        "DESC",
+		Order:        "ASC",
 	}
 
 	docs, ok := resource.FetchFromPrimary(table, params)
@@ -94,7 +113,7 @@ func TestResource_FetchFromSubIndices(t *testing.T) {
 		StartKey:     subIndex.SortKey.Parse("120"),
 		EndKey:       subIndex.SortKey.Parse("140"),
 		Limit:        20,
-		Order:        "DESC",
+		Order:        "ASC",
 	}
 
 	docs, ok := resource.FetchFromSubIndices(table, params)
@@ -103,7 +122,7 @@ func TestResource_FetchFromSubIndices(t *testing.T) {
 	}
 
 	if len(docs) != 3 {
-		t.Error("should return length 3: %d", len(docs))
+		t.Error("should return length 3:", len(docs))
 	}
 
 	params = GetParams{
@@ -120,6 +139,11 @@ func TestResource_FetchFromSubIndices(t *testing.T) {
 	if ok {
 		t.Error("should return not ok")
 	}
+
+	if len(docs) != 0 {
+		t.Error("should return length 0:", len(docs))
+	}
+
 }
 
 func TestResource_Get(t *testing.T) {
@@ -169,7 +193,7 @@ func TestResource_GetMultiple(t *testing.T) {
 		StartKey:     "ddd",
 		EndKey:       nil,
 		Limit:        20,
-		Order:        "DESC",
+		Order:        "ASC",
 	}
 
 	jsonData = resource.GetMultiple(params)

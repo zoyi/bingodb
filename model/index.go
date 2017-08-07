@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/zoyi/bingodb/ds/redblacktree"
+	"github.com/zoyi/bingodb/ds/skiplist"
 	"sync"
 )
 
@@ -27,10 +27,10 @@ func (index *PrimaryIndex) Fetch(
 	var next interface{} = nil
 
 	hash = index.HashKey.Parse(hash)
-	treeData, _ := index.Data.Load(hash)
+	listData, _ := index.Data.Load(hash)
 
-	if tree, ok := treeData.(*redblacktree.Tree); ok {
-		if tree.Size() == 0 {
+	if list, ok := listData.(*skiplist.SkipList); ok {
+		if list.Len() == 0 {
 			return result, next
 		}
 
@@ -40,24 +40,30 @@ func (index *PrimaryIndex) Fetch(
 		if startSortKey != nil {
 			start = index.SortKey.Parse(startSortKey)
 		} else {
-			start = tree.Left().Key
+			start = list.SeekToFirst().Key()
 		}
 		if endSortKey != nil {
 			end = index.SortKey.Parse(endSortKey)
 		} else {
-			end = tree.Right().Key
+			end = list.SeekToLast().Key()
 		}
 
-		if tree.Comparator(start, end) > 0 {
+		//greater or equal - less than
+		boundIterator := list.Seek(start)
+		if boundIterator == nil || 0 >= limit {
 			return result, next
 		}
-
-		for it := tree.Find(start); it.Present() && len(result) <= limit && tree.Comparator(it.Key(), end) <= 0; it.Next() {
-			if len(result) == limit {
-				next = it.Key()
+		//add first element if limit is greater than 0
+		result = append(result, boundIterator.Value().(*Document))
+		for boundIterator.Next() {
+			didReachToEnd := !list.LessThan(boundIterator.Key(), end) && boundIterator.Key() != end
+			if len(result) == limit || didReachToEnd {
+				if boundIterator.Next() {
+					next = boundIterator.Key()
+				}
 				break
 			}
-			result = append(result, it.Value().(*Document))
+			result = append(result, boundIterator.Value().(*Document))
 		}
 	}
 
@@ -74,10 +80,10 @@ func (index *PrimaryIndex) RFetch(
 	var next interface{} = nil
 
 	hash = index.HashKey.Parse(hash)
-	treeData, _ := index.Data.Load(hash)
+	listData, _ := index.Data.Load(hash)
 
-	if tree, ok := treeData.(*redblacktree.Tree); ok {
-		if tree.Size() == 0 {
+	if list, ok := listData.(*skiplist.SkipList); ok {
+		if list.Len() == 0 {
 			return result, next
 		}
 
@@ -87,24 +93,30 @@ func (index *PrimaryIndex) RFetch(
 		if startSortKey != nil {
 			start = index.SortKey.Parse(startSortKey)
 		} else {
-			start = tree.Left().Key
+			start = list.SeekToLast().Key()
 		}
 		if endSortKey != nil {
 			end = index.SortKey.Parse(endSortKey)
 		} else {
-			end = tree.Right().Key
+			end = list.SeekToFirst().Key()
 		}
 
-		if tree.Comparator(start, end) > 0 {
+		//greater or equal - less than
+		boundIterator := list.Seek(start)
+		if boundIterator == nil || 0 >= limit {
 			return result, next
 		}
-
-		for it := tree.RFind(end); it.Present() && len(result) <= limit && tree.Comparator(start, it.Key()) <= 0; it.Next() {
-			if len(result) == limit {
-				next = it.Key()
+		//add first element if limit is greater than 0
+		result = append(result, boundIterator.Value().(*Document))
+		for boundIterator.Previous() {
+			didReachToEnd := list.LessThan(boundIterator.Key(), end) && boundIterator.Key() != end
+			if len(result) == limit || didReachToEnd {
+				if boundIterator.Previous() {
+					next = boundIterator.Key()
+				}
 				break
 			}
-			result = append(result, it.Value().(*Document))
+			result = append(result, boundIterator.Value().(*Document))
 		}
 	}
 
@@ -120,30 +132,37 @@ func (index *SubIndex) Fetch(
 	var next SubSortTreeKey
 
 	hash = index.HashKey.Parse(hash)
-	treeData, _ := index.Data.Load(hash)
+	listData, _ := index.Data.Load(hash)
 
-	if tree, ok := treeData.(*redblacktree.Tree); ok {
-		if tree.Size() == 0 {
+	if list, ok := listData.(*skiplist.SkipList); ok {
+		if list.Len() == 0 {
 			return result, next
 		}
 
 		if startSortKey.Empty() {
-			startSortKey = tree.Left().Key.(SubSortTreeKey)
+			startSortKey = list.SeekToFirst().Key().(SubSortTreeKey)
 		}
 		if endSortKey.Empty() {
-			endSortKey = tree.Right().Key.(SubSortTreeKey)
+			endSortKey = list.SeekToLast().Key().(SubSortTreeKey)
 		}
 
-		if tree.Comparator(startSortKey, endSortKey) > 0 {
+		//greater or equal - less than
+		boundIterator := list.Seek(startSortKey)
+		if boundIterator == nil || 0 >= limit {
 			return result, next
 		}
-
-		for it := tree.Find(startSortKey); it.Present() && len(result) <= limit && tree.Comparator(it.Key(), endSortKey) <= 0; it.Next() {
-			if len(result) == limit {
-				next = it.Key().(SubSortTreeKey)
+		//add first element
+		result = append(result, boundIterator.Key().(SubSortTreeKey).Document)
+		for boundIterator.Next() {
+			didReachToEnd := !list.LessThan(boundIterator.Key().(SubSortTreeKey), endSortKey) &&
+				boundIterator.Key() != endSortKey
+			if len(result) == limit || didReachToEnd {
+				if boundIterator.Next() {
+					next = boundIterator.Key().(SubSortTreeKey)
+				}
 				break
 			}
-			result = append(result, it.Key().(SubSortTreeKey).Document)
+			result = append(result, boundIterator.Key().(SubSortTreeKey).Document)
 		}
 	}
 	return result, next
@@ -159,30 +178,37 @@ func (index *SubIndex) RFetch(
 	var next SubSortTreeKey
 
 	hash = index.HashKey.Parse(hash)
-	treeData, _ := index.Data.Load(hash)
+	listData, _ := index.Data.Load(hash)
 
-	if tree, ok := treeData.(*redblacktree.Tree); ok {
-		if tree.Size() == 0 {
+	if list, ok := listData.(*skiplist.SkipList); ok {
+		if list.Len() == 0 {
 			return result, next
 		}
 
 		if startSortKey.Empty() {
-			startSortKey = tree.Left().Key.(SubSortTreeKey)
+			startSortKey = list.SeekToFirst().Key().(SubSortTreeKey)
 		}
 		if endSortKey.Empty() {
-			endSortKey = tree.Right().Key.(SubSortTreeKey)
+			endSortKey = list.SeekToLast().Key().(SubSortTreeKey)
 		}
 
-		if tree.Comparator(startSortKey, endSortKey) > 0 {
+		//greater or equal - less than
+		boundIterator := list.Seek(startSortKey)
+		if boundIterator == nil || 0 >= limit {
 			return result, next
 		}
-
-		for it := tree.RFind(endSortKey); it.Present() && len(result) <= limit && tree.Comparator(startSortKey, it.Key()) <= 0; it.Next() {
-			if len(result) == limit {
-				next = it.Key().(SubSortTreeKey)
+		//add first element if limit is greater than 0
+		result = append(result, boundIterator.Key().(SubSortTreeKey).Document)
+		for boundIterator.Previous() {
+			didReachToEnd := list.LessThan(boundIterator.Key().(SubSortTreeKey), endSortKey) &&
+				boundIterator.Key() != endSortKey
+			if len(result) == limit || didReachToEnd {
+				if boundIterator.Previous() {
+					next = boundIterator.Key().(SubSortTreeKey)
+				}
 				break
 			}
-			result = append(result, it.Key().(SubSortTreeKey).Document)
+			result = append(result, boundIterator.Key().(SubSortTreeKey).Document)
 		}
 	}
 
@@ -196,10 +222,10 @@ func (index *PrimaryIndex) delete(
 	hash = index.HashKey.Parse(hash)
 	sort = index.SortKey.Parse(sort)
 
-	treeData, _ := index.Data.Load(hash)
+	listData, _ := index.Data.Load(hash)
 
-	if tree, ok := treeData.(*redblacktree.Tree); ok {
-		value, present := tree.Remove(sort)
+	if list, ok := listData.(*skiplist.SkipList); ok {
+		value, present := list.Delete(sort)
 		if !present {
 			return nil, false
 		}
@@ -213,10 +239,10 @@ func (index *SubIndex) delete(doc *Document) {
 	hash := doc.Get(index.HashKey.Name)
 	sort := SubSortTreeKey{Key: doc.Get(index.SortKey.Name), Document: doc}
 
-	treeData, _ := index.Data.Load(hash)
+	listData, _ := index.Data.Load(hash)
 
-	if tree, ok := treeData.(*redblacktree.Tree); ok {
-		tree.Remove(sort)
+	if list, ok := listData.(*skiplist.SkipList); ok {
+		list.Delete(sort)
 	}
 }
 
@@ -227,10 +253,10 @@ func (index *PrimaryIndex) Get(
 	hash = index.HashKey.Parse(hash)
 	sort = index.SortKey.Parse(sort)
 
-	treeData, _ := index.Data.Load(hash)
+	listData, _ := index.Data.Load(hash)
 
-	if tree, ok := treeData.(*redblacktree.Tree); ok {
-		value, present := tree.Get(sort)
+	if list, ok := listData.(*skiplist.SkipList); ok {
+		value, present := list.Get(sort)
 		if !present {
 			return nil, false
 		}
@@ -248,15 +274,16 @@ func (index *SubIndex) Get(
 	hash = index.HashKey.Parse(hash)
 	sort = index.SortKey.Parse(sort)
 
-	treeData, _ := index.Data.Load(hash)
+	listData, _ := index.Data.Load(hash)
 
-	if tree, ok := treeData.(*redblacktree.Tree); ok {
-		node, present := tree.Ceiling(SubSortTreeKey{Key: sort})
-		if !present || node.Key.(SubSortTreeKey).Key != sort {
+	if list, ok := listData.(*skiplist.SkipList); ok {
+		keyData, _, present := list.GetPair(SubSortTreeKey{Key: sort})
+		key := keyData.(SubSortTreeKey)
+		if !present || key.Key != sort {
 			return nil, false
 		}
 
-		return node.Key.(SubSortTreeKey).Document, true
+		return key.Document, true
 	}
 
 	return nil, false
@@ -266,18 +293,16 @@ func (index *PrimaryIndex) put(doc *Document) (*Document, bool) {
 	hashValue := doc.Get(index.HashKey.Name)
 	sortValue := doc.Get(index.SortKey.Name)
 
-	var tree *redblacktree.Tree
-	var ok bool
-	treeData, ok := index.Data.Load(hashValue)
+	var list *skiplist.SkipList
 
-	if !ok {
-		tree = redblacktree.NewWithStringComparator()
-		index.Data.Store(hashValue, tree)
-	} else if tree, ok = treeData.(*redblacktree.Tree); !ok {
-		return nil, false
+	if listData, ok := index.Data.Load(hashValue); ok {
+		list, _ = listData.(*skiplist.SkipList)
+	} else {
+		list = skiplist.NewStringMap()
+		index.Data.Store(hashValue, list)
 	}
 
-	removed, replaced := tree.Put(sortValue, doc)
+	removed, replaced := list.Set(sortValue, doc)
 	if replaced {
 		return removed.(*Document), true
 	} else {
@@ -289,25 +314,24 @@ func (index *SubIndex) put(doc *Document) {
 	hashValue := doc.Get(index.HashKey.Name)
 	sortValue := SubSortTreeKey{Key: doc.Get(index.SortKey.Name), Document: doc}
 
-	var tree *redblacktree.Tree
+	var list *skiplist.SkipList
 	var ok bool
 
-	treeData, _ := index.Data.Load(hashValue)
+	listData, _ := index.Data.Load(hashValue)
 
-	if tree, ok = treeData.(*redblacktree.Tree); !ok {
-		tree = &redblacktree.Tree{Comparator: func(a, b interface{}) int {
-			ka := a.(SubSortTreeKey)
-			kb := b.(SubSortTreeKey)
+	if list, ok = listData.(*skiplist.SkipList); !ok {
+		list = skiplist.NewCustomMap(func(l, r interface{}) bool {
+			ka := l.(SubSortTreeKey)
+			kb := r.(SubSortTreeKey)
 			o := GeneralCompare(ka.Key, kb.Key)
 			if o != 0 {
-				return o
+				return o < 0
 			}
 
-			return doc.schema.PrimaryKey.Compare(ka.Document, kb.Document)
-		},
-		}
-		index.Data.Store(hashValue, tree)
+			return doc.schema.PrimaryKey.Compare(ka.Document, kb.Document) < 0
+		})
+		index.Data.Store(hashValue, list)
 	}
 
-	tree.Put(sortValue, nil)
+	list.Set(sortValue, nil)
 }
