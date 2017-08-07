@@ -110,85 +110,86 @@ func ParseConfigBytes(bingo *Bingo, config []byte) error {
 func isValidTable(tableName string, tableInfo TableInfo) error {
 	format := fmt.Sprintf("Table configuration error (Table '%v')", tableName)
 
-	if err, ok := isValidFields(tableInfo.Fields); !ok {
-		return errors.New(fmt.Sprintf("%v - %v", format, err))
+	if err := isValidFields(tableInfo.Fields); err != nil {
+		return errors.New(fmt.Sprintf("%v - %v", format, err.Error()))
 	}
 
-	if err, ok := isValidSubIndices(tableInfo.SubIndices, tableInfo.Fields); !ok {
-		return errors.New(fmt.Sprintf("%v - %v", format, err))
+	if err := isValidSubIndices(tableInfo.SubIndices, tableInfo.Fields); err != nil {
+		return errors.New(fmt.Sprintf("%v - %v", format, err.Error()))
 	}
 
-	if err, ok := isValidKeySet(tableInfo.HashKey, tableInfo.SortKey, tableInfo.Fields); !ok {
-		return errors.New(fmt.Sprintf("%v - %v", format, err))
+	if err := isValidKeySet(tableInfo.HashKey, tableInfo.SortKey, tableInfo.Fields); err != nil {
+		return errors.New(fmt.Sprintf("%v - %v", format, err.Error()))
 	}
 
-	if err, ok := isValidExpireKey(tableInfo.ExpireKey, tableInfo.Fields); !ok {
-		return errors.New(fmt.Sprintf("%v - %v", format, err))
+	if err := isValidExpireKey(tableInfo.ExpireKey, tableInfo.Fields); err != nil {
+		return errors.New(fmt.Sprintf("%v - %v", format, err.Error()))
 	}
 
 	return nil
 }
 
 // check fields is not empty and field's value type is valid
-func isValidFields(fields map[string]string) (string, bool) {
+func isValidFields(fields map[string]string) error {
 	if len(fields) == 0 {
-		return "fields cannot be empty", false
+		return errors.New("fields cannot be empty")
 	}
 	for fieldName, fieldType := range fields {
 		if ok := isAllowedFieldType(fieldType); !ok {
-			return fmt.Sprintf("unknown field type '%v' in '%v'", fieldType, fieldName), false
+			return errors.New(fmt.Sprintf("unknown field type '%v' in '%v'", fieldType, fieldName))
 		}
 	}
 
-	return "", true
+	return nil
 }
 
 // check subIndices empty, hashKey and SortKey's difference, value is contains in fields
-func isValidSubIndices(subIndices map[string]IndexInfo, fields map[string]string) (string, bool) {
+func isValidSubIndices(subIndices map[string]IndexInfo, fields map[string]string) error {
 	for indexName, indexInfo := range subIndices {
-		if err, ok := isValidKeySet(indexInfo.HashKey, indexInfo.SortKey, fields); !ok {
-			return fmt.Sprintf("%v in index '%v' for subIndices", err, indexName), false
+		if err := isValidKeySet(indexInfo.HashKey, indexInfo.SortKey, fields); err != nil {
+			return errors.New(fmt.Sprintf("%v in index '%v' for subIndices", err.Error(), indexName))
 		}
 	}
 
-	return "", true
+	return nil
 }
 
-func isValidKeySet(hashKey string, sortKey string, fields map[string]string) (string, bool) {
-	if err, ok := isValidReferenceField(hashKey, "hashKey", fields); !ok {
-		return err, false
+func isValidKeySet(hashKey string, sortKey string, fields map[string]string) error {
+	if err := isValidReferenceField(hashKey, "hashKey", fields); err != nil {
+		return err
 	}
-	if err, ok := isValidReferenceField(sortKey, "sortKey", fields); !ok {
-		return err, false
+	if err := isValidReferenceField(sortKey, "sortKey", fields); err != nil {
+		return err
 	}
 	if hashKey == sortKey {
-		return "hashKey and sortKey must be different", false
+		return errors.New("hashKey and sortKey must be different")
 	}
 
-	return "", true
+	return nil
 }
 
-func isValidExpireKey(expireKey string, fields map[string]string) (string, bool) {
-	if err, ok := isValidReferenceField(expireKey, "expireKey", fields); !ok {
-		return err, false
+func isValidExpireKey(expireKey string, fields map[string]string) error {
+	if err := isValidReferenceField(expireKey, "expireKey", fields); err != nil {
+		return err
 	}
 
 	if fields[expireKey] != INTEGER {
-		return fmt.Sprintf("Only integer type can be used for expireKey. Current key '%v' is '%v'", expireKey, fields[expireKey]), false
+		return errors.New(
+			fmt.Sprintf("Only integer type can be used for expireKey. Current key '%v' is '%v'", expireKey, fields[expireKey]))
 	}
 
-	return "", true
+	return nil
 }
 
-func isValidReferenceField(key string, name string, fields map[string]string) (string, bool) {
+func isValidReferenceField(key string, name string, fields map[string]string) error {
 	if key == "" {
-		return fmt.Sprintf("%v cannot be empty", name), false
+		return errors.New(fmt.Sprintf("%v cannot be empty", name))
 	}
 	if _, ok := fields[key]; !ok {
-		return fmt.Sprintf("undefined field '%v' for %v", key, name), false
+		return errors.New(fmt.Sprintf("undefined field '%v' for %v", key, name))
 	}
 
-	return "", true
+	return nil
 }
 
 func isAllowedFieldType(fieldType string) bool {
