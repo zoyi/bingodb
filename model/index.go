@@ -277,18 +277,19 @@ func (index *SubIndex) Get(
 	listData, _ := index.Data.Load(hash)
 
 	if list, ok := listData.(*skiplist.SkipList); ok {
-		value, present := list.Get(SubSortTreeKey{Key: sort})
-		if !present || value != sort {
+		keyData, _, present := list.GetPair(SubSortTreeKey{Key: sort})
+		key := keyData.(SubSortTreeKey)
+		if !present || key.Key != sort {
 			return nil, false
 		}
 
-		return value.(*Document), true
+		return key.Document, true
 	}
 
 	return nil, false
 }
 
-func (index *PrimaryIndex) put(doc *Document) *Document {
+func (index *PrimaryIndex) put(doc *Document) (*Document, bool) {
 	hashValue := doc.Get(index.HashKey.Name)
 	sortValue := doc.Get(index.SortKey.Name)
 
@@ -301,8 +302,12 @@ func (index *PrimaryIndex) put(doc *Document) *Document {
 		index.Data.Store(hashValue, list)
 	}
 
-	list.Set(sortValue, doc)
-	return doc
+	removed, replaced := list.Set(sortValue, doc)
+	if replaced {
+		return removed.(*Document), true
+	} else {
+		return nil, false
+	}
 }
 
 func (index *SubIndex) put(doc *Document) {
@@ -325,8 +330,8 @@ func (index *SubIndex) put(doc *Document) {
 
 			return doc.schema.PrimaryKey.Compare(ka.Document, kb.Document) < 0
 		})
+		index.Data.Store(hashValue, list)
 	}
 
-	index.Data.Store(hashValue, list)
 	list.Set(sortValue, nil)
 }

@@ -364,6 +364,16 @@ func (s SkipList) randomLevel() (n int) {
 	return
 }
 
+func (s *SkipList) GetPair(k interface{}) (key, value interface{}, ok bool) {
+	candidate := s.getPath(s.header, nil, key)
+
+	if candidate == nil || candidate.key != key {
+		return nil, nil, false
+	}
+
+	return candidate.key, candidate.value, true
+}
+
 // Get returns the value associated with key from s (nil if the key is
 // not present in s). The second return value is true when the key is
 // present.
@@ -412,7 +422,7 @@ func (s *SkipList) getPath(current *node, update []*node, key interface{}) *node
 }
 
 // Sets set the value associated with key in s.
-func (s *SkipList) Set(key, value interface{}) {
+func (s *SkipList) Set(key, value interface{}) (interface{}, bool) {
 	if key == nil {
 		panic("goskiplist: nil keys are not supported")
 	}
@@ -425,8 +435,9 @@ func (s *SkipList) Set(key, value interface{}) {
 	candidate := s.getPath(s.header, update, key)
 
 	if candidate != nil && candidate.key == key {
+		removed := candidate.value
 		candidate.value = value
-		return
+		return removed, true
 	}
 
 	newLevel := s.randomLevel()
@@ -467,6 +478,8 @@ func (s *SkipList) Set(key, value interface{}) {
 	if s.footer == nil || s.LessThan(s.footer.key, key) {
 		s.footer = newNode
 	}
+
+	return nil, false
 }
 
 // Delete removes the node with the given key.

@@ -31,11 +31,8 @@ func comparator(l, r interface{}) bool {
 	if a.Table == nil || b.Table == nil {
 		if a.Table == b.Table {
 			return false
-		} else if a.Table == nil {
-			return false
-		} else {
-			return true
 		}
+		return a.Table == nil
 	}
 
 	diff = utils.StringComparator(a.Table.Name, b.Table.Name)
@@ -71,10 +68,16 @@ func (keeper *Keeper) delete(table *Table, doc *Document) {
 }
 
 func (keeper *Keeper) Expire() {
-	boundIterator := keeper.list.Seek(&ExpireKey{ExpiresAt: util.Now().Millisecond()})
-	for boundIterator.Previous() {
-		expireKey := boundIterator.Key().(*ExpireKey)
-		expireKey.Table.Delete(expireKey.Document.PrimaryKeyValue())
+	currentTime := util.Now().Millisecond()
+
+	for true {
+		if key, ok := keeper.list.SeekToFirst().Key().(*ExpireKey); ok {
+			if key.ExpiresAt < currentTime {
+				key.Table.Delete(key.Document.PrimaryKeyValue())
+			}
+		} else {
+			break
+		}
 	}
 }
 
