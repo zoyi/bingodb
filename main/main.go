@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+
 	"github.com/CrowdSurge/banner"
 	"github.com/valyala/fasthttp"
 	"github.com/zoyi/bingodb/api"

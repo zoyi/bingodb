@@ -1,8 +1,9 @@
 package api
 
 import (
-	"github.com/zoyi/bingodb/model"
 	"testing"
+
+	"github.com/zoyi/bingodb/model"
 )
 
 var resource *Resource

@@ -3,9 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/zoyi/bingodb/model"
 	"strings"
 	"testing"
+
+	"github.com/zoyi/bingodb/model"
 )
 
 var bingo *model.Bingo

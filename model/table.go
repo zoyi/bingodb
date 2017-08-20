@@ -2,10 +2,11 @@ package model
 
 import (
 	"encoding/json"
-	"github.com/emirpasic/gods/utils"
 	"reflect"
 	"strconv"
 	"sync"
+
+	"github.com/emirpasic/gods/utils"
 )
 
 type FieldSchema struct {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
 	"github.com/zoyi/bingodb/mock"

@@ -3,10 +3,11 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/zoyi/bingodb/mock"
-	"github.com/zoyi/bingodb/model"
 	"strings"
 	"testing"
+
+	"github.com/zoyi/bingodb/mock"
+	"github.com/zoyi/bingodb/model"
 )
 
 var response *Resource

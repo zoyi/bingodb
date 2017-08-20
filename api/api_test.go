@@ -1,9 +1,10 @@
 package api
 
 import (
-	"github.com/gavv/httpexpect"
 	"net/http"
 	"testing"
+
+	"github.com/gavv/httpexpect"
 )
 
 var (

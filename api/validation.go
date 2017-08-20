@@ -2,10 +2,11 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/valyala/fasthttp"
-	"github.com/zoyi/bingodb/model"
 	"strconv"
 	"strings"
+
+	"github.com/valyala/fasthttp"
+	"github.com/zoyi/bingodb/model"
 )
 
 func (rs *Resource) GetKeysForPrimary(

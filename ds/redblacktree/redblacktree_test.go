@@ -6,9 +6,10 @@ package redblacktree
 
 import (
 	"fmt"
-	"github.com/emirpasic/gods/utils"
 	"sync"
 	"testing"
+
+	"github.com/emirpasic/gods/utils"
 )
 
 func TestRedBlackTreeIterator1Next(t *testing.T) {

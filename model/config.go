@@ -3,9 +3,10 @@ package model
 import (
 	"errors"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"sync"
+
+	"gopkg.in/yaml.v2"
 )
 
 type TableInfo struct {

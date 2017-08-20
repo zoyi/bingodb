@@ -2,8 +2,9 @@ package mock
 
 import (
 	"encoding/json"
-	"github.com/zoyi/bingodb/model"
 	"strings"
+
+	"github.com/zoyi/bingodb/model"
 )
 
 func InitDefaultSeedData(bingo *model.Bingo) {

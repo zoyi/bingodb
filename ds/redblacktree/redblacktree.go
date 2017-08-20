@@ -13,8 +13,9 @@ package redblacktree
 
 import (
 	"fmt"
-	"github.com/emirpasic/gods/utils"
 	"sync"
+
+	"github.com/emirpasic/gods/utils"
 )
 
 //func assertTreeImplementation() {

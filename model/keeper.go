@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+
 	"github.com/emirpasic/gods/utils"
 	"github.com/zoyi/bingodb/ds/redblacktree"
 	"github.com/zoyi/bingodb/util"

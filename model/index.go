@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/zoyi/bingodb/ds/redblacktree"
 	"sync"
+
+	"github.com/zoyi/bingodb/ds/redblacktree"
 )
 
 type Index struct {
