@@ -6,6 +6,7 @@ import (
 	"github.com/CrowdSurge/banner"
 	"github.com/valyala/fasthttp"
 	"github.com/zoyi/bingodb/api"
+	"github.com/zoyi/bingodb"
 )
 
 var (
@@ -17,8 +18,11 @@ func main() {
 	banner.Print("bingodb")
 	fmt.Printf("									by ZOYI\n")
 
-	router := api.DefaultRouter(*config)
+	fmt.Printf("* Loaded configration file..\n")
+	bingo := bingodb.Load(*config)
 
-	fmt.Printf("* Bingo is ready on %s\n", *addr)
+	router := api.MakeRouter(bingo)
+
+	fmt.Printf("* bingo is ready on %s\n", *addr)
 	fasthttp.ListenAndServe(*addr, router.Handler)
 }

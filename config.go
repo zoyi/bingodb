@@ -1,28 +1,30 @@
-package model
+package bingodb
 
 import (
 	"errors"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	"sync"
 )
 
-type TableInfo struct {
+
+type MetricsConfig struct {
+	Table string `yaml:"table"`
+	Ttl int `yaml:"ttl"`
+	Interval int `yaml:"interval"`
+}
+
+type TableConfig struct {
 	Fields     map[string]string    `yaml:"fields"`
 	HashKey    string               `yaml:"hashKey"`
 	SortKey    string               `yaml:"sortKey"`
-	SubIndices map[string]IndexInfo `yaml:"subIndices"`
+	SubIndices map[string]string    `yaml:"subIndices"`
 	ExpireKey  string               `yaml:"expireKey"`
+	Metrics    *MetricsConfig        `yaml:"metrics"`
 }
 
-type IndexInfo struct {
-	HashKey string `yaml:"hashKey"`
-	SortKey string `yaml:"sortKey"`
-}
-
-type ConfigInfo struct {
-	Tables map[string]TableInfo `yaml:"tables"`
+type BingoConfig struct {
+	Tables map[string]TableConfig `yaml:"tables,omitempty"`
 }
 
 const (
@@ -31,7 +33,7 @@ const (
 )
 
 // Load configuration file with specified path and
-// parse it to create table schema to prepare Bingo.
+// parse it to create source schema to prepare bingo.
 // It returns any error encountered.
 func ParseConfig(bingo *Bingo, path string) error {
 	configBytes, err := ioutil.ReadFile(path)
@@ -42,81 +44,73 @@ func ParseConfig(bingo *Bingo, path string) error {
 }
 
 // Parse specified string of configuration and
-// create table schema to prepare Bingo.
+// create source schema to prepare bingo.
 // It returns any error encountered.
 func ParseConfigString(bingo *Bingo, configString string) error {
 	return ParseConfigBytes(bingo, []byte(configString))
 }
 
 // Parse specified bytes of configuration and
-// create table schema to prepare Bingo.
+// create source schema to prepare bingo.
 // It returns any error encountered.
-func ParseConfigBytes(bingo *Bingo, config []byte) error {
-	configInfo := &ConfigInfo{}
+func ParseConfigBytes(bingo *Bingo, configBytes []byte) error {
+	bingoConfig := &BingoConfig{}
 
-	if err := yaml.UnmarshalStrict(config, configInfo); err != nil {
+	if err := yaml.UnmarshalStrict(configBytes, bingoConfig); err != nil {
 		return err
 	}
 
-	if len(configInfo.Tables) == 0 {
+	if len(bingoConfig.Tables) == 0 {
 		return errors.New("Table cannot be empty")
 	}
 
-	for tableName, tableInfo := range configInfo.Tables {
-		if err := isValidTable(tableName, tableInfo); err != nil {
+	for tableName, tableConfig := range bingoConfig.Tables {
+		if len(tableName) == 0 {
+			continue
+		}
+		if err := isValidTable(tableName, tableConfig); err != nil {
 			return err
 		}
 
 		fields := make(map[string]*FieldSchema)
 
-		for fieldKey, fieldType := range tableInfo.Fields {
+		for fieldKey, fieldType := range tableConfig.Fields {
 			field := &FieldSchema{Name: fieldKey, Type: fieldType}
 			fields[fieldKey] = field
 		}
 
-		primaryKey := &Key{
-			HashKey: fields[tableInfo.HashKey],
-			SortKey: fields[tableInfo.SortKey]}
 		schema := &TableSchema{
-			Fields:       fields,
-			PrimaryKey:   primaryKey,
-			SubIndexKeys: new(sync.Map),
-			ExpireField:  fields[tableInfo.ExpireKey]}
+			fields:       fields,
+			hashKey: fields[tableConfig.HashKey],
+			sortKey: fields[tableConfig.SortKey],
+			expireField:  fields[tableConfig.ExpireKey]}
 
-		primaryIndex := &PrimaryIndex{&Index{
-			Data: new(sync.Map),
-			Key:  primaryKey}}
+		primaryIndex := &PrimaryIndex{index: newIndex(schema, fields[tableConfig.SortKey])}
 
-		subIndices := new(sync.Map)
+		subIndices := make(map[string]*SubIndex)
 
-		for indexName, indexInfo := range tableInfo.SubIndices {
-
-			subKey := &Key{HashKey: fields[indexInfo.HashKey],
-				SortKey: fields[indexInfo.SortKey]}
-
-			schema.SubIndexKeys.Store(indexName, subKey)
-
-			subIndices.Store(indexName, &SubIndex{&Index{
-				Data: new(sync.Map),
-				Key:  subKey}})
+		for indexName, sortKeyName := range tableConfig.SubIndices {
+			subIndices[indexName] = &SubIndex{index: newIndex(schema, fields[sortKeyName])}
 		}
 
-		bingo.AddTable(tableName, schema, primaryIndex, subIndices)
+		bingo.tables[tableName] = newTable(bingo, tableName, schema, primaryIndex, subIndices, tableConfig.Metrics)
 	}
+
+	bingo.setMetrics()
 
 	return nil
 }
 
-func isValidTable(tableName string, tableInfo TableInfo) error {
+func isValidTable(tableName string, tableInfo TableConfig) error {
 	format := fmt.Sprintf("Table configuration error (Table '%v')", tableName)
 
 	if err := isValidFields(tableInfo.Fields); err != nil {
 		return errors.New(fmt.Sprintf("%v - %v", format, err.Error()))
 	}
 
-	if err := isValidSubIndices(tableInfo.SubIndices, tableInfo.Fields); err != nil {
-		return errors.New(fmt.Sprintf("%v - %v", format, err.Error()))
-	}
+	//if err := isValidSubIndices(tableInfo.SubIndices, tableInfo.Fields); err != nil {
+	//	return errors.New(fmt.Sprintf("%v - %v", format, err.Error()))
+	//}
 
 	if err := isValidKeySet(tableInfo.HashKey, tableInfo.SortKey, tableInfo.Fields); err != nil {
 		return errors.New(fmt.Sprintf("%v - %v", format, err.Error()))
@@ -143,26 +137,26 @@ func isValidFields(fields map[string]string) error {
 	return nil
 }
 
-// check subIndices empty, hashKey and SortKey's difference, value is contains in fields
-func isValidSubIndices(subIndices map[string]IndexInfo, fields map[string]string) error {
-	for indexName, indexInfo := range subIndices {
-		if err := isValidKeySet(indexInfo.HashKey, indexInfo.SortKey, fields); err != nil {
-			return errors.New(fmt.Sprintf("%v in index '%v' for subIndices", err.Error(), indexName))
-		}
-	}
-
-	return nil
-}
+// check subIndices empty, HashKey and SortKey's difference, value is contains in fields
+//func isValidSubIndices(subIndices map[string]IndexConfig, fields map[string]string) error {
+//	for IndexName, indexInfo := range subIndices {
+//		if err := isValidKeySet(indexInfo.HashKey, indexInfo.SortKey, fields); err != nil {
+//			return errors.New(fmt.Sprintf("%v in index '%v' for subIndices", err.Error(), IndexName))
+//		}
+//	}
+//
+//	return nil
+//}
 
 func isValidKeySet(hashKey string, sortKey string, fields map[string]string) error {
-	if err := isValidReferenceField(hashKey, "hashKey", fields); err != nil {
+	if err := isValidReferenceField(hashKey, "HashKey", fields); err != nil {
 		return err
 	}
 	if err := isValidReferenceField(sortKey, "sortKey", fields); err != nil {
 		return err
 	}
 	if hashKey == sortKey {
-		return errors.New("hashKey and sortKey must be different")
+		return errors.New("HashKey and sortKey must be different")
 	}
 
 	return nil

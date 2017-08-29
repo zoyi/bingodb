@@ -10,6 +10,18 @@ tables:
     hashKey: 'channelId'
     sortKey: 'id'
     subIndices:
-      guest:
-        hashKey: 'channelId'
-        sortKey: 'lastSeen'
+      guest: 'lastSeen'
+    metrics:
+      table: 'metrics'
+      ttl: 60
+      interval: 2
+
+  metrics:
+    fields:
+      channelId: 'string'
+      time: 'integer'
+      count: 'integer'
+      expiresAt: 'integer'
+    expireKey: 'expiresAt'
+    hashKey: 'channelId'
+    sortKey: 'time'

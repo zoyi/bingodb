@@ -13,7 +13,7 @@ var bingo *model.Bingo
 func prepare() {
 	bingo = model.Load("test_config.yml")
 
-	tableData, _ := bingo.Tables.Load("onlines")
+	tableData, _ := bingo.tables.Load("onlines")
 	table := tableData.(*model.Table)
 	{
 		var s = `{
@@ -99,17 +99,17 @@ func prepare() {
 	fmt.Println(table.Index("guest").Get("1", "100"))
 
 	fmt.Println("expire keeper tree")
-	fmt.Println(bingo.Keeper.String())
-	bingo.Keeper.Expire()
-	fmt.Println(bingo.Keeper.String())
+	fmt.Println(bingo.keeper.String())
+	bingo.keeper.Expire()
+	fmt.Println(bingo.keeper.String())
 	fmt.Println(table.Index("guest").Get("1", "123"))
 
 	fmt.Println("====")
 
 	fmt.Println("expire keeper tree")
-	fmt.Println(bingo.Keeper.String())
-	bingo.Keeper.Expire()
-	fmt.Println(bingo.Keeper.String())
+	fmt.Println(bingo.keeper.String())
+	bingo.keeper.Expire()
+	fmt.Println(bingo.keeper.String())
 	fmt.Println(table.Index("guest").Get("1", "123"))
 }
 
