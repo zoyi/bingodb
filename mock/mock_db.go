@@ -7,7 +7,7 @@ import (
 )
 
 func InitDefaultSeedData(bingo *model.Bingo) {
-	tableData, _ := bingo.Tables.Load("onlines")
+	tableData, _ := bingo.tables.Load("onlines")
 	table := tableData.(*model.Table)
 	{
 		var s = `{

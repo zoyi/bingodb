@@ -1,4 +1,4 @@
-package model
+package bingodb
 
 import (
 	"fmt"
@@ -44,9 +44,7 @@ tables:
     hashKey: 'name'
     sortKey: 'id'
     subIndices:
-      friends:
-        hashKey: 'email'
-        sortKey: 'name'
+      friends: 'name'
 `
 
 	bingo := newBingo()
@@ -94,11 +92,11 @@ tables:
       email: 'string'
       expiresAt: 'integer'
     expireKey: 'expiresAt'
-    hashKey: 'name'
+    HashKey: 'name'
     sortKey: 'id'
     subIndices:
       friends:
-        hashKey: 'email'
+        HashKey: 'email'
         sortKey: 'name'
 `
 
@@ -116,11 +114,11 @@ func TestErrorWhenFieldsIsEmpty(t *testing.T)  {
 tables:
   weird:
     expireKey: 'expiresAt'
-    hashKey: 'name'
+    HashKey: 'name'
     sortKey: 'id'
     subIndices:
       friends:
-        hashKey: 'email'
+        HashKey: 'email'
         sortKey: 'name'
 `
 
@@ -143,11 +141,11 @@ tables:
       email: 'weird'
       expiresAt: 'integer'
     expireKey: 'expiresAt'
-    hashKey: 'name'
+    HashKey: 'name'
     sortKey: 'id'
     subIndices:
       friends:
-        hashKey: 'email'
+        HashKey: 'email'
         sortKey: 'name'
 `
 
@@ -173,7 +171,7 @@ tables:
     sortKey: 'id'
     subIndices:
       friends:
-        hashKey: 'email'
+        HashKey: 'email'
         sortKey: 'name'
 `
 
@@ -196,11 +194,11 @@ tables:
       email: 'string'
       expiresAt: 'integer'
     expireKey: 'expiresAt'
-    hashKey: 'weird'
+    HashKey: 'weird'
     sortKey: 'name'
     subIndices:
       friends:
-        hashKey: 'email'
+        HashKey: 'email'
         sortKey: 'name'
 `
 
@@ -223,10 +221,10 @@ tables:
       email: 'string'
       expiresAt: 'integer'
     expireKey: 'expiresAt'
-    hashKey: 'name'
+    HashKey: 'name'
     subIndices:
       friends:
-        hashKey: 'email'
+        HashKey: 'email'
         sortKey: 'name'
 `
 
@@ -249,11 +247,11 @@ tables:
       email: 'string'
       expiresAt: 'integer'
     expireKey: 'expiresAt'
-    hashKey: 'id'
+    HashKey: 'id'
     sortKey: 'weird'
     subIndices:
       friends:
-        hashKey: 'email'
+        HashKey: 'email'
         sortKey: 'name'
 `
 
@@ -276,11 +274,11 @@ tables:
       email: 'string'
       expiresAt: 'integer'
     expireKey: 'expiresAt'
-    hashKey: 'id'
+    HashKey: 'id'
     sortKey: 'id'
     subIndices:
       friends:
-        hashKey: 'email'
+        HashKey: 'email'
         sortKey: 'name'
 `
 
@@ -302,11 +300,11 @@ tables:
       name: 'string'
       email: 'string'
       expiresAt: 'integer'
-    hashKey: 'name'
+    HashKey: 'name'
     sortKey: 'id'
     subIndices:
       friends:
-        hashKey: 'email'
+        HashKey: 'email'
         sortKey: 'name'
 `
 
@@ -329,11 +327,11 @@ tables:
       email: 'string'
       expiresAt: 'integer'
     expireKey: 'weird'
-    hashKey: 'id'
+    HashKey: 'id'
     sortKey: 'name'
     subIndices:
       friends:
-        hashKey: 'email'
+        HashKey: 'email'
         sortKey: 'name'
 `
 
@@ -356,11 +354,11 @@ tables:
       email: 'string'
       expiresAt: 'string'
     expireKey: 'expiresAt'
-    hashKey: 'name'
+    HashKey: 'name'
     sortKey: 'id'
     subIndices:
       friends:
-        hashKey: 'email'
+        HashKey: 'email'
         sortKey: 'name'
 `
 
@@ -383,11 +381,11 @@ tables:
       email: 'string'
       expiresAt: 'integer'
     expireKey: 'expiresAt'
-    hashKey: 'name'
+    HashKey: 'name'
     sortKey: 'id'
     subIndices:
       friends:
-        hashKey: 'email'
+        HashKey: 'email'
         weird: 'name'
 `
 
@@ -410,7 +408,7 @@ tables:
       email: 'string'
       expiresAt: 'integer'
     expireKey: 'expiresAt'
-    hashKey: 'name'
+    HashKey: 'name'
     sortKey: 'id'
     subIndices:
       friends:
@@ -436,11 +434,11 @@ tables:
       email: 'string'
       expiresAt: 'integer'
     expireKey: 'expiresAt'
-    hashKey: 'name'
+    HashKey: 'name'
     sortKey: 'id'
     subIndices:
       friends:
-        hashKey: 'email'
+        HashKey: 'email'
 `
 
 	bingo := newBingo()
@@ -462,11 +460,11 @@ tables:
       email: 'string'
       expiresAt: 'integer'
     expireKey: 'expiresAt'
-    hashKey: 'name'
+    HashKey: 'name'
     sortKey: 'id'
     subIndices:
       friends:
-        hashKey: 'email'
+        HashKey: 'email'
         sortKey: 'email'
 `
 
@@ -489,11 +487,11 @@ tables:
       email: 'string'
       expiresAt: 'integer'
     expireKey: 'expiresAt'
-    hashKey: 'name'
+    HashKey: 'name'
     sortKey: 'id'
     subIndices:
       friends:
-        hashKey: 'weird'
+        HashKey: 'weird'
         sortKey: 'email'
 `
 
@@ -516,11 +514,11 @@ tables:
       email: 'string'
       expiresAt: 'integer'
     expireKey: 'expiresAt'
-    hashKey: 'name'
+    HashKey: 'name'
     sortKey: 'id'
     subIndices:
       friends:
-        hashKey: 'id'
+        HashKey: 'id'
         sortKey: 'weird'
 `
 

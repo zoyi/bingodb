@@ -1,4 +1,4 @@
-package model
+package bingodb
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ type Document struct {
 }
 
 func ParseDoc(data Data, schema *TableSchema) *Document {
-	for _, field := range schema.Fields {
+	for _, field := range schema.fields {
 		raw, present := data[field.Name]
 		if present {
 			data[field.Name] = field.Parse(raw)
@@ -26,12 +26,12 @@ func (doc *Document) GetData() Data {
 	return doc.data
 }
 
-func (doc *Document) ToJSON() ([]byte, bool) {
-	json, err := json.Marshal(doc.data)
+func (doc *Document) ToJSON() []byte {
+	bytes, err := json.Marshal(doc.data)
 	if err != nil {
-		return nil, false
+		return nil
 	}
-	return json, true
+	return bytes
 }
 
 func (doc *Document) Get(field string) interface{} {
@@ -39,19 +39,14 @@ func (doc *Document) Get(field string) interface{} {
 }
 
 func (doc *Document) GetExpiresAt() (int64, bool) {
-	if doc.schema.ExpireField == nil {
+	if doc.schema.expireField == nil {
 		return 0, false
 	}
 
-	value, ok := doc.data[doc.schema.ExpireField.Name]
+	value, ok := doc.data[doc.schema.expireField.Name]
 	if !ok {
 		return 0, false
 	}
 
 	return value.(int64), ok
-}
-
-func (doc *Document) PrimaryKeyValue() (interface{}, interface{}) {
-	key := doc.schema.PrimaryKey
-	return doc.Get(key.HashKey.Name), doc.Get(key.SortKey.Name)
 }
