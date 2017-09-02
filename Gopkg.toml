@@ -30,8 +30,8 @@
   version = "0.1.1"
 
 [[constraint]]
-  name = "github.com/emirpasic/gods"
-  version = "1.9.0"
+  branch = "master"
+  name = "github.com/zoyi/skiplist"
 
 [[constraint]]
   branch = "master"

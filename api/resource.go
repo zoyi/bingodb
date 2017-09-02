@@ -10,17 +10,22 @@ import (
 type GetRequest struct {
 	IndexName string      `json:"index,omitempty"`
 	HashKey   interface{} `json:"hash"`
-	SortKey   interface{} `json:"sort"`  //optional
+	SortKey   interface{} `json:"sort"` //optional
 }
 
 type GetQuery struct {
 	indexName string
-	hashKey interface{}
-	sortKey interface{}
+	hashKey   interface{}
+	sortKey   interface{}
 }
 
 type Resource struct {
 	bingo *bingodb.Bingo
+}
+
+type ListResponse struct {
+	Values interface{} `json:"values"`
+	Next   interface{} `json:"next,omitempty"`
 }
 
 func (rs *Resource) Tables(ctx *fasthttp.RequestCtx) {
@@ -40,8 +45,8 @@ func (rs *Resource) TableInfo(ctx *fasthttp.RequestCtx) {
 func (rs *Resource) Scan(ctx *fasthttp.RequestCtx) {
 	if table := rs.fetchTable(ctx); table != nil {
 		query := rs.fetchScanQuery(ctx, table)
-		res := table.PrimaryIndex().Scan(query.HashKey, query.Since, query.Limit)
-		if bytes, err := json.Marshal(res); err == nil {
+		res, next := table.PrimaryIndex().Scan(query.HashKey, query.Since, query.Limit)
+		if bytes, err := json.Marshal(ListResponse{Values: res, Next: next}); err == nil {
 			success(ctx, bytes)
 		}
 		//if index := table.Index(getRequest.IndexName); index != nil {
@@ -110,7 +115,7 @@ func (rs *Resource) fetchTable(ctx *fasthttp.RequestCtx) *bingodb.Table {
 		return table
 	}
 	raiseError(ctx, fmt.Sprintf("Table not found: %s", tableName))
-	return  nil
+	return nil
 }
 
 func (rs *Resource) fetchScanQuery(ctx *fasthttp.RequestCtx, table *bingodb.Table) (query ScanQuery) {
@@ -138,7 +143,6 @@ func (rs *Resource) fetchScanQuery(ctx *fasthttp.RequestCtx, table *bingodb.Tabl
 
 	return query
 }
-
 
 func (rs *Resource) fetchGetRequest(ctx *fasthttp.RequestCtx) (request GetRequest) {
 	if len(ctx.PostBody()) != 0 {
