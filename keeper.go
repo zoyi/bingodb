@@ -82,7 +82,6 @@ func (keeper *Keeper) Expire() {
 		key.table.RemoveByDocument(key.Document)
 		i++
 	}
-	fmt.Printf("Removed items: %d\n", i)
 }
 
 func (keeper *Keeper) run() {

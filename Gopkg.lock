@@ -53,13 +53,13 @@
   branch = "master"
   name = "github.com/zoyi/skiplist"
   packages = ["lazy","lib"]
-  revision = "f6fb3f7c53ed2a50d5840a60dcd2100b2918063d"
+  revision = "185ba894223644ca66cefbc593fa7db3177e6066"
 
 [[projects]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "25c4ec802a7d637f88d584ab26798e94ad14c13b"
+  revision = "eb3733d160e74a9c7e442f435eb3bea458e1d19f"
 
 [solve-meta]
   analyzer-name = "dep"
