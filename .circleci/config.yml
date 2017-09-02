@@ -32,18 +32,15 @@ jobs:
       #run test
       - run: go get -v -t -d ./...
       - run:
+          name: Run core tests and generating coverage
+          command: go test -v ./ -race -cover -coverprofile=core-cov.out
+      - run:
           name: Run API tests and generating coverage
           command: go test -v ./api -race -cover -coverprofile=api-cov.out
-      - run:
-          name: Run model tests and generating coverage
-          command: go test -v ./model -race -cover -coverprofile=model-cov.out
-      - run:
-          name: Run ds tests and generating coverage
-          command: go test -v ./ds/redblacktree -race -cover -coverprofile=ds-cov.out
       #merge coverage
       - run:
           name: Merging all coverages
-          command: gocovmerge api-cov.out model-cov.out ds-cov.out > coverage.txt
+          command: gocovmerge core-cov.out api-cov.out > coverage.txt
       #codecov
       - run:
           name: Reporting to Codecov
