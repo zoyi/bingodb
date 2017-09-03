@@ -59,6 +59,7 @@ func (rs *Resource) Scan(ctx *fasthttp.RequestCtx) {
 		//	raiseError(ctx, "Not found index")
 		//}
 	}
+	rs.bingo.AddScan()
 }
 
 func (rs *Resource) Get(ctx *fasthttp.RequestCtx) {
@@ -74,6 +75,7 @@ func (rs *Resource) Get(ctx *fasthttp.RequestCtx) {
 			raiseError(ctx, "Not found index")
 		}
 	}
+	rs.bingo.AddGet()
 }
 
 func (rs *Resource) Put(ctx *fasthttp.RequestCtx) {
@@ -86,6 +88,7 @@ func (rs *Resource) Put(ctx *fasthttp.RequestCtx) {
 			success(ctx, []byte("{}"))
 		}
 	}
+	rs.bingo.AddPut()
 }
 
 func (rs *Resource) Remove(ctx *fasthttp.RequestCtx) {
@@ -97,6 +100,7 @@ func (rs *Resource) Remove(ctx *fasthttp.RequestCtx) {
 			success(ctx, []byte("{}"))
 		}
 	}
+	rs.bingo.AddRemove()
 }
 
 ////

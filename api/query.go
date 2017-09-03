@@ -1,6 +1,5 @@
 package api
 
-
 type ScanQuery struct {
 	IndexName string
 	HashKey   interface{}

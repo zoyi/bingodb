@@ -3,12 +3,15 @@ package bingodb
 import (
 	"fmt"
 	"github.com/emirpasic/gods/utils"
+	"github.com/robfig/cron"
 	"github.com/zoyi/skiplist/lazy"
 	"time"
 )
 
 type Keeper struct {
-	list *lazyskiplist.SkipList
+	bingo *Bingo
+	list  *lazyskiplist.SkipList
+	cron  *cron.Cron
 }
 
 type ExpireKey struct {
@@ -50,9 +53,11 @@ func comparator(aRaw, bRaw interface{}) int {
 	return a.table.Compare(a.Document, b.Document)
 }
 
-func NewKeeper() *Keeper {
-	keeper := &Keeper{list: lazyskiplist.NewLazySkipList(comparator)}
-	go keeper.run()
+func NewKeeper(bingo *Bingo) *Keeper {
+	keeper := &Keeper{bingo: bingo, list: lazyskiplist.NewLazySkipList(comparator)}
+	c := cron.New()
+	c.AddFunc("@every 1s", keeper.expire)
+	keeper.cron = c
 	return keeper
 }
 
@@ -72,7 +77,7 @@ func (keeper *Keeper) remove(table *Table, doc *Document) {
 	}
 }
 
-func (keeper *Keeper) Expire() {
+func (keeper *Keeper) expire() {
 	i := 0
 	for it := keeper.list.Begin(nil); it.Present(); it.Next() {
 		key := it.Key().(*ExpireKey)
@@ -82,11 +87,13 @@ func (keeper *Keeper) Expire() {
 		key.table.RemoveByDocument(key.Document)
 		i++
 	}
+	keeper.bingo.AddExpire(int64(i))
 }
 
-func (keeper *Keeper) run() {
-	for {
-		keeper.Expire()
-		time.Sleep(time.Second * 1)
-	}
+func (keeper *Keeper) start() {
+	keeper.cron.Start()
+}
+
+func (keeper *Keeper) stop() {
+	keeper.cron.Stop()
 }

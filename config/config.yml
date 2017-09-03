@@ -12,16 +12,32 @@ tables:
     subIndices:
       guest: 'lastSeen'
     metrics:
-      table: 'metrics'
+      table: 'onlines-metrics'
       ttl: 60
       interval: 2
 
-  metrics:
+  onlines-metrics:
     fields:
       channelId: 'string'
       time: 'integer'
-      count: 'integer'
+      value: 'integer'
       expiresAt: 'integer'
     expireKey: 'expiresAt'
     hashKey: 'channelId'
     sortKey: 'time'
+
+  _metrics:
+    fields:
+      key: 'string'
+      time: 'integer'
+      value: 'integer'
+      expiresAt: 'integer'
+    expireKey: 'expiresAt'
+    hashKey: 'key'
+    sortKey: 'time'
+
+# scan
+# get_tpm
+# put_tpm
+# size
+# expire

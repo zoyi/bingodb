@@ -54,7 +54,7 @@ tables:
 	}
 }
 
-func TestErrorForEmptyConfig(t *testing.T)  {
+func TestErrorForEmptyConfig(t *testing.T) {
 	weirdFieldConfig := `
 `
 
@@ -67,7 +67,7 @@ func TestErrorForEmptyConfig(t *testing.T)  {
 	}
 }
 
-func TestErrorForEmptyTable(t *testing.T)  {
+func TestErrorForEmptyTable(t *testing.T) {
 	weirdFieldConfig := `
 tables:
 `
@@ -81,7 +81,7 @@ tables:
 	}
 }
 
-func TestErrorForUnknownField(t *testing.T)  {
+func TestErrorForUnknownField(t *testing.T) {
 	weirdFieldConfig := `
 tables:
   weird:
@@ -109,7 +109,7 @@ tables:
 	}
 }
 
-func TestErrorWhenFieldsIsEmpty(t *testing.T)  {
+func TestErrorWhenFieldsIsEmpty(t *testing.T) {
 	weirdFieldConfig := `
 tables:
   weird:
@@ -131,7 +131,7 @@ tables:
 	}
 }
 
-func TestErrorForUnknownFieldType(t *testing.T)  {
+func TestErrorForUnknownFieldType(t *testing.T) {
 	weirdFieldConfig := `
 tables:
   weird:
@@ -158,7 +158,7 @@ tables:
 	}
 }
 
-func TestErrorWhenHashKeyIsEmpty(t *testing.T)  {
+func TestErrorWhenHashKeyIsEmpty(t *testing.T) {
 	weirdFieldConfig := `
 tables:
   weird:
@@ -184,7 +184,7 @@ tables:
 	}
 }
 
-func TestErrorWhenHashKeyIsNotInField(t *testing.T)  {
+func TestErrorWhenHashKeyIsNotInField(t *testing.T) {
 	weirdFieldConfig := `
 tables:
   weird:
@@ -211,7 +211,7 @@ tables:
 	}
 }
 
-func TestErrorWhenSortKeyIsEmpty(t *testing.T)  {
+func TestErrorWhenSortKeyIsEmpty(t *testing.T) {
 	weirdFieldConfig := `
 tables:
   weird:
@@ -237,7 +237,7 @@ tables:
 	}
 }
 
-func TestErrorWhenSortKeyIsNotInField(t *testing.T)  {
+func TestErrorWhenSortKeyIsNotInField(t *testing.T) {
 	weirdFieldConfig := `
 tables:
   weird:
@@ -264,7 +264,7 @@ tables:
 	}
 }
 
-func TestErrorWhenHashKeySortKeyIsSame(t *testing.T)  {
+func TestErrorWhenHashKeySortKeyIsSame(t *testing.T) {
 	weirdFieldConfig := `
 tables:
   weird:
@@ -291,7 +291,7 @@ tables:
 	}
 }
 
-func TestErrorWhenExpireKeyIsEmpty(t *testing.T)  {
+func TestErrorWhenExpireKeyIsEmpty(t *testing.T) {
 	weirdFieldConfig := `
 tables:
   weird:
@@ -317,7 +317,7 @@ tables:
 	}
 }
 
-func TestErrorWhenExpireKeyIsNotInField(t *testing.T)  {
+func TestErrorWhenExpireKeyIsNotInField(t *testing.T) {
 	weirdFieldConfig := `
 tables:
   weird:
@@ -344,7 +344,7 @@ tables:
 	}
 }
 
-func TestErrorWhenExpireKeyTypeIsNotInteger(t *testing.T)  {
+func TestErrorWhenExpireKeyTypeIsNotInteger(t *testing.T) {
 	weirdFieldConfig := `
 tables:
   weird:
@@ -371,7 +371,7 @@ tables:
 	}
 }
 
-func TestErrorWhenSubIndicesHasWrongField(t *testing.T)  {
+func TestErrorWhenSubIndicesHasWrongField(t *testing.T) {
 	weirdFieldConfig := `
 tables:
   weird:
@@ -398,7 +398,7 @@ tables:
 	}
 }
 
-func TestErrorWhenSubIndicesHashKeyEmpty(t *testing.T)  {
+func TestErrorWhenSubIndicesHashKeyEmpty(t *testing.T) {
 	weirdFieldConfig := `
 tables:
   weird:
@@ -424,7 +424,7 @@ tables:
 	}
 }
 
-func TestErrorWhenSubIndicesSortKeyEmpty(t *testing.T)  {
+func TestErrorWhenSubIndicesSortKeyEmpty(t *testing.T) {
 	weirdFieldConfig := `
 tables:
   weird:
@@ -450,7 +450,7 @@ tables:
 	}
 }
 
-func TestErrorWhenSubIndicesSameHashKeySortKey(t *testing.T)  {
+func TestErrorWhenSubIndicesSameHashKeySortKey(t *testing.T) {
 	weirdFieldConfig := `
 tables:
   weird:
@@ -477,7 +477,7 @@ tables:
 	}
 }
 
-func TestErrorWhenSubIndicesHashKeyWrongValue(t *testing.T)  {
+func TestErrorWhenSubIndicesHashKeyWrongValue(t *testing.T) {
 	weirdFieldConfig := `
 tables:
   weird:
@@ -504,7 +504,7 @@ tables:
 	}
 }
 
-func TestErrorWhenSubIndicesSortKeyWrongValue(t *testing.T)  {
+func TestErrorWhenSubIndicesSortKeyWrongValue(t *testing.T) {
 	weirdFieldConfig := `
 tables:
   weird:

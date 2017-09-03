@@ -2,7 +2,7 @@ package bingodb
 
 import (
 	"encoding/json"
-	"github.com/emirpasic/gods/utils"
+	"github.com/zoyi/skiplist/lib"
 	"reflect"
 	"strconv"
 )
@@ -13,27 +13,26 @@ type FieldSchema struct {
 }
 
 type TableSchema struct {
-	fields       map[string]*FieldSchema
-	hashKey   *FieldSchema
-	sortKey *FieldSchema
+	fields      map[string]*FieldSchema
+	hashKey     *FieldSchema
+	sortKey     *FieldSchema
 	subSortKeys map[string]*FieldSchema
-	expireField  *FieldSchema
+	expireField *FieldSchema
 }
 
 type Table struct {
 	*TableSchema
-	bingo        *Bingo
-	name         string
-	primaryIndex *PrimaryIndex
-	subIndices   map[string]*SubIndex
+	bingo         *Bingo
+	name          string
+	primaryIndex  *PrimaryIndex
+	subIndices    map[string]*SubIndex
 	metricsConfig *MetricsConfig
 }
 
-
 type TableInfo struct {
-	Name	string 	`json:"name"`
-	Size	int		`json:"size"`
-	SubIndices	map[string]int64 `json:"subIndices"`
+	Name       string           `json:"name"`
+	Size       int              `json:"size"`
+	SubIndices map[string]int64 `json:"subIndices,omitempty"`
 }
 
 func (table *Table) Info() *TableInfo {
@@ -42,14 +41,14 @@ func (table *Table) Info() *TableInfo {
 		subIndices[key] = index.size
 	}
 	return &TableInfo{
-		Name: table.name,
-		Size: int(table.primaryIndex.size),
+		Name:       table.name,
+		Size:       int(table.primaryIndex.size),
 		SubIndices: subIndices}
 }
 
 type SubSortKey struct {
 	main interface{}
-	sub interface{}
+	sub  interface{}
 }
 
 func newTable(
@@ -61,11 +60,11 @@ func newTable(
 	metricsConfig *MetricsConfig,
 ) *Table {
 	return &Table{
-		TableSchema:       schema,
-		bingo:        bingo,
-		name:         tableName,
-		primaryIndex: primaryIndex,
-		subIndices:   subIndices,
+		TableSchema:   schema,
+		bingo:         bingo,
+		name:          tableName,
+		primaryIndex:  primaryIndex,
+		subIndices:    subIndices,
 		metricsConfig: metricsConfig,
 	}
 }
@@ -110,12 +109,18 @@ func (field *FieldSchema) Parse(raw interface{}) interface{} {
 
 		case float64:
 			return int64(raw.(float64))
+
+		case []interface{}:
+			return field.Parse(raw.([]interface{})[0])
 		}
 
 	case "string":
 		switch raw.(type) {
 		case []byte:
 			return string(raw.([]byte))
+
+		case []interface{}:
+			return field.Parse(raw.([]interface{})[0])
 		}
 	}
 	return raw
@@ -147,7 +152,7 @@ func GeneralCompare(a, b interface{}) int {
 	if reflect.TypeOf(a).Kind() == reflect.Int64 {
 		return NumberComparator(a, b)
 	}
-	return utils.StringComparator(a, b)
+	return lib.StringComparator(a, b)
 }
 
 func (schema *TableSchema) Compare(a, b *Document) int {

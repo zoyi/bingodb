@@ -42,5 +42,9 @@
   name = "github.com/valyala/fasthttp"
 
 [[constraint]]
+  branch = "master"
+  name = "github.com/robfig/cron"
+
+[[constraint]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"

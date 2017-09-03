@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/CrowdSurge/banner"
 	"github.com/valyala/fasthttp"
-	"github.com/zoyi/bingodb/api"
 	"github.com/zoyi/bingodb"
+	"github.com/zoyi/bingodb/api"
 )
 
 var (

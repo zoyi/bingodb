@@ -7,20 +7,19 @@ import (
 	"io/ioutil"
 )
 
-
 type MetricsConfig struct {
-	Table string `yaml:"table"`
-	Ttl int `yaml:"ttl"`
-	Interval int `yaml:"interval"`
+	Table    string `yaml:"table"`
+	Ttl      int    `yaml:"ttl"`
+	Interval int    `yaml:"interval"`
 }
 
 type TableConfig struct {
-	Fields     map[string]string    `yaml:"fields"`
-	HashKey    string               `yaml:"hashKey"`
-	SortKey    string               `yaml:"sortKey"`
-	SubIndices map[string]string    `yaml:"subIndices"`
-	ExpireKey  string               `yaml:"expireKey"`
-	Metrics    *MetricsConfig        `yaml:"metrics"`
+	Fields     map[string]string `yaml:"fields"`
+	HashKey    string            `yaml:"hashKey"`
+	SortKey    string            `yaml:"sortKey"`
+	SubIndices map[string]string `yaml:"subIndices"`
+	ExpireKey  string            `yaml:"expireKey"`
+	Metrics    *MetricsConfig    `yaml:"metrics"`
 }
 
 type BingoConfig struct {
@@ -28,7 +27,7 @@ type BingoConfig struct {
 }
 
 const (
-	STRING = "string"
+	STRING  = "string"
 	INTEGER = "integer"
 )
 
@@ -80,10 +79,10 @@ func ParseConfigBytes(bingo *Bingo, configBytes []byte) error {
 		}
 
 		schema := &TableSchema{
-			fields:       fields,
-			hashKey: fields[tableConfig.HashKey],
-			sortKey: fields[tableConfig.SortKey],
-			expireField:  fields[tableConfig.ExpireKey]}
+			fields:      fields,
+			hashKey:     fields[tableConfig.HashKey],
+			sortKey:     fields[tableConfig.SortKey],
+			expireField: fields[tableConfig.ExpireKey]}
 
 		primaryIndex := &PrimaryIndex{index: newIndex(schema, fields[tableConfig.SortKey])}
 
@@ -96,7 +95,7 @@ func ParseConfigBytes(bingo *Bingo, configBytes []byte) error {
 		bingo.tables[tableName] = newTable(bingo, tableName, schema, primaryIndex, subIndices, tableConfig.Metrics)
 	}
 
-	bingo.setMetrics()
+	bingo.setTableMetrics()
 
 	return nil
 }

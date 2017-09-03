@@ -1,27 +1,27 @@
 package bingodb
 
 import (
-	"time"
 	"github.com/zoyi/skiplist/lazy"
+	"time"
 )
 
-type Metrics struct {
-	source *Table
-	output *Table
-	ttl time.Duration
+type TableMetrics struct {
+	source   *Table
+	output   *Table
+	ttl      time.Duration
 	interval time.Duration
 }
 
-func NewMetric(
+func NewTableMetrics(
 	source *Table,
 	output *Table,
 	ttl int,
 	interval int,
-) *Metrics {
-	metrics := &Metrics{
-		source: source,
-		output: output,
-		ttl: time.Second * time.Duration(ttl),
+) *TableMetrics {
+	metrics := &TableMetrics{
+		source:   source,
+		output:   output,
+		ttl:      time.Second * time.Duration(ttl),
 		interval: time.Second * time.Duration(interval)}
 
 	go metrics.run()
@@ -29,7 +29,7 @@ func NewMetric(
 	return metrics
 }
 
-func (metrics *Metrics) put(hash interface{}, skipList *lazyskiplist.SkipList) bool {
+func (metrics *TableMetrics) put(hash interface{}, skipList *lazyskiplist.SkipList) bool {
 	data := Data{}
 	hashKey := metrics.source.hashKey.Name
 	data[hashKey] = hash
@@ -40,7 +40,7 @@ func (metrics *Metrics) put(hash interface{}, skipList *lazyskiplist.SkipList) b
 	return true
 }
 
-func (metrics *Metrics) run() {
+func (metrics *TableMetrics) run() {
 	for {
 		metrics.source.PrimaryIndex().Range(metrics.put)
 		time.Sleep(metrics.interval)

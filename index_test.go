@@ -122,7 +122,6 @@ func TestScanForPrimaryIndex(t *testing.T) {
 	}
 }
 
-
 func TestRScanForPrimaryIndex(t *testing.T) {
 	prepare()
 
@@ -137,7 +136,7 @@ func TestRScanForPrimaryIndex(t *testing.T) {
 		t.Errorf("Value different. Got %v expected nil", next)
 	}
 
-	result, next = primaryIndex.RScan("1", nil,  2)
+	result, next = primaryIndex.RScan("1", nil, 2)
 	if actualValue, expectedValue := len(result), 2; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
 	}

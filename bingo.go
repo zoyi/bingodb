@@ -5,17 +5,19 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 )
 
 type Bingo struct {
-	tables map[string]*Table
-	keeper *Keeper
+	tables        map[string]*Table
+	keeper        *Keeper
+	systemMetrics *SystemMetrics
 }
 
-func (bingo *Bingo) TablesArray() []*Table {
-	tables := make([]*Table, 0, len(bingo.tables))
+func (bingo *Bingo) TablesArray() []*TableInfo {
+	tables := make([]*TableInfo, 0, len(bingo.tables))
 	for _, table := range bingo.tables {
-		tables = append(tables, table)
+		tables = append(tables, table.Info())
 	}
 	return tables
 }
@@ -39,13 +41,27 @@ func Load(filename string) *Bingo {
 }
 
 func newBingo() *Bingo {
-	return &Bingo{tables: make(map[string]*Table), keeper: NewKeeper()}
+	bingo := &Bingo{tables: make(map[string]*Table)}
+	bingo.keeper = NewKeeper(bingo)
+	bingo.systemMetrics = NewSystemMetrics(bingo)
+	bingo.Start()
+	return bingo
 }
 
-func (bingo *Bingo) setMetrics() {
+func (bingo *Bingo) Start() {
+	bingo.keeper.start()
+	bingo.systemMetrics.start()
+}
+
+func (bingo *Bingo) Stop() {
+	bingo.keeper.stop()
+	bingo.systemMetrics.stop()
+}
+
+func (bingo *Bingo) setTableMetrics() {
 	for _, source := range bingo.tables {
 		if config := source.metricsConfig; config != nil {
-			NewMetric(
+			NewTableMetrics(
 				source,
 				bingo.tables[config.Table],
 				config.Ttl,
@@ -54,3 +70,22 @@ func (bingo *Bingo) setMetrics() {
 	}
 }
 
+func (bingo *Bingo) AddScan() {
+	atomic.AddInt64(&bingo.systemMetrics.scan, 1)
+}
+
+func (bingo *Bingo) AddGet() {
+	atomic.AddInt64(&bingo.systemMetrics.get, 1)
+}
+
+func (bingo *Bingo) AddPut() {
+	atomic.AddInt64(&bingo.systemMetrics.put, 1)
+}
+
+func (bingo *Bingo) AddRemove() {
+	atomic.AddInt64(&bingo.systemMetrics.remove, 1)
+}
+
+func (bingo *Bingo) AddExpire(i int64) {
+	atomic.AddInt64(&bingo.systemMetrics.expire, i)
+}
