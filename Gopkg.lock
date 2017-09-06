@@ -39,6 +39,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/robfig/cron"
+  packages = ["."]
+  revision = "736158dc09e10f1911ca3a1e1b01f11b566ce5db"
+
+[[projects]]
+  branch = "master"
   name = "github.com/valyala/bytebufferpool"
   packages = ["."]
   revision = "e746df99fe4a3986f4d4f79e13c1e0117ce9c2f7"
@@ -47,7 +53,7 @@
   branch = "master"
   name = "github.com/valyala/fasthttp"
   packages = [".","fasthttputil","stackless"]
-  revision = "ae643c872d2c060154a4fb2162dc1c0ab1693ccd"
+  revision = "b43f17d9a9aa1e39f2614f49c8fa4fe8f406c83d"
 
 [[projects]]
   branch = "master"
@@ -64,6 +70,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5b2b4610ce2c241bcc682b2a7d7d4c5b2e842b4c3f1d0eb8a9f7ef00bef4f385"
+  inputs-digest = "7f6258a51e3f12572707686558b8f21447284f77f9a687f946a63f9932e676a0"
   solver-name = "gps-cdcl"
   solver-version = 1
