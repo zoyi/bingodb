@@ -24,7 +24,7 @@ func TestErrorParseConfigByWrongPath(t *testing.T) {
 
 func TestParseConfig(t *testing.T) {
 	bingo := newBingo()
-	absPath, _ := filepath.Abs(filepath.Join(projectPath, "/config", "test_config.yml"))
+	absPath, _ := filepath.Abs(filepath.Join(projectPath, "/config", "test.yml"))
 
 	if err := ParseConfig(bingo, absPath); err != nil {
 		t.Error(err)

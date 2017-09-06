@@ -8,7 +8,7 @@ package api
 //)
 //
 //var (
-//	router = MakeRouter("test_config.yml")
+//	router = MakeRouter("test.yml")
 //)
 //
 //func getExpector(t *testing.T) *httpexpect.Expect {

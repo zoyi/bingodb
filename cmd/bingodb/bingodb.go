@@ -9,17 +9,15 @@ import (
 	"github.com/zoyi/bingodb/api"
 )
 
-var (
-	addr   = flag.String("addr", ":8080", "TCP address to listen to")
-	config = flag.String("file", "config.yml", "import config file")
-)
-
 func main() {
-	banner.Print("bingodb")
-	fmt.Printf("									by ZOYI\n")
+	addr := flag.String("addr", ":8080", "TCP address to listen to")
+	config := flag.String("config", "config/development.yml", "Config file")
+	flag.Parse()
 
-	fmt.Printf("* Loaded configration file..\n")
-	bingo := bingodb.Load(*config)
+	banner.Print("bingodb")
+
+	fmt.Printf("* Loading configration file... %s %s\n", *config, *addr)
+	bingo := bingodb.NewBingoFromConfigFile(*config)
 
 	router := api.MakeRouter(bingo)
 

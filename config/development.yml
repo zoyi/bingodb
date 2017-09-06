@@ -35,9 +35,3 @@ tables:
     expireKey: 'expiresAt'
     hashKey: 'key'
     sortKey: 'time'
-
-# scan
-# get_tpm
-# put_tpm
-# size
-# expire

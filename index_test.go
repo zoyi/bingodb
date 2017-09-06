@@ -4,16 +4,20 @@ package bingodb
 
 import (
 	"encoding/json"
+	"path/filepath"
 	"strings"
 	"testing"
 )
 
-var config *Bingo
+var bingo *Bingo
 
 func prepare() {
-	config = Load("test_config.yml")
+	bingo = newBingo()
+	absPath, _ := filepath.Abs(filepath.Join(projectPath, "/config", "test.yml"))
 
-	table := config.tables["onlines"]
+	bingo = NewBingoFromConfigFile(absPath)
+
+	table := bingo.tables["onlines"]
 	{
 		var s = `{
 			"channelId": "1",
@@ -92,7 +96,7 @@ func prepare() {
 func TestScanForPrimaryIndex(t *testing.T) {
 	prepare()
 
-	table := config.tables["onlines"]
+	table := bingo.tables["onlines"]
 	primaryIndex := table.primaryIndex
 
 	result, next := primaryIndex.Scan("1", nil, 10)
@@ -125,7 +129,7 @@ func TestScanForPrimaryIndex(t *testing.T) {
 func TestRScanForPrimaryIndex(t *testing.T) {
 	prepare()
 
-	table := config.tables["onlines"]
+	table := bingo.tables["onlines"]
 	primaryIndex := table.primaryIndex
 
 	result, next := primaryIndex.RScan("1", nil, 10)
@@ -162,7 +166,7 @@ func TestRScanForPrimaryIndex(t *testing.T) {
 func TestFetchSubIndex(t *testing.T) {
 	prepare()
 
-	table := config.tables["onlines"]
+	table := bingo.tables["onlines"]
 
 	result, next := table.Index("guest").Scan("1", nil, 10)
 

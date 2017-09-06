@@ -3,8 +3,6 @@ package bingodb
 import (
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
 	"sync/atomic"
 )
 
@@ -27,12 +25,9 @@ func (bingo *Bingo) Table(name string) (value *Table, ok bool) {
 	return
 }
 
-func Load(filename string) *Bingo {
-	projectPath := filepath.Join(os.Getenv("GOPATH"), "/src/github.com/zoyi/bingodb/")
-	absPath, _ := filepath.Abs(filepath.Join(projectPath, "/config", filename))
-
+func NewBingoFromConfigFile(configFile string) *Bingo {
 	bingo := newBingo()
-	err := ParseConfig(bingo, absPath)
+	err := ParseConfig(bingo, configFile)
 	if err != nil {
 		fmt.Println(err)
 		log.Fatalf("error: %v", err)

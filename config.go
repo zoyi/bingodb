@@ -31,7 +31,7 @@ const (
 	INTEGER = "integer"
 )
 
-// Load configuration file with specified path and
+// NewBingoFromConfigFile configuration file with specified path and
 // parse it to create source schema to prepare bingo.
 // It returns any error encountered.
 func ParseConfig(bingo *Bingo, path string) error {
