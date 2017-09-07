@@ -10,7 +10,7 @@ import (
 type GetRequest struct {
 	IndexName string      `json:"index,omitempty"`
 	HashKey   interface{} `json:"hash"`
-	SortKey   interface{} `json:"sort"` //optional
+	SortKey   interface{} `json:"sort,omitempty"` //optional
 }
 
 type GetQuery struct {
@@ -64,7 +64,7 @@ func (rs *Resource) Scan(ctx *fasthttp.RequestCtx) {
 
 func (rs *Resource) Get(ctx *fasthttp.RequestCtx) {
 	if table := rs.fetchTable(ctx); table != nil {
-		getRequest := rs.fetchGetRequest(ctx)
+		getRequest := rs.fetchGetRequest(ctx, table)
 		if index := table.Index(getRequest.IndexName); index != nil {
 			if document, ok := index.Get(getRequest.HashKey, getRequest.SortKey); ok {
 				success(ctx, document.ToJSON())
@@ -93,7 +93,7 @@ func (rs *Resource) Put(ctx *fasthttp.RequestCtx) {
 
 func (rs *Resource) Remove(ctx *fasthttp.RequestCtx) {
 	if table := rs.fetchTable(ctx); table != nil {
-		getRequest := rs.fetchGetRequest(ctx)
+		getRequest := rs.fetchGetRequest(ctx, table)
 		if document, ok := table.Remove(getRequest.HashKey, getRequest.SortKey); ok {
 			success(ctx, document.ToJSON())
 		} else {
@@ -130,11 +130,13 @@ func (rs *Resource) fetchScanQuery(ctx *fasthttp.RequestCtx, table *bingodb.Tabl
 
 	query.Since = make([]interface{}, 2)
 
-	for i, value := range ctx.QueryArgs().PeekMulti("since") {
-		if i >= 2 {
-			break
+	if sortKey != nil {
+		for i, value := range ctx.QueryArgs().PeekMulti("since") {
+			if i >= 2 {
+				break
+			}
+			query.Since[i] = sortKey.Parse(value)
 		}
-		query.Since[i] = sortKey.Parse(value)
 	}
 
 	query.IndexName = string(ctx.QueryArgs().Peek("index"))
@@ -148,15 +150,20 @@ func (rs *Resource) fetchScanQuery(ctx *fasthttp.RequestCtx, table *bingodb.Tabl
 	return query
 }
 
-func (rs *Resource) fetchGetRequest(ctx *fasthttp.RequestCtx) (request GetRequest) {
+func (rs *Resource) fetchGetRequest(ctx *fasthttp.RequestCtx, table *bingodb.Table) (request GetRequest) {
 	if len(ctx.PostBody()) != 0 {
 		if err := json.Unmarshal(ctx.PostBody(), &request); err != nil {
 			ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		}
 	} else {
+		hashKey := table.HashKey()
+		sortKey := table.SortKey()
+
 		request.IndexName = string(ctx.QueryArgs().Peek("index"))
-		request.HashKey = string(ctx.QueryArgs().Peek("hash"))
-		request.SortKey = string(ctx.QueryArgs().Peek("sort"))
+		request.HashKey = hashKey.Parse(ctx.QueryArgs().Peek(hashKey.Name))
+		if sortKey != nil {
+			request.SortKey = sortKey.Parse(ctx.QueryArgs().Peek(sortKey.Name))
+		}
 	}
 	return
 }

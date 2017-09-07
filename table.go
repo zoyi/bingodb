@@ -117,7 +117,11 @@ func (field *FieldSchema) Parse(raw interface{}) interface{} {
 	case "string":
 		switch raw.(type) {
 		case []byte:
-			return string(raw.([]byte))
+			if bytes := raw.([]byte); len(bytes) > 0 {
+				return string(raw.([]byte))
+			} else {
+				return nil
+			}
 
 		case []interface{}:
 			return field.Parse(raw.([]interface{})[0])
@@ -165,12 +169,12 @@ func (schema *TableSchema) Compare(a, b *Document) int {
 			return 1
 		}
 	}
-	hashDiff := GeneralCompare(a.Get(schema.hashKey.Name), b.Get(schema.hashKey.Name))
+	hashDiff := GeneralCompare(a.Get(schema.hashKey), b.Get(schema.hashKey))
 	if hashDiff != 0 {
 		return hashDiff
 	}
 
-	return GeneralCompare(a.Get(schema.sortKey.Name), b.Get(schema.sortKey.Name))
+	return GeneralCompare(a.Get(schema.sortKey), b.Get(schema.sortKey))
 }
 
 func (table *Table) Index(name string) IndexInterface {
@@ -225,8 +229,8 @@ func (table *Table) Remove(hash interface{}, sort interface{}) (doc *Document, o
 }
 
 func (table *Table) RemoveByDocument(doc *Document) (*Document, bool) {
-	hashValue := doc.Get(table.hashKey.Name)
-	sortValue := doc.Get(table.sortKey.Name)
+	hashValue := doc.Get(table.hashKey)
+	sortValue := doc.Get(table.sortKey)
 
 	return table.Remove(hashValue, sortValue)
 }

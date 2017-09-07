@@ -84,12 +84,15 @@ func ParseConfigBytes(bingo *Bingo, configBytes []byte) error {
 			sortKey:     fields[tableConfig.SortKey],
 			expireField: fields[tableConfig.ExpireKey]}
 
-		primaryIndex := &PrimaryIndex{index: newIndex(schema, fields[tableConfig.SortKey])}
+		primaryIndex := &PrimaryIndex{index: newIndex(schema.hashKey, schema.sortKey)}
 
 		subIndices := make(map[string]*SubIndex)
 
 		for indexName, sortKeyName := range tableConfig.SubIndices {
-			subIndices[indexName] = &SubIndex{index: newIndex(schema, fields[sortKeyName])}
+			subIndices[indexName] = &SubIndex{
+				index:          newIndex(schema.hashKey, fields[sortKeyName]),
+				primarySortKey: schema.sortKey,
+			}
 		}
 
 		bingo.tables[tableName] = newTable(bingo, tableName, schema, primaryIndex, subIndices, tableConfig.Metrics)
@@ -151,9 +154,9 @@ func isValidKeySet(hashKey string, sortKey string, fields map[string]string) err
 	if err := isValidReferenceField(hashKey, "HashKey", fields); err != nil {
 		return err
 	}
-	if err := isValidReferenceField(sortKey, "sortKey", fields); err != nil {
-		return err
-	}
+	//if err := isValidReferenceField(sortKey, "sortKey", fields); err != nil {
+	//	return err
+	//}
 	if hashKey == sortKey {
 		return errors.New("HashKey and sortKey must be different")
 	}

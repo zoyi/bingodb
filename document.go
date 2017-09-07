@@ -34,7 +34,15 @@ func (doc *Document) ToJSON() []byte {
 	return bytes
 }
 
-func (doc *Document) Get(field string) interface{} {
+func (doc *Document) Get(schema *FieldSchema) interface{} {
+	if schema != nil {
+		return doc.data[schema.Name]
+	} else {
+		return nil
+	}
+}
+
+func (doc *Document) Fetch(field string) interface{} {
 	return doc.data[field]
 }
 

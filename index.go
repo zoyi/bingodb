@@ -13,7 +13,7 @@ type IndexInterface interface {
 
 type index struct {
 	m       *sync.Map
-	schema  *TableSchema
+	hashKey *FieldSchema
 	sortKey *FieldSchema
 	size    int64
 }
@@ -26,10 +26,11 @@ type PrimaryIndex struct {
 type SubIndex struct {
 	IndexInterface
 	*index
+	primarySortKey *FieldSchema
 }
 
-func newIndex(schema *TableSchema, sortKey *FieldSchema) *index {
-	return &index{m: new(sync.Map), schema: schema, sortKey: sortKey}
+func newIndex(hashKey *FieldSchema, sortKey *FieldSchema) *index {
+	return &index{m: new(sync.Map), hashKey: hashKey, sortKey: sortKey}
 }
 
 func (index *index) skipList(hash interface{}) *lazyskiplist.SkipList {
@@ -46,8 +47,8 @@ func (index *PrimaryIndex) Range(f func(key interface{}, list *lazyskiplist.Skip
 }
 
 func (index *PrimaryIndex) Scan(hash interface{}, since interface{}, limit int) (result []Data, next interface{}) {
-	hash = index.schema.hashKey.Parse(hash)
-	since = index.sortKey.Parse(since)
+	hash = index.hashKey.Parse(hash)
+	since = index.parseSortKey(since)
 
 	if list := index.skipList(hash); list != nil {
 		it := list.Begin(since)
@@ -62,8 +63,8 @@ func (index *PrimaryIndex) Scan(hash interface{}, since interface{}, limit int) 
 }
 
 func (index *PrimaryIndex) RScan(hash interface{}, since interface{}, limit int) (result []Data, next interface{}) {
-	hash = index.schema.hashKey.Parse(hash)
-	since = index.sortKey.Parse(since)
+	hash = index.hashKey.Parse(hash)
+	since = index.parseSortKey(since)
 
 	if list := index.skipList(hash); list != nil {
 		it := list.End(since)
@@ -78,8 +79,8 @@ func (index *PrimaryIndex) RScan(hash interface{}, since interface{}, limit int)
 }
 
 func (index *PrimaryIndex) Get(hash interface{}, sort interface{}) (*Document, bool) {
-	hash = index.schema.hashKey.Parse(hash)
-	sort = index.sortKey.Parse(sort)
+	hash = index.hashKey.Parse(hash)
+	sort = index.parseSortKey(sort)
 
 	if list := index.skipList(hash); list != nil {
 		if value, ok := list.Get(sort); ok {
@@ -105,7 +106,7 @@ func (index *PrimaryIndex) Get(hash interface{}, sort interface{}) (*Document, b
 //}
 
 func (index *SubIndex) Scan(hash interface{}, since interface{}, limit int) (result []Data, next interface{}) {
-	hash = index.schema.hashKey.Parse(hash)
+	hash = index.hashKey.Parse(hash)
 	since = index.parseSubSortKey(since)
 
 	if list := index.skipList(hash); list != nil {
@@ -120,8 +121,16 @@ func (index *SubIndex) Scan(hash interface{}, since interface{}, limit int) (res
 	return result, next
 }
 
+func (index *index) parseSortKey(raw interface{}) interface{} {
+	if raw == nil || index.sortKey == nil {
+		return nil
+	} else {
+		return index.sortKey.Parse(raw)
+	}
+}
+
 func (index *SubIndex) parseSubSortKey(raw interface{}) interface{} {
-	if raw == nil {
+	if raw == nil || index.sortKey == nil || index.primarySortKey == nil {
 		return nil
 	}
 
@@ -136,7 +145,7 @@ func (index *SubIndex) parseSubSortKey(raw interface{}) interface{} {
 			key.main = index.sortKey.Parse(ary[0])
 		}
 		if len(ary) > 1 {
-			key.sub = index.sortKey.Parse(ary[1])
+			key.sub = index.primarySortKey.Parse(ary[1])
 		}
 		return key
 
@@ -145,9 +154,16 @@ func (index *SubIndex) parseSubSortKey(raw interface{}) interface{} {
 	}
 }
 
+func (index *index) sortValueFromDoc(doc *Document) interface{} {
+	if sortKey := index.sortKey; sortKey != nil {
+		return doc.data[sortKey.Name]
+	}
+	return nil
+}
+
 func (index *PrimaryIndex) put(doc *Document) (*Document, bool) {
-	hashValue := doc.Get(index.schema.hashKey.Name)
-	sortValue := doc.Get(index.sortKey.Name)
+	hashValue := doc.Get(index.hashKey)
+	sortValue := doc.Get(index.sortKey)
 
 	newSkipList := lazyskiplist.NewLazySkipList(GeneralCompare)
 	read, _ := index.m.LoadOrStore(hashValue, newSkipList)
@@ -162,8 +178,8 @@ func (index *PrimaryIndex) put(doc *Document) (*Document, bool) {
 }
 
 func (index *SubIndex) put(doc *Document) {
-	hashValue := doc.Get(index.schema.hashKey.Name)
-	sortValue := SubSortKey{main: doc.Get(index.sortKey.Name), sub: doc.Get(index.schema.sortKey.Name)}
+	hashValue := doc.Get(index.hashKey)
+	sortValue := SubSortKey{main: doc.Get(index.sortKey), sub: doc.Get(index.primarySortKey)}
 
 	newSkipList := lazyskiplist.NewLazySkipList(func(a, b interface{}) int {
 		ka := a.(SubSortKey)
@@ -183,8 +199,8 @@ func (index *SubIndex) put(doc *Document) {
 }
 
 func (index *PrimaryIndex) remove(hash interface{}, sort interface{}) (*Document, bool) {
-	hash = index.schema.hashKey.Parse(hash)
-	sort = index.sortKey.Parse(sort)
+	hash = index.hashKey.Parse(hash)
+	sort = index.parseSortKey(sort)
 
 	if list := index.skipList(hash); list != nil {
 		if value, ok := list.Remove(sort); ok {
@@ -196,8 +212,8 @@ func (index *PrimaryIndex) remove(hash interface{}, sort interface{}) (*Document
 }
 
 func (index *SubIndex) remove(doc *Document) {
-	hash := doc.Get(index.schema.hashKey.Name)
-	sort := SubSortKey{main: doc.Get(index.sortKey.Name), sub: doc.Get(index.schema.sortKey.Name)}
+	hash := doc.Get(index.hashKey)
+	sort := SubSortKey{main: doc.Get(index.sortKey), sub: doc.Get(index.primarySortKey)}
 
 	read, _ := index.m.Load(hash)
 	list := read.(*lazyskiplist.SkipList)

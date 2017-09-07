@@ -1,19 +1,18 @@
 tables:
   onlines:
     fields:
-      id: 'string'
-      guestKey: 'string'
       channelId: 'string'
+      personKey: 'string'
       expiresAt: 'integer'
-      lastSeen: 'integer'
+      updatedAt: 'integer'
     expireKey: 'expiresAt'
     hashKey: 'channelId'
-    sortKey: 'id'
+    sortKey: 'personKey'
     subIndices:
-      guest: 'lastSeen'
+      guest: 'updatedAt'
     metrics:
       table: 'onlines-metrics'
-      ttl: 60
+      ttl: 600
       interval: 2
 
   onlines-metrics:
@@ -24,6 +23,27 @@ tables:
       expiresAt: 'integer'
     expireKey: 'expiresAt'
     hashKey: 'channelId'
+    sortKey: 'time'
+
+  sockets:
+    fields:
+      id: 'string'
+      expiresAt: 'integer'
+    expireKey: 'expiresAt'
+    hashKey: 'id'
+    metrics:
+      table: 'sockets-metrics'
+      ttl: 600
+      interval: 2
+
+  sockets-metrics:
+    fields:
+      id: 'string'
+      time: 'integer'
+      value: 'integer'
+      expiresAt: 'integer'
+    expireKey: 'expiresAt'
+    hashKey: 'id'
     sortKey: 'time'
 
   _metrics:
