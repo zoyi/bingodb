@@ -41,7 +41,7 @@ func MakeRouter(bingo *bingodb.Bingo) *fasthttprouter.Router {
 // Logging ... simple logging middleware
 func Logging(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
-		// ctx.Logger().Printf("%s at %s\n", ctx.Method(), ctx.Path())
+		ctx.Logger().Printf("%s at %s\n", ctx.Method(), ctx.Path())
 		h(ctx)
 	})
 }
