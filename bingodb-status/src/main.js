@@ -10,33 +10,7 @@ Vue.config.productionTip = false;
 /* eslint-disable no-new */
 new Vue({
   el: '#app',
-  router,
   template: '<App/>',
   components: { App },
-  methods: {
-    transform(data) {
-      const transformed = {};
-      transformed.data = [];
-
-      /*
-      for (let i = 0; i < data.length; i++) {
-        transformed.data.push({
-          name: 'hello',
-          size: 10,
-        });
-      }
-      */
-      transformed.data.push({
-        name: 'hello',
-        size: 10,
-      });
-
-      transformed.data.push({
-        name: 'hi',
-        size: 10,
-      });
-
-      return transformed;
-    },
-  },
+  router,
 });
