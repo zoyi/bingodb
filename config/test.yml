@@ -10,5 +10,7 @@ tables:
     hashKey: 'channelId'
     sortKey: 'id'
     subIndices:
-      guest: 'lastSeen'
+      guest:
+        hashKey: 'channelId'
+        sortKey: 'lastSeen'
 

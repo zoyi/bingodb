@@ -31,7 +31,7 @@ func NewTableMetrics(
 
 func (metrics *TableMetrics) put(hash interface{}, skipList *lazyskiplist.SkipList) bool {
 	data := Data{}
-	hashKey := metrics.source.hashKey.Name
+	hashKey := metrics.source.primaryKey.hashKey.Name
 	data[hashKey] = hash
 	data["count"] = skipList.Size()
 	data["time"] = time.Now().Unix()

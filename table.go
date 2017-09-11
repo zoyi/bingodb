@@ -12,11 +12,15 @@ type FieldSchema struct {
 	Type string
 }
 
+type Key struct {
+	hashKey *FieldSchema
+	sortKey *FieldSchema
+}
+
 type TableSchema struct {
 	fields      map[string]*FieldSchema
-	hashKey     *FieldSchema
-	sortKey     *FieldSchema
-	subSortKeys map[string]*FieldSchema
+	primaryKey  *Key
+	subKeys     map[string]*Key
 	expireField *FieldSchema
 }
 
@@ -47,8 +51,13 @@ func (table *Table) Info() *TableInfo {
 }
 
 type SubSortKey struct {
-	main interface{}
-	sub  interface{}
+	sort        interface{}
+	primaryHash interface{}
+	primarySort interface{}
+}
+
+func (key SubSortKey) Array() interface{} {
+	return []interface{}{key.sort, key.primaryHash, key.primarySort}
 }
 
 func newTable(
@@ -70,20 +79,24 @@ func newTable(
 }
 
 func (table *Table) HashKey() *FieldSchema {
-	return table.hashKey
+	return table.primaryKey.hashKey
 }
 
 func (table *Table) SortKey() *FieldSchema {
-	return table.sortKey
+	return table.primaryKey.sortKey
 }
 
-func (key *SubSortKey) Empty() bool {
-	return key.main == nil && key.sub == nil
+func ParseField(field *FieldSchema, raw interface{}) interface{} {
+	if field == nil {
+		return nil
+	} else {
+		return field.Parse(raw)
+	}
 }
 
 func (field *FieldSchema) Parse(raw interface{}) interface{} {
 	if raw == nil {
-		return raw
+		return nil
 	}
 
 	switch field.Type {
@@ -169,12 +182,11 @@ func (schema *TableSchema) Compare(a, b *Document) int {
 			return 1
 		}
 	}
-	hashDiff := GeneralCompare(a.Get(schema.hashKey), b.Get(schema.hashKey))
-	if hashDiff != 0 {
-		return hashDiff
+	if diff := GeneralCompare(a.Get(schema.primaryKey.hashKey), b.Get(schema.primaryKey.hashKey)); diff != 0 {
+		return diff
 	}
 
-	return GeneralCompare(a.Get(schema.sortKey), b.Get(schema.sortKey))
+	return GeneralCompare(a.Get(schema.primaryKey.sortKey), b.Get(schema.primaryKey.sortKey))
 }
 
 func (table *Table) Index(name string) IndexInterface {
@@ -229,8 +241,8 @@ func (table *Table) Remove(hash interface{}, sort interface{}) (doc *Document, o
 }
 
 func (table *Table) RemoveByDocument(doc *Document) (*Document, bool) {
-	hashValue := doc.Get(table.hashKey)
-	sortValue := doc.Get(table.sortKey)
+	hashValue := doc.Get(table.primaryKey.hashKey)
+	sortValue := doc.Get(table.primaryKey.sortKey)
 
 	return table.Remove(hashValue, sortValue)
 }

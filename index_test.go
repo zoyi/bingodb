@@ -177,7 +177,7 @@ func TestFetchSubIndex(t *testing.T) {
 		t.Errorf("Value different. Got %v expected empty", next)
 	}
 
-	result, next = table.Index("guest").Scan("1", SubSortKey{main: int64(100), sub: "1"}, 10)
+	result, next = table.Index("guest").Scan("1", SubSortKey{sort: int64(100), primaryHash: "1"}, 10)
 
 	if actualValue, expectedValue := len(result), 4; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
@@ -186,7 +186,7 @@ func TestFetchSubIndex(t *testing.T) {
 		t.Errorf("Value different. Got %v expected empty", next)
 	}
 
-	result, next = table.Index("guest").Scan("1", SubSortKey{main: int64(123), sub: "1"}, 10)
+	result, next = table.Index("guest").Scan("1", SubSortKey{sort: int64(123), primaryHash: "1"}, 10)
 
 	if actualValue, expectedValue := len(result), 3; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
