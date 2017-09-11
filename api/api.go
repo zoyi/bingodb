@@ -8,6 +8,13 @@ import (
 	"github.com/zoyi/bingodb"
 )
 
+const (
+	corsAllowHeaders     = "authorization"
+	corsAllowMethods     = "HEAD,GET,POST,PUT,DELETE,OPTIONS,PATCH"
+	corsAllowOrigin      = "*"
+	corsAllowCredentials = "true"
+)
+
 type Manager struct {
 	*Resource
 }
@@ -25,23 +32,27 @@ func MakeRouter(bingo *bingodb.Bingo) *fasthttprouter.Router {
 
 	router := fasthttprouter.New()
 
-	router.GET("/tables", Logging(resource.Tables))
-	router.GET("/tables/:table", Logging(resource.Get))
-	router.GET("/tables/:table/info", Logging(resource.TableInfo))
-	router.GET("/tables/:table/scan", Logging(resource.Scan))
-	router.GET("/tables/:table/indices/:index", Logging(resource.Get))
+	router.GET("/tables", cors(resource.Tables))
+	router.GET("/tables/:table", cors(resource.Get))
+	router.GET("/tables/:table/info", cors(resource.TableInfo))
+	router.GET("/tables/:table/scan", cors(resource.Scan))
+	router.GET("/tables/:table/indices/:index", cors(resource.Get))
 
-	router.PUT("/tables/:table", Logging(resource.Put))
+	router.PUT("/tables/:table", cors(resource.Put))
 
-	router.DELETE("/tables/:table", Logging(resource.Remove))
+	router.DELETE("/tables/:table", cors(resource.Remove))
 
 	return router
 }
 
-// Logging ... simple logging middleware
-func Logging(h fasthttp.RequestHandler) fasthttp.RequestHandler {
+func cors(next fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
-		// ctx.Logger().Printf("%s at %s\n", ctx.Method(), ctx.Path())
-		h(ctx)
+
+		ctx.Response.Header.Set("Access-Control-Allow-Credentials", corsAllowCredentials)
+		ctx.Response.Header.Set("Access-Control-Allow-Headers", corsAllowHeaders)
+		ctx.Response.Header.Set("Access-Control-Allow-Methods", corsAllowMethods)
+		ctx.Response.Header.Set("Access-Control-Allow-Origin", corsAllowOrigin)
+
+		next(ctx)
 	})
 }
