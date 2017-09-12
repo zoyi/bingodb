@@ -30,7 +30,7 @@ func prepare() {
 		dec.UseNumber()
 		var data Data
 		dec.Decode(&data)
-		table.Put(&data)
+		table.Put(&data, nil)
 	}
 	{
 		var s = `{
@@ -44,7 +44,7 @@ func prepare() {
 		dec.UseNumber()
 		var data Data
 		dec.Decode(&data)
-		table.Put(&data)
+		table.Put(&data, nil)
 	}
 
 	{
@@ -59,7 +59,7 @@ func prepare() {
 		dec.UseNumber()
 		var data Data
 		dec.Decode(&data)
-		table.Put(&data)
+		table.Put(&data, nil)
 	}
 
 	{
@@ -74,7 +74,7 @@ func prepare() {
 		dec.UseNumber()
 		var data Data
 		dec.Decode(&data)
-		table.Put(&data)
+		table.Put(&data, nil)
 	}
 
 	{
@@ -89,7 +89,7 @@ func prepare() {
 		dec.UseNumber()
 		var data Data
 		dec.Decode(&data)
-		table.Put(&data)
+		table.Put(&data, nil)
 	}
 }
 

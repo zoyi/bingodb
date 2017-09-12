@@ -201,29 +201,35 @@ func (table *Table) PrimaryIndex() *PrimaryIndex {
 	return table.primaryIndex
 }
 
-func (table *Table) Put(data *Data) (*Document, bool) {
-	doc := ParseDoc(*data, table.TableSchema)
+func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Document, bool) {
+	set := ParseDoc(setData, table.TableSchema)
+	setOnInsert := ParseDoc(setOnInsertData, table.TableSchema)
+
+	onUpdate := func(oldRaw interface{}) interface{} {
+		old := oldRaw.(*Document)
+		return old.Merge(set)
+	}
 
 	// Insert doc into primary index
-	original, replaced := table.primaryIndex.put(doc)
+	old, newbie, replaced := table.primaryIndex.put(set.Merge(setOnInsert), onUpdate)
 
 	// Update for sub index
 
 	for _, index := range table.subIndices {
 		if replaced {
-			index.remove(original)
+			index.remove(old)
 		}
-		index.put(doc)
+		index.put(newbie)
 	}
 
 	// Update for event list
 	keeper := table.bingo.keeper
 	if replaced {
-		keeper.remove(table, original)
+		keeper.remove(table, old)
 	}
-	keeper.put(table, doc)
+	keeper.put(table, newbie)
 
-	return doc, replaced
+	return old, newbie, replaced
 }
 
 func (table *Table) Remove(hash interface{}, sort interface{}) (doc *Document, ok bool) {

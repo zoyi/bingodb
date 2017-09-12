@@ -62,5 +62,5 @@ func (metrics *SystemMetrics) output(key string, value int64) {
 	data["value"] = value
 	data["time"] = time.Now().Unix()
 	data["expiresAt"] = time.Now().Add(time.Hour * 3).Unix()
-	metrics.bingo.tables["_metrics"].Put(&data)
+	metrics.bingo.tables["_metrics"].Put(&data, nil)
 }

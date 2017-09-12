@@ -12,6 +12,11 @@ type GetQuery struct {
 	SortKey interface{} `json:"sort,omitempty"` //optional
 }
 
+type PutQuery struct {
+	Set         bingodb.Data `json:"$set"`
+	SetOnInsert bingodb.Data `json:"$setOnInsert,omitempty"` //optional
+}
+
 type ScanQuery struct {
 	HashKey  interface{}
 	Since    []interface{}
@@ -23,12 +28,29 @@ type Resource struct {
 	bingo *bingodb.Bingo
 }
 
-type ListResponse struct {
+type ScanResult struct {
 	Values interface{} `json:"values"`
 	Next   interface{} `json:"next,omitempty"`
 }
 
-func newListResponse(values []bingodb.Data, next interface{}) *ListResponse {
+type PutResult struct {
+	Old      interface{} `json:"old,omitempty"`
+	New      interface{} `json:"new"`
+	Replaced bool        `json:"replaced"`
+}
+
+func newPutReuslt(old *bingodb.Document, newbie *bingodb.Document, replaced bool) *PutResult {
+	var oldDoc, newbieDoc bingodb.Data
+	if old != nil {
+		oldDoc = old.Data()
+	}
+	if newbie != nil {
+		newbieDoc = newbie.Data()
+	}
+	return &PutResult{Old: oldDoc, New: newbieDoc, Replaced: replaced}
+}
+
+func newListResponse(values []bingodb.Data, next interface{}) *ScanResult {
 	if next != nil {
 		switch next.(type) {
 		case bingodb.SubSortKey:
@@ -36,7 +58,7 @@ func newListResponse(values []bingodb.Data, next interface{}) *ListResponse {
 		}
 	}
 
-	return &ListResponse{Values: values, Next: next}
+	return &ScanResult{Values: values, Next: next}
 }
 
 func (rs *Resource) Tables(ctx *fasthttp.RequestCtx) {
@@ -84,12 +106,11 @@ func (rs *Resource) Get(ctx *fasthttp.RequestCtx) {
 
 func (rs *Resource) Put(ctx *fasthttp.RequestCtx) {
 	if table := rs.fetchTable(ctx); table != nil {
-		data := rs.fetchData(ctx)
+		data := rs.fetchPutQuery(ctx)
 
-		if document, replaced := table.Put(&data); replaced {
-			success(ctx, document.ToJSON())
-		} else {
-			success(ctx, []byte("{}"))
+		old, newbie, replaced := table.Put(&data.Set, &data.SetOnInsert)
+		if bytes, err := json.Marshal(newPutReuslt(old, newbie, replaced)); err == nil {
+			success(ctx, bytes)
 		}
 	}
 	rs.bingo.AddPut()
@@ -97,7 +118,7 @@ func (rs *Resource) Put(ctx *fasthttp.RequestCtx) {
 
 func (rs *Resource) Remove(ctx *fasthttp.RequestCtx) {
 	if table := rs.fetchTable(ctx); table != nil {
-		getRequest := rs.fetchGetQuery(ctx, table.PrimaryIndex())
+		getRequest := rs.fetchGetQuery(ctx)
 		if document, ok := table.Remove(getRequest.HashKey, getRequest.SortKey); ok {
 			success(ctx, document.ToJSON())
 		} else {
@@ -163,6 +184,13 @@ func (rs *Resource) fetchGetQuery(ctx *fasthttp.RequestCtx) (request GetQuery) {
 }
 
 func (rs *Resource) fetchData(ctx *fasthttp.RequestCtx) (data bingodb.Data) {
+	if err := json.Unmarshal(ctx.PostBody(), &data); err != nil {
+		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
+	}
+	return
+}
+
+func (rs *Resource) fetchPutQuery(ctx *fasthttp.RequestCtx) (data PutQuery) {
 	if err := json.Unmarshal(ctx.PostBody(), &data); err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 	}

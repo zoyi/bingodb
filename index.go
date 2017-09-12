@@ -70,7 +70,7 @@ func (index *PrimaryIndex) Scan(hash interface{}, since interface{}, limit int) 
 	if list := index.skipList(hash); list != nil {
 		it := list.Begin(since)
 		for i := 0; i < limit && it.Present(); i, _ = i+1, it.Next() {
-			result = append(result, it.Value().(*Document).GetData())
+			result = append(result, it.Value().(*Document).Data())
 		}
 		if it.Present() {
 			next = it.Key()
@@ -86,7 +86,7 @@ func (index *PrimaryIndex) RScan(hash interface{}, since interface{}, limit int)
 	if list := index.skipList(hash); list != nil {
 		it := list.End(since)
 		for i := 0; i < limit && it.Present(); i, _ = i+1, it.Prev() {
-			result = append(result, it.Value().(*Document).GetData())
+			result = append(result, it.Value().(*Document).Data())
 		}
 		if it.Present() {
 			next = it.Key()
@@ -114,7 +114,7 @@ func (index *SubIndex) Scan(hash interface{}, since interface{}, limit int) (res
 	if list := index.skipList(hash); list != nil {
 		it := list.Begin(since)
 		for i := 0; i < limit && it.Present(); i, _ = i+1, it.Next() {
-			result = append(result, it.Value().(*Document).GetData())
+			result = append(result, it.Value().(*Document).Data())
 		}
 		if it.Present() {
 			next = it.Key()
@@ -158,7 +158,7 @@ func (index *index) sortValueFromDoc(doc *Document) interface{} {
 	return nil
 }
 
-func (index *PrimaryIndex) put(doc *Document) (*Document, bool) {
+func (index *PrimaryIndex) put(doc *Document, onUpdate lazyskiplist.OnUpdate) (*Document, *Document, bool) {
 	hashValue := doc.Get(index.hashKey)
 	sortValue := doc.Get(index.sortKey)
 
@@ -166,11 +166,11 @@ func (index *PrimaryIndex) put(doc *Document) (*Document, bool) {
 	read, _ := index.m.LoadOrStore(hashValue, newSkipList)
 	list := read.(*lazyskiplist.SkipList)
 
-	if original, replaced := list.Put(sortValue, doc); replaced {
-		return original.(*Document), true
+	if old, newbie, replaced := list.Put(sortValue, doc, onUpdate); replaced {
+		return old.(*Document), newbie.(*Document), true
 	} else {
 		atomic.AddInt64(&index.size, 1)
-		return nil, false
+		return nil, newbie.(*Document), false
 	}
 }
 
@@ -192,7 +192,7 @@ func (index *SubIndex) put(doc *Document) {
 	read, _ := index.m.LoadOrStore(hash, newSkipList)
 	list := read.(*lazyskiplist.SkipList)
 
-	if _, replaced := list.Put(sort, doc); !replaced {
+	if _, _, replaced := list.Put(sort, doc, nil); !replaced {
 		atomic.AddInt64(&index.size, 1)
 	}
 }

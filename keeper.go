@@ -65,7 +65,7 @@ func (keeper *Keeper) put(table *Table, doc *Document) {
 	value, ok := doc.GetExpiresAt()
 	if ok {
 		key := &ExpireKey{expiresAt: value, table: table, Document: doc}
-		keeper.list.Put(key, nil)
+		keeper.list.Put(key, nil, nil)
 	}
 }
 
