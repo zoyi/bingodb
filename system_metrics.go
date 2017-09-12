@@ -57,10 +57,12 @@ func (metrics *SystemMetrics) dump() {
 }
 
 func (metrics *SystemMetrics) output(key string, value int64) {
-	data := Data{}
-	data["key"] = key
-	data["value"] = value
-	data["time"] = time.Now().Unix()
-	data["expiresAt"] = time.Now().Add(time.Hour * 3).Unix()
-	metrics.bingo.tables["_metrics"].Put(&data, nil)
+	if table, ok := metrics.bingo.tables["_metrics"]; ok {
+		data := Data{}
+		data["key"] = key
+		data["value"] = value
+		data["time"] = time.Now().Unix()
+		data["expiresAt"] = time.Now().Add(time.Hour * 3).Unix()
+		table.Put(&data, nil)
+	}
 }
