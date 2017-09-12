@@ -56,7 +56,7 @@ func (rs *Resource) TableInfo(ctx *fasthttp.RequestCtx) {
 func (rs *Resource) Scan(ctx *fasthttp.RequestCtx) {
 	if table := rs.fetchTable(ctx); table != nil {
 		if index := table.Index(rs.fetchIndex(ctx)); index != nil {
-			query := rs.fetchScanQuery(ctx, index)
+			query := rs.fetchScanQuery(ctx)
 			values, next := index.Scan(query.HashKey, query.Since, query.Limit)
 			if bytes, err := json.Marshal(newListResponse(values, next)); err == nil {
 				success(ctx, bytes)
@@ -69,7 +69,7 @@ func (rs *Resource) Scan(ctx *fasthttp.RequestCtx) {
 func (rs *Resource) Get(ctx *fasthttp.RequestCtx) {
 	if table := rs.fetchTable(ctx); table != nil {
 		if index := table.Index(rs.fetchIndex(ctx)); index != nil {
-			getRequest := rs.fetchGetQuery(ctx, index)
+			getRequest := rs.fetchGetQuery(ctx)
 			if document, ok := index.Get(getRequest.HashKey, getRequest.SortKey); ok {
 				success(ctx, document.ToJSON())
 			} else {
@@ -130,10 +130,8 @@ func (rs *Resource) fetchIndex(ctx *fasthttp.RequestCtx) string {
 	return ctx.UserValue("index").(string)
 }
 
-func (rs *Resource) fetchScanQuery(ctx *fasthttp.RequestCtx, index bingodb.IndexInterface) (query ScanQuery) {
-	hashKey := index.HashKey()
-
-	query.HashKey = string(ctx.QueryArgs().Peek(hashKey.Name))
+func (rs *Resource) fetchScanQuery(ctx *fasthttp.RequestCtx) (query ScanQuery) {
+	query.HashKey = string(ctx.QueryArgs().Peek("hash"))
 
 	query.Since = make([]interface{}, 3)
 	for i, value := range ctx.QueryArgs().PeekMulti("since") {
@@ -152,19 +150,14 @@ func (rs *Resource) fetchScanQuery(ctx *fasthttp.RequestCtx, index bingodb.Index
 	return query
 }
 
-func (rs *Resource) fetchGetQuery(ctx *fasthttp.RequestCtx, index bingodb.IndexInterface) (request GetQuery) {
+func (rs *Resource) fetchGetQuery(ctx *fasthttp.RequestCtx) (request GetQuery) {
 	if len(ctx.PostBody()) != 0 {
 		if err := json.Unmarshal(ctx.PostBody(), &request); err != nil {
 			ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		}
 	} else {
-		hashKey := index.HashKey()
-		sortKey := index.SortKey()
-
-		request.HashKey = hashKey.Parse(ctx.QueryArgs().Peek(hashKey.Name))
-		if sortKey != nil {
-			request.SortKey = sortKey.Parse(ctx.QueryArgs().Peek(sortKey.Name))
-		}
+		request.HashKey = ctx.QueryArgs().Peek("hash")
+		request.SortKey = ctx.QueryArgs().Peek("sort")
 	}
 	return
 }
