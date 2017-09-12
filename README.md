@@ -47,6 +47,38 @@ tables:
         sortKey: 'lastSeen'
 ```
 
+## API Overview
+
+### <code>PUT</code> /tables/:table/
+* 새로운 document를 추가하는 API
+* $setOnInsert는 해당 document가 디비에 없어 새로 추가되는 경우에만 값을 set하게 됨
+* Reponse에는 디비에 이전 값이 있다면 이전 값과 새로 추가된 값, 교체된 여부를 알 수 있음
+* Request example 
+```json
+{
+  "$set": {
+    "id": "soc1",
+    "personKey": "user1",
+    "updatedAt": 1505200000,
+    "expiresAt": 1513008702
+  },
+  "$setOnInsert": {
+    "createdAt": 1505200000
+  }
+}
+```
+
+### <code>GET</code> /tables/:table/scan?hash=[hash]&limit=[limit]&since=[since]
+* 해쉬 값에 해당하는 아이템들을 list로 얻는 API
+* since 값을 포함해 그 이후 데이터를 조회함
+* 최대 limit 개수 만큼 조회 
+
+### <code>GET</code> /tables/:table/indices/:index/scan?hash=[hash]&limit=[limit]&since=[since1]&since=[since2]&since=[since3]
+* index 이름을 가진 서브 인덱스에 대해 해당하는 아이템들을 list로 얻는 API
+* since 값을 포함해 그 이후 데이터를 조회함
+* 최대 limit 개수 만큼 조회
+
+
 ## Performance
 * put: O(lg(n))
 * lookup: O(lg(n))
