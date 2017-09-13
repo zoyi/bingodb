@@ -192,9 +192,10 @@ func (schema *TableSchema) Compare(a, b *Document) int {
 func (table *Table) Index(name string) IndexInterface {
 	if len(name) == 0 {
 		return table.primaryIndex
-	} else {
-		return table.subIndices[name]
+	} else if index, ok := table.subIndices[name]; ok {
+		return index
 	}
+	return nil
 }
 
 func (table *Table) PrimaryIndex() *PrimaryIndex {

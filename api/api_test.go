@@ -128,6 +128,14 @@ func TestScanWithInvalidParams(t *testing.T) {
 		Expect().Status(http.StatusBadRequest)
 }
 
+func TestScanIndexWithInvalidName(t *testing.T)	{
+	getExpector(t).
+		GET("/tables/onlines/indices/wrong/scan").
+		WithQuery("limit", "20").
+		Expect().Status(http.StatusBadRequest)
+}
+
+
 //func TestUpdateWithValidParams(t *testing.T) {
 //	body := make(map[string]interface{})
 //	body["channelId"] = "1"

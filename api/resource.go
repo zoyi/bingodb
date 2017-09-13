@@ -84,6 +84,8 @@ func (rs *Resource) Scan(ctx *fasthttp.RequestCtx) {
 					success(ctx, bytes)
 				}
 			}
+		} else {
+			raiseError(ctx, "Not found index")
 		}
 	}
 	rs.bingo.AddScan()
