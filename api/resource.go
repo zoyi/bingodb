@@ -78,10 +78,11 @@ func (rs *Resource) TableInfo(ctx *fasthttp.RequestCtx) {
 func (rs *Resource) Scan(ctx *fasthttp.RequestCtx) {
 	if table := rs.fetchTable(ctx); table != nil {
 		if index := table.Index(rs.fetchIndex(ctx)); index != nil {
-			query := rs.fetchScanQuery(ctx)
-			values, next := index.Scan(query.HashKey, query.Since, query.Limit)
-			if bytes, err := json.Marshal(newListResponse(values, next)); err == nil {
-				success(ctx, bytes)
+			if query, ok := rs.fetchScanQuery(ctx); ok {
+				values, next := index.Scan(query.HashKey, query.Since, query.Limit)
+				if bytes, err := json.Marshal(newListResponse(values, next)); err == nil {
+					success(ctx, bytes)
+				}
 			}
 		}
 	}
@@ -91,11 +92,12 @@ func (rs *Resource) Scan(ctx *fasthttp.RequestCtx) {
 func (rs *Resource) Get(ctx *fasthttp.RequestCtx) {
 	if table := rs.fetchTable(ctx); table != nil {
 		if index := table.Index(rs.fetchIndex(ctx)); index != nil {
-			getRequest := rs.fetchGetQuery(ctx)
-			if document, ok := index.Get(getRequest.HashKey, getRequest.SortKey); ok {
-				success(ctx, document.ToJSON())
-			} else {
-				raiseError(ctx, "Not found document")
+			if getRequest, ok := rs.fetchGetQuery(ctx, table.SortKey() != nil); ok {
+				if document, ok := index.Get(getRequest.HashKey, getRequest.SortKey); ok {
+					success(ctx, document.ToJSON())
+				} else {
+					raiseError(ctx, "Not found document")
+				}
 			}
 		} else {
 			raiseError(ctx, "Not found index")
@@ -118,11 +120,12 @@ func (rs *Resource) Put(ctx *fasthttp.RequestCtx) {
 
 func (rs *Resource) Remove(ctx *fasthttp.RequestCtx) {
 	if table := rs.fetchTable(ctx); table != nil {
-		getRequest := rs.fetchGetQuery(ctx)
-		if document, ok := table.Remove(getRequest.HashKey, getRequest.SortKey); ok {
-			success(ctx, document.ToJSON())
-		} else {
-			success(ctx, []byte("{}"))
+		if getRequest, ok := rs.fetchGetQuery(ctx, table.SortKey() != nil); ok {
+			if document, ok := table.Remove(getRequest.HashKey, getRequest.SortKey); ok {
+				success(ctx, document.ToJSON())
+			} else {
+				success(ctx, []byte("{}"))
+			}
 		}
 	}
 	rs.bingo.AddRemove()
@@ -155,8 +158,13 @@ func (rs *Resource) fetchIndex(ctx *fasthttp.RequestCtx) string {
 	}
 }
 
-func (rs *Resource) fetchScanQuery(ctx *fasthttp.RequestCtx) (query ScanQuery) {
-	query.HashKey = string(ctx.QueryArgs().Peek("hash"))
+func (rs *Resource) fetchScanQuery(ctx *fasthttp.RequestCtx) (query ScanQuery, ok bool) {
+	ok = true
+	if query.HashKey = string(ctx.QueryArgs().Peek("hash")); len(query.HashKey.(string)) == 0 {
+		raiseError(ctx, fmt.Sprintf("Hash key missing"))
+		ok = false
+		return
+	}
 
 	query.Since = make([]interface{}, 3)
 	for i, value := range ctx.QueryArgs().PeekMulti("since") {
@@ -172,17 +180,32 @@ func (rs *Resource) fetchScanQuery(ctx *fasthttp.RequestCtx) (query ScanQuery) {
 
 	query.Backward = ctx.QueryArgs().GetBool("backward")
 
-	return query
+	return
 }
 
-func (rs *Resource) fetchGetQuery(ctx *fasthttp.RequestCtx) (request GetQuery) {
+func (rs *Resource) fetchGetQuery(ctx *fasthttp.RequestCtx, hasSortKey bool) (request GetQuery, ok bool) {
+	ok = true
 	if len(ctx.PostBody()) != 0 {
 		if err := json.Unmarshal(ctx.PostBody(), &request); err != nil {
 			ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		}
 	} else {
-		request.HashKey = ctx.QueryArgs().Peek("hash")
+		if request.HashKey = string(ctx.QueryArgs().Peek("hash")); len(request.HashKey.(string)) == 0 {
+			raiseError(ctx, fmt.Sprintf("Hash key missing"))
+			ok = false
+			return
+		}
 		request.SortKey = ctx.QueryArgs().Peek("sort")
+		if request.SortKey == nil && hasSortKey {
+			raiseError(ctx, fmt.Sprintf("Sort key missing"))
+			ok = false
+			return
+		}
+		if request.SortKey != nil && !hasSortKey {
+			raiseError(ctx, fmt.Sprintf("Sort key not exists"))
+			ok = false
+			return
+		}
 	}
 	return
 }
