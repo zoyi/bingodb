@@ -64,6 +64,7 @@ func (index *PrimaryIndex) Range(f func(key interface{}, list *lazyskiplist.Skip
 }
 
 func (index *PrimaryIndex) Scan(hash interface{}, since interface{}, limit int) (result []Data, next interface{}) {
+	result = make([]Data, 0)
 	hash = ParseField(index.hashKey, hash)
 	since = ParseField(index.sortKey, since)
 
@@ -80,6 +81,7 @@ func (index *PrimaryIndex) Scan(hash interface{}, since interface{}, limit int) 
 }
 
 func (index *PrimaryIndex) RScan(hash interface{}, since interface{}, limit int) (result []Data, next interface{}) {
+	result = make([]Data, 0)
 	hash = ParseField(index.hashKey, hash)
 	since = ParseField(index.sortKey, since)
 
@@ -108,6 +110,7 @@ func (index *PrimaryIndex) Get(hash interface{}, sort interface{}) (*Document, b
 }
 
 func (index *SubIndex) Scan(hash interface{}, since interface{}, limit int) (result []Data, next interface{}) {
+	result = make([]Data, 0)
 	hash = ParseField(index.hashKey, hash)
 	since = index.parseSubSortKey(since)
 
