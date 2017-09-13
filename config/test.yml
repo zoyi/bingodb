@@ -1,16 +1,18 @@
 tables:
   onlines:
     fields:
-      id: 'string'
-      guestKey: 'string'
       channelId: 'string'
+      personKey: 'string'
       expiresAt: 'integer'
-      lastSeen: 'integer'
+      updatedAt: 'integer'
     expireKey: 'expiresAt'
     hashKey: 'channelId'
-    sortKey: 'id'
+    sortKey: 'personKey'
     subIndices:
       guest:
         hashKey: 'channelId'
-        sortKey: 'lastSeen'
-
+        sortKey: 'updatedAt'
+    metrics:
+      table: 'onlines-metrics'
+      ttl: 600
+      interval: 2

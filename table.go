@@ -214,7 +214,6 @@ func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Docum
 	old, newbie, replaced := table.primaryIndex.put(set.Merge(setOnInsert), onUpdate)
 
 	// Update for sub index
-
 	for _, index := range table.subIndices {
 		if replaced {
 			index.remove(old)

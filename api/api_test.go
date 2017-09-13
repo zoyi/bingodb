@@ -1,85 +1,133 @@
 package api
 
-//
-//import (
-//	"github.com/gavv/httpexpect"
-//	"net/http"
-//	"testing"
-//)
-//
-//var (
-//	router = MakeRouter("test.yml")
-//)
-//
-//func getExpector(t *testing.T) *httpexpect.Expect {
-//	e := httpexpect.WithConfig(httpexpect.Config{
-//		Reporter: httpexpect.NewAssertReporter(t),
-//		Client: &http.Client{
-//			Transport: httpexpect.NewFastBinder(router.Handler),
-//		},
-//		Printers: []httpexpect.Printer{
-//			httpexpect.NewCurlPrinter(t),
-//			httpexpect.NewDebugPrinter(t, true),
-//		},
-//	})
-//
-//	return e
-//}
-//
-//func TestGetWithValidParams(t *testing.T) {
-//	getExpector(t).
-//		GET("/get/onlines").
-//		WithQuery("hashKey", "1").
-//		WithQuery("sortKey", "what").
-//		Expect().Status(http.StatusOK).
-//		JSON().Object().
-//		ValueEqual("id", "what").
-//		ValueEqual("channelId", "1").
-//		ContainsKey("expiresAt").
-//		ContainsKey("lastSeen")
-//}
-//
-//func TestGetWithInvalidParams(t *testing.T) {
-//	getExpector(t).
-//		GET("/get/onlines").
-//		WithQuery("hashKey", "1").
-//		Expect().Status(http.StatusBadRequest)
-//}
-//
-//func TestGetWithValidParamEmptyResult(t *testing.T) {
-//	getExpector(t).
-//		GET("/get/onlines").
-//		WithQuery("hashKey", "1").
-//		WithQuery("sortKey", "red").
-//		Expect().Status(http.StatusOK).
-//		JSON().Object().Empty()
-//}
-//
-//func TestGetsWithValidParams(t *testing.T) {
-//	getExpector(t).
-//		GET("/gets/onlines").
-//		WithQuery("indexName", "guest").
-//		WithQuery("hashKey", "1").
-//		WithQuery("startKey", "120").
-//		WithQuery("endKey", "130").
-//		WithQuery("limit", "20").
-//		WithQuery("order", "DESC").
-//		Expect().Status(http.StatusOK).
-//		JSON().Array().
-//		Length().Equal(2)
-//}
-//
-//func TestGetsWithInvalidParams(t *testing.T) {
-//	getExpector(t).
-//		GET("/gets/onlines").
-//		WithQuery("indexName", "guest").
-//		WithQuery("startKey", "120").
-//		WithQuery("endKey", "130").
-//		WithQuery("limit", "20").
-//		WithQuery("order", "DESC").
-//		Expect().Status(http.StatusBadRequest)
-//}
-//
+
+import (
+	"github.com/gavv/httpexpect"
+	"net/http"
+	"testing"
+	"github.com/zoyi/bingodb"
+	"encoding/json"
+	"strings"
+)
+
+var (
+	bingo = bingodb.NewBingoFromConfigFile("../config/test.yml")
+	router = MakeRouter(bingo)
+)
+
+func initDefaultSeedData() {
+	table, _ := bingo.Table("onlines")
+	{
+		var s = `{
+			"channelId": "1",
+			"id": "1",
+			"personKey": "person1",
+			"lastSeen": 123,
+			"expiresAt": 2600000000
+		}`
+
+		dec := json.NewDecoder(strings.NewReader(s))
+		dec.UseNumber()
+		var data bingodb.Data
+		dec.Decode(&data)
+		table.Put(&data, nil)
+	}
+	{
+		var s = `{
+			"channelId": "1",
+			"id": "2",
+			"personKey": "person2",
+			"lastSeen": 129,
+			"expiresAt": 2700000000
+		}`
+
+		dec := json.NewDecoder(strings.NewReader(s))
+		dec.UseNumber()
+		var data bingodb.Data
+		dec.Decode(&data)
+		table.Put(&data, nil)
+	}
+	{
+		var s = `{
+			"channelId": "1",
+			"id": "3",
+			"personKey": "person3",
+			"lastSeen": 132,
+			"expiresAt": 2800000000
+		}`
+
+		dec := json.NewDecoder(strings.NewReader(s))
+		dec.UseNumber()
+		var data bingodb.Data
+		dec.Decode(&data)
+		table.Put(&data, nil)
+	}
+}
+
+func getExpector(t *testing.T) *httpexpect.Expect {
+	initDefaultSeedData()
+
+	e := httpexpect.WithConfig(httpexpect.Config{
+		Reporter: httpexpect.NewAssertReporter(t),
+		Client: &http.Client{
+			Transport: httpexpect.NewFastBinder(router.Handler),
+		},
+		Printers: []httpexpect.Printer{
+			httpexpect.NewCurlPrinter(t),
+			httpexpect.NewDebugPrinter(t, true),
+		},
+	})
+
+	return e
+}
+
+func TestGetWithValidParams(t *testing.T) {
+	getExpector(t).
+		GET("/tables/onlines").
+		WithQuery("hash", "1").
+		WithQuery("sort", "person1").
+		Expect().Status(http.StatusOK).
+		JSON().Object().
+		ValueEqual("id", "1").
+		ValueEqual("channelId", "1").
+		ContainsKey("expiresAt").
+		ContainsKey("lastSeen")
+}
+
+func TestGetWithInvalidParams(t *testing.T) {
+	getExpector(t).
+		GET("/tables/onlines").
+		WithQuery("hash", "1").
+		Expect().Status(http.StatusBadRequest).
+		Body().Contains("Not found document")
+}
+
+func TestGetWithValidParamEmptyResult(t *testing.T) {
+	getExpector(t).
+		GET("/tables/onlines").
+		WithQuery("hash", "1").
+		WithQuery("sort", "red").
+		Expect().Status(http.StatusBadRequest).
+		Body().Contains("Not found document")
+}
+
+func TestScanWithValidParams(t *testing.T) {
+	getExpector(t).
+		GET("/tables/onlines/scan").
+		WithQuery("hash", "1").
+		WithQuery("limit", "20").
+		Expect().Status(http.StatusOK).
+		JSON().Object().Value("values").
+		Array().Length().Equal(3)
+}
+
+func TestScanWithInvalidParams(t *testing.T) {
+	getExpector(t).
+		GET("/tables/onlines/scan").
+		WithQuery("limit", "20").
+		Expect().Status(http.StatusBadRequest)
+}
+
 //func TestUpdateWithValidParams(t *testing.T) {
 //	body := make(map[string]interface{})
 //	body["channelId"] = "1"
