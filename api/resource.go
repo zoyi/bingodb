@@ -148,7 +148,11 @@ func (rs *Resource) fetchTable(ctx *fasthttp.RequestCtx) *bingodb.Table {
 }
 
 func (rs *Resource) fetchIndex(ctx *fasthttp.RequestCtx) string {
-	return ctx.UserValue("index").(string)
+	if index := ctx.UserValue("index"); index != nil {
+		return index.(string)
+	} else {
+		return ""
+	}
 }
 
 func (rs *Resource) fetchScanQuery(ctx *fasthttp.RequestCtx) (query ScanQuery) {
