@@ -12,7 +12,14 @@ tables:
       guest:
         hashKey: 'channelId'
         sortKey: 'updatedAt'
-    metrics:
-      table: 'onlines-metrics'
-      ttl: 600
-      interval: 2
+  tests:
+    fields:
+      hash: 'integer'
+      sort: 'integer'
+      expiresAt: 'integer'
+    hashKey: 'hash'
+    sortKey: 'sort'
+    expireKey: 'expiresAt'
+    subIndices:
+      index:
+        hashKey: 'hash'

@@ -38,7 +38,11 @@ func ParseDoc(data *Data, schema *TableSchema) *Document {
 	for _, field := range schema.fields {
 		raw, present := (*data)[field.Name]
 		if present {
-			(*data)[field.Name] = field.Parse(raw)
+			val, ok := field.Parse(raw)
+			if !ok {
+				continue
+			}
+			(*data)[field.Name] = val
 		}
 	}
 

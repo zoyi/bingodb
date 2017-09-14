@@ -90,38 +90,42 @@ func ParseField(field *FieldSchema, raw interface{}) interface{} {
 	if field == nil {
 		return nil
 	} else {
-		return field.Parse(raw)
+		val, ok := field.Parse(raw)
+		if !ok {
+			return nil
+		}
+		return val
 	}
 }
 
-func (field *FieldSchema) Parse(raw interface{}) interface{} {
+func (field *FieldSchema) Parse(raw interface{}) (interface{}, bool) {
 	if raw == nil {
-		return nil
+		return nil, true
 	}
 
 	switch field.Type {
 	case "integer":
 		switch raw.(type) {
 		case json.Number:
-			value, _ := raw.(json.Number).Int64()
-			return value
+			value, err := raw.(json.Number).Int64()
+			return value, err == nil
 
 		case string:
-			value, _ := strconv.ParseInt(raw.(string), 10, 64)
-			return value
+			value, err := strconv.ParseInt(raw.(string), 10, 64)
+			return value, err == nil
 
 		case []byte:
-			value, _ := strconv.ParseInt(string(raw.([]byte)), 10, 64)
-			return value
+			value, err := strconv.ParseInt(string(raw.([]byte)), 10, 64)
+			return value, err == nil
 
 		case int:
-			return int64(raw.(int))
+			return int64(raw.(int)), true
 
 		case int64:
-			return raw.(int64)
+			return raw.(int64), true
 
 		case float64:
-			return int64(raw.(float64))
+			return int64(raw.(float64)), true
 
 		case []interface{}:
 			return field.Parse(raw.([]interface{})[0])
@@ -131,16 +135,16 @@ func (field *FieldSchema) Parse(raw interface{}) interface{} {
 		switch raw.(type) {
 		case []byte:
 			if bytes := raw.([]byte); len(bytes) > 0 {
-				return string(raw.([]byte))
+				return string(raw.([]byte)), true
 			} else {
-				return nil
+				return nil, true
 			}
 
 		case []interface{}:
 			return field.Parse(raw.([]interface{})[0])
 		}
 	}
-	return raw
+	return raw, true
 }
 
 func NumberComparator(a, b interface{}) int {

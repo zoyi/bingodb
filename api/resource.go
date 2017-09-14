@@ -39,7 +39,7 @@ type PutResult struct {
 	Replaced bool        `json:"replaced"`
 }
 
-func newPutReuslt(old *bingodb.Document, newbie *bingodb.Document, replaced bool) *PutResult {
+func newPutResult(old *bingodb.Document, newbie *bingodb.Document, replaced bool) *PutResult {
 	var oldDoc, newbieDoc bingodb.Data
 	if old != nil {
 		oldDoc = old.Data()
@@ -110,11 +110,11 @@ func (rs *Resource) Get(ctx *fasthttp.RequestCtx) {
 
 func (rs *Resource) Put(ctx *fasthttp.RequestCtx) {
 	if table := rs.fetchTable(ctx); table != nil {
-		data := rs.fetchPutQuery(ctx)
-
-		old, newbie, replaced := table.Put(&data.Set, &data.SetOnInsert)
-		if bytes, err := json.Marshal(newPutReuslt(old, newbie, replaced)); err == nil {
-			success(ctx, bytes)
+		if data, ok := rs.fetchPutQuery(ctx, table.HashKey(), table.SortKey()); ok {
+			old, newbie, replaced := table.Put(&data.Set, &data.SetOnInsert)
+			if bytes, err := json.Marshal(newPutResult(old, newbie, replaced)); err == nil {
+				success(ctx, bytes)
+			}
 		}
 	}
 	rs.bingo.AddPut()
@@ -132,8 +132,6 @@ func (rs *Resource) Remove(ctx *fasthttp.RequestCtx) {
 	}
 	rs.bingo.AddRemove()
 }
-
-////
 
 func success(ctx *fasthttp.RequestCtx, p []byte) {
 	ctx.Success("application/json", p)
@@ -163,7 +161,7 @@ func (rs *Resource) fetchIndex(ctx *fasthttp.RequestCtx) string {
 func (rs *Resource) fetchScanQuery(ctx *fasthttp.RequestCtx) (query ScanQuery, ok bool) {
 	ok = true
 	if query.HashKey = string(ctx.QueryArgs().Peek("hash")); len(query.HashKey.(string)) == 0 {
-		raiseError(ctx, fmt.Sprintf("Hash key missing"))
+		raiseError(ctx, "Hash key missing")
 		ok = false
 		return
 	}
@@ -186,42 +184,47 @@ func (rs *Resource) fetchScanQuery(ctx *fasthttp.RequestCtx) (query ScanQuery, o
 }
 
 func (rs *Resource) fetchGetQuery(ctx *fasthttp.RequestCtx, hasSortKey bool) (request GetQuery, ok bool) {
-	ok = true
-	if len(ctx.PostBody()) != 0 {
-		if err := json.Unmarshal(ctx.PostBody(), &request); err != nil {
-			ctx.Error(err.Error(), fasthttp.StatusBadRequest)
-		}
-	} else {
-		if request.HashKey = string(ctx.QueryArgs().Peek("hash")); len(request.HashKey.(string)) == 0 {
-			raiseError(ctx, fmt.Sprintf("Hash key missing"))
-			ok = false
-			return
-		}
-		request.SortKey = ctx.QueryArgs().Peek("sort")
-		if request.SortKey == nil && hasSortKey {
-			raiseError(ctx, fmt.Sprintf("Sort key missing"))
-			ok = false
-			return
-		}
-		if request.SortKey != nil && !hasSortKey {
-			raiseError(ctx, fmt.Sprintf("Sort key not exists"))
-			ok = false
-			return
-		}
+	if request.HashKey = string(ctx.QueryArgs().Peek("hash")); len(request.HashKey.(string)) == 0 {
+		raiseError(ctx, "Hash key missing")
+		return request, false
 	}
-	return
+
+	if request.SortKey = string(ctx.QueryArgs().Peek("sort")); len(request.SortKey.(string)) == 0 && hasSortKey {
+		raiseError(ctx, "Sort key missing")
+		return request, false
+	}
+	return request, true
 }
 
-func (rs *Resource) fetchData(ctx *fasthttp.RequestCtx) (data bingodb.Data) {
+func (rs *Resource) fetchPutQuery(
+	ctx *fasthttp.RequestCtx,
+	hashKey *bingodb.FieldSchema,
+	sortKey *bingodb.FieldSchema) (data PutQuery, ok bool) {
 	if err := json.Unmarshal(ctx.PostBody(), &data); err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
+		return data, false
 	}
-	return
-}
-
-func (rs *Resource) fetchPutQuery(ctx *fasthttp.RequestCtx) (data PutQuery) {
-	if err := json.Unmarshal(ctx.PostBody(), &data); err != nil {
-		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
+	if data.Set == nil && data.SetOnInsert == nil {
+		raiseError(ctx, "Empty data")
+		return data, false
 	}
-	return
+	hash, ok := data.Set[hashKey.Name]
+	if !ok {
+		raiseError(ctx, "Hash key missing")
+		return data, false
+	} else if _, ok = hashKey.Parse(hash); !ok {
+		raiseError(ctx, fmt.Sprintf("Parse hash key to %s failed", hashKey.Type))
+		return data, false
+	}
+	if sortKey != nil {
+		sort, ok := data.Set[sortKey.Name]
+		if !ok {
+			raiseError(ctx, "Sort key missing")
+			return data, false
+		} else if _, ok = sortKey.Parse(sort); !ok {
+			raiseError(ctx, fmt.Sprintf("Parse sort key to %s failed", sortKey.Type))
+			return data, false
+		}
+	}
+	return data, true
 }

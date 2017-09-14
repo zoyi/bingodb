@@ -19,10 +19,6 @@ type Manager struct {
 	*Resource
 }
 
-func Test(ctx *fasthttp.RequestCtx) {
-	fmt.Fprint(ctx, "Welcome!\n")
-}
-
 func MakeRouter(bingo *bingodb.Bingo) *fasthttprouter.Router {
 	flag.Parse()
 
