@@ -44,7 +44,9 @@ tables:
     hashKey: 'name'
     sortKey: 'id'
     subIndices:
-      friends: 'name'
+      friends:
+        hashKey: 'name'
+        sortKey: 'email'
 `
 
 	bingo := newBingo()

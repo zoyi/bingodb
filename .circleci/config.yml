@@ -36,7 +36,7 @@ jobs:
           command: go test -v ./ -race -cover -coverprofile=core-cov.out
       - run:
           name: Run API tests and generating coverage
-          command: go test -v ./api -race -cover -coverprofile=api-cov.out
+          command: go test -v ./api -cover -coverprofile=api-cov.out
       #merge coverage
       - run:
           name: Merging all coverages

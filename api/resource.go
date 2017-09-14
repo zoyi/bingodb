@@ -7,25 +7,58 @@ import (
 	"github.com/zoyi/bingodb"
 )
 
-type GetRequest struct {
-	IndexName string      `json:"index,omitempty"`
-	HashKey   interface{} `json:"hash"`
-	SortKey   interface{} `json:"sort,omitempty"` //optional
+type GetQuery struct {
+	HashKey interface{} `json:"hash"`
+	SortKey interface{} `json:"sort,omitempty"` //optional
 }
 
-type GetQuery struct {
-	indexName string
-	hashKey   interface{}
-	sortKey   interface{}
+type PutQuery struct {
+	Set         bingodb.Data `json:"$set"`
+	SetOnInsert bingodb.Data `json:"$setOnInsert,omitempty"` //optional
+}
+
+type ScanQuery struct {
+	HashKey  interface{}
+	Since    []interface{}
+	Limit    int
+	Backward bool
 }
 
 type Resource struct {
 	bingo *bingodb.Bingo
 }
 
-type ListResponse struct {
+type ScanResult struct {
 	Values interface{} `json:"values"`
 	Next   interface{} `json:"next,omitempty"`
+}
+
+type PutResult struct {
+	Old      interface{} `json:"old,omitempty"`
+	New      interface{} `json:"new"`
+	Replaced bool        `json:"replaced"`
+}
+
+func newPutReuslt(old *bingodb.Document, newbie *bingodb.Document, replaced bool) *PutResult {
+	var oldDoc, newbieDoc bingodb.Data
+	if old != nil {
+		oldDoc = old.Data()
+	}
+	if newbie != nil {
+		newbieDoc = newbie.Data()
+	}
+	return &PutResult{Old: oldDoc, New: newbieDoc, Replaced: replaced}
+}
+
+func newListResponse(values []bingodb.Data, next interface{}) *ScanResult {
+	if next != nil {
+		switch next.(type) {
+		case bingodb.SubSortKey:
+			next = next.(bingodb.SubSortKey).Array()
+		}
+	}
+
+	return &ScanResult{Values: values, Next: next}
 }
 
 func (rs *Resource) Tables(ctx *fasthttp.RequestCtx) {
@@ -44,32 +77,29 @@ func (rs *Resource) TableInfo(ctx *fasthttp.RequestCtx) {
 
 func (rs *Resource) Scan(ctx *fasthttp.RequestCtx) {
 	if table := rs.fetchTable(ctx); table != nil {
-		query := rs.fetchScanQuery(ctx, table)
-		res, next := table.PrimaryIndex().Scan(query.HashKey, query.Since, query.Limit)
-		if bytes, err := json.Marshal(ListResponse{Values: res, Next: next}); err == nil {
-			success(ctx, bytes)
+		if index := table.Index(rs.fetchIndex(ctx)); index != nil {
+			if query, ok := rs.fetchScanQuery(ctx); ok {
+				values, next := index.Scan(query.HashKey, query.Since, query.Limit)
+				if bytes, err := json.Marshal(newListResponse(values, next)); err == nil {
+					success(ctx, bytes)
+				}
+			}
+		} else {
+			raiseError(ctx, "Not found index")
 		}
-		//if index := table.Index(getRequest.IndexName); index != nil {
-		//	if document, ok := index.Get(getRequest.HashKey, getRequest.SortKey); ok {
-		//		success(ctx, document.ToJSON())
-		//	} else {
-		//		raiseError(ctx, "Not found document")
-		//	}
-		//} else {
-		//	raiseError(ctx, "Not found index")
-		//}
 	}
 	rs.bingo.AddScan()
 }
 
 func (rs *Resource) Get(ctx *fasthttp.RequestCtx) {
 	if table := rs.fetchTable(ctx); table != nil {
-		getRequest := rs.fetchGetRequest(ctx, table)
-		if index := table.Index(getRequest.IndexName); index != nil {
-			if document, ok := index.Get(getRequest.HashKey, getRequest.SortKey); ok {
-				success(ctx, document.ToJSON())
-			} else {
-				raiseError(ctx, "Not found document")
+		if index := table.Index(rs.fetchIndex(ctx)); index != nil {
+			if getRequest, ok := rs.fetchGetQuery(ctx, table.SortKey() != nil); ok {
+				if document, ok := index.Get(getRequest.HashKey, getRequest.SortKey); ok {
+					success(ctx, document.ToJSON())
+				} else {
+					raiseError(ctx, "Not found document")
+				}
 			}
 		} else {
 			raiseError(ctx, "Not found index")
@@ -80,12 +110,11 @@ func (rs *Resource) Get(ctx *fasthttp.RequestCtx) {
 
 func (rs *Resource) Put(ctx *fasthttp.RequestCtx) {
 	if table := rs.fetchTable(ctx); table != nil {
-		data := rs.fetchData(ctx)
+		data := rs.fetchPutQuery(ctx)
 
-		if document, replaced := table.Put(&data); replaced {
-			success(ctx, document.ToJSON())
-		} else {
-			success(ctx, []byte("{}"))
+		old, newbie, replaced := table.Put(&data.Set, &data.SetOnInsert)
+		if bytes, err := json.Marshal(newPutReuslt(old, newbie, replaced)); err == nil {
+			success(ctx, bytes)
 		}
 	}
 	rs.bingo.AddPut()
@@ -93,11 +122,12 @@ func (rs *Resource) Put(ctx *fasthttp.RequestCtx) {
 
 func (rs *Resource) Remove(ctx *fasthttp.RequestCtx) {
 	if table := rs.fetchTable(ctx); table != nil {
-		getRequest := rs.fetchGetRequest(ctx, table)
-		if document, ok := table.Remove(getRequest.HashKey, getRequest.SortKey); ok {
-			success(ctx, document.ToJSON())
-		} else {
-			success(ctx, []byte("{}"))
+		if getRequest, ok := rs.fetchGetQuery(ctx, table.SortKey() != nil); ok {
+			if document, ok := table.Remove(getRequest.HashKey, getRequest.SortKey); ok {
+				success(ctx, document.ToJSON())
+			} else {
+				success(ctx, []byte("{}"))
+			}
 		}
 	}
 	rs.bingo.AddRemove()
@@ -122,24 +152,29 @@ func (rs *Resource) fetchTable(ctx *fasthttp.RequestCtx) *bingodb.Table {
 	return nil
 }
 
-func (rs *Resource) fetchScanQuery(ctx *fasthttp.RequestCtx, table *bingodb.Table) (query ScanQuery) {
-	hashKey := table.HashKey()
-	sortKey := table.SortKey()
+func (rs *Resource) fetchIndex(ctx *fasthttp.RequestCtx) string {
+	if index := ctx.UserValue("index"); index != nil {
+		return index.(string)
+	} else {
+		return ""
+	}
+}
 
-	query.HashKey = hashKey.Parse(string(ctx.QueryArgs().Peek(hashKey.Name)))
-
-	query.Since = make([]interface{}, 2)
-
-	if sortKey != nil {
-		for i, value := range ctx.QueryArgs().PeekMulti("since") {
-			if i >= 2 {
-				break
-			}
-			query.Since[i] = sortKey.Parse(value)
-		}
+func (rs *Resource) fetchScanQuery(ctx *fasthttp.RequestCtx) (query ScanQuery, ok bool) {
+	ok = true
+	if query.HashKey = string(ctx.QueryArgs().Peek("hash")); len(query.HashKey.(string)) == 0 {
+		raiseError(ctx, fmt.Sprintf("Hash key missing"))
+		ok = false
+		return
 	}
 
-	query.IndexName = string(ctx.QueryArgs().Peek("index"))
+	query.Since = make([]interface{}, 3)
+	for i, value := range ctx.QueryArgs().PeekMulti("since") {
+		if i >= 3 {
+			break
+		}
+		query.Since[i] = value
+	}
 
 	if query.Limit = ctx.QueryArgs().GetUintOrZero("limit"); query.Limit == 0 {
 		query.Limit = 20
@@ -147,28 +182,44 @@ func (rs *Resource) fetchScanQuery(ctx *fasthttp.RequestCtx, table *bingodb.Tabl
 
 	query.Backward = ctx.QueryArgs().GetBool("backward")
 
-	return query
+	return
 }
 
-func (rs *Resource) fetchGetRequest(ctx *fasthttp.RequestCtx, table *bingodb.Table) (request GetRequest) {
+func (rs *Resource) fetchGetQuery(ctx *fasthttp.RequestCtx, hasSortKey bool) (request GetQuery, ok bool) {
+	ok = true
 	if len(ctx.PostBody()) != 0 {
 		if err := json.Unmarshal(ctx.PostBody(), &request); err != nil {
 			ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		}
 	} else {
-		hashKey := table.HashKey()
-		sortKey := table.SortKey()
-
-		request.IndexName = string(ctx.QueryArgs().Peek("index"))
-		request.HashKey = hashKey.Parse(ctx.QueryArgs().Peek(hashKey.Name))
-		if sortKey != nil {
-			request.SortKey = sortKey.Parse(ctx.QueryArgs().Peek(sortKey.Name))
+		if request.HashKey = string(ctx.QueryArgs().Peek("hash")); len(request.HashKey.(string)) == 0 {
+			raiseError(ctx, fmt.Sprintf("Hash key missing"))
+			ok = false
+			return
+		}
+		request.SortKey = ctx.QueryArgs().Peek("sort")
+		if request.SortKey == nil && hasSortKey {
+			raiseError(ctx, fmt.Sprintf("Sort key missing"))
+			ok = false
+			return
+		}
+		if request.SortKey != nil && !hasSortKey {
+			raiseError(ctx, fmt.Sprintf("Sort key not exists"))
+			ok = false
+			return
 		}
 	}
 	return
 }
 
 func (rs *Resource) fetchData(ctx *fasthttp.RequestCtx) (data bingodb.Data) {
+	if err := json.Unmarshal(ctx.PostBody(), &data); err != nil {
+		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
+	}
+	return
+}
+
+func (rs *Resource) fetchPutQuery(ctx *fasthttp.RequestCtx) (data PutQuery) {
 	if err := json.Unmarshal(ctx.PostBody(), &data); err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 	}

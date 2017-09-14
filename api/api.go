@@ -37,6 +37,7 @@ func MakeRouter(bingo *bingodb.Bingo) *fasthttprouter.Router {
 	router.GET("/tables/:table/info", cors(resource.TableInfo))
 	router.GET("/tables/:table/scan", cors(resource.Scan))
 	router.GET("/tables/:table/indices/:index", cors(resource.Get))
+	router.GET("/tables/:table/indices/:index/scan", cors(resource.Scan))
 
 	router.PUT("/tables/:table", cors(resource.Put))
 

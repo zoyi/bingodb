@@ -13,13 +13,18 @@ type MetricsConfig struct {
 	Interval int    `yaml:"interval"`
 }
 
+type SubIndexConfig struct {
+	HashKey string `yaml:"hashKey"`
+	SortKey string `yaml:"sortKey"`
+}
+
 type TableConfig struct {
-	Fields     map[string]string `yaml:"fields"`
-	HashKey    string            `yaml:"hashKey"`
-	SortKey    string            `yaml:"sortKey"`
-	SubIndices map[string]string `yaml:"subIndices"`
-	ExpireKey  string            `yaml:"expireKey"`
-	Metrics    *MetricsConfig    `yaml:"metrics"`
+	Fields     map[string]string         `yaml:"fields"`
+	HashKey    string                    `yaml:"hashKey"`
+	SortKey    string                    `yaml:"sortKey"`
+	SubIndices map[string]SubIndexConfig `yaml:"subIndices"`
+	ExpireKey  string                    `yaml:"expireKey"`
+	Metrics    *MetricsConfig            `yaml:"metrics"`
 }
 
 type BingoConfig struct {
@@ -78,20 +83,29 @@ func ParseConfigBytes(bingo *Bingo, configBytes []byte) error {
 			fields[fieldKey] = field
 		}
 
+		primaryKey := &Key{
+			hashKey: fields[tableConfig.HashKey],
+			sortKey: fields[tableConfig.SortKey],
+		}
+
 		schema := &TableSchema{
 			fields:      fields,
-			hashKey:     fields[tableConfig.HashKey],
-			sortKey:     fields[tableConfig.SortKey],
+			primaryKey:  primaryKey,
 			expireField: fields[tableConfig.ExpireKey]}
 
-		primaryIndex := &PrimaryIndex{index: newIndex(schema.hashKey, schema.sortKey)}
+		primaryIndex := &PrimaryIndex{index: newIndex(primaryKey)}
 
 		subIndices := make(map[string]*SubIndex)
 
-		for indexName, sortKeyName := range tableConfig.SubIndices {
+		for indexName, indexConfig := range tableConfig.SubIndices {
+			subKey := &Key{
+				hashKey: fields[indexConfig.HashKey],
+				sortKey: fields[indexConfig.SortKey],
+			}
+
 			subIndices[indexName] = &SubIndex{
-				index:          newIndex(schema.hashKey, fields[sortKeyName]),
-				primarySortKey: schema.sortKey,
+				index:      newIndex(subKey),
+				primaryKey: primaryKey,
 			}
 		}
 

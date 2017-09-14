@@ -9,7 +9,9 @@ tables:
     hashKey: 'channelId'
     sortKey: 'personKey'
     subIndices:
-      guest: 'updatedAt'
+      guest:
+        hashKey: 'channelId'
+        sortKey: 'updatedAt'
     metrics:
       table: 'onlines-metrics'
       ttl: 600
@@ -28,9 +30,13 @@ tables:
   sockets:
     fields:
       id: 'string'
+      personKey: 'string'
       expiresAt: 'integer'
     expireKey: 'expiresAt'
     hashKey: 'id'
+    subIndices:
+      person:
+        hashKey: 'personKey'
     metrics:
       table: 'sockets-metrics'
       ttl: 600

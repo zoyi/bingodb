@@ -53,13 +53,13 @@
   branch = "master"
   name = "github.com/valyala/fasthttp"
   packages = [".","fasthttputil","stackless"]
-  revision = "b43f17d9a9aa1e39f2614f49c8fa4fe8f406c83d"
+  revision = "5116aa64e038d917b3916a74da456c00643ff1e6"
 
 [[projects]]
   branch = "master"
   name = "github.com/zoyi/skiplist"
   packages = ["lazy","lib"]
-  revision = "185ba894223644ca66cefbc593fa7db3177e6066"
+  revision = "a568e7a28f7ad9e0f3b26ef0bb1f108859765173"
 
 [[projects]]
   branch = "v2"

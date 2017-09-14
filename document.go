@@ -11,18 +11,41 @@ type Document struct {
 	schema *TableSchema
 }
 
-func ParseDoc(data Data, schema *TableSchema) *Document {
+func (doc *Document) Merge(op *Document) *Document {
+	if op == nil {
+		return doc
+	}
+	if doc.schema != op.schema {
+		panic("The schema of the two docs are different")
+	}
+
+	newbie := make(map[string]interface{})
+
+	for k, v := range doc.data {
+		newbie[k] = v
+	}
+	for k, v := range op.data {
+		newbie[k] = v
+	}
+
+	return &Document{data: newbie, schema: doc.schema}
+}
+
+func ParseDoc(data *Data, schema *TableSchema) *Document {
+	if data == nil {
+		return nil
+	}
 	for _, field := range schema.fields {
-		raw, present := data[field.Name]
+		raw, present := (*data)[field.Name]
 		if present {
-			data[field.Name] = field.Parse(raw)
+			(*data)[field.Name] = field.Parse(raw)
 		}
 	}
 
-	return &Document{data: data, schema: schema}
+	return &Document{data: *data, schema: schema}
 }
 
-func (doc *Document) GetData() Data {
+func (doc *Document) Data() Data {
 	return doc.data
 }
 
