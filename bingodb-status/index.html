@@ -11,7 +11,6 @@
         -moz-osx-font-smoothing: grayscale;
         text-align: center;
         color: #2c3e50;
-        margin-top: 60px;
       }
 
       body {
@@ -20,16 +19,22 @@
         color: #444;
       }
 
-      form {
-        padding: 0 0 10px 0;
-      }
-
       table {
         border: 2px solid #42b983;
         border-radius: 3px;
         border-collapse: separate;
         border-spacing: 2px;
         background-color: #fff;
+      }
+
+      .full-table {
+        margin-top: 10px;
+        width: 100%;
+        max-width: 1024px;
+        border: 0;
+        border-top: 2px solid #42b983;
+        border-bottom: 2px solid #42b983;
+        border-radius: 0;
       }
 
       th {
@@ -46,8 +51,12 @@
         background-color: #f9f9f9;
       }
 
+      .td-link {
+        cursor: pointer;
+      }
+
       th, td {
-        min-width: 240px;
+        min-width: 360px;
         padding: 10px 20px;
       }
 
@@ -84,33 +93,45 @@
 
   <body>
     <div id="app">
-      <div class="ui two column centered grid">
-        <div class="four column centered row">
-          <img src="img/logo.png">
-        </div>
+      <div class="centered row">
+        <img src="img/logo.png">
+      </div>
 
-        <div class="column centered row">
-          <div class="column">
+      <div class="ui attached stackable menu">
+        <div class="ui container">
+          <a class="item" href="#">
+            <i class="home icon"></i> Overview
+          </a>
+
+          <a class="active item">
+            <i class="refresh icon"></i> Auto Refresh
+          </a>
+
+          <div class="right item">
             <form id="search">
               <div class="ui icon input">
                 <input type="text" placeholder="Search..." name="query" v-model="searchQuery">
                 <i class="search icon"></i>
               </div>
             </form>
-
-            <metric-table
-              :data="gridData"
-              :columns="gridColumns"
-              :filter-key="searchQuery">
-            </metric-table>
           </div>
+        </div>
+      </div>
+
+      <div class="ui two column centered grid container">
+        <div class="centered row">
+          <metric-table
+            :data="gridData"
+            :columns="gridColumns"
+            :filter-key="searchQuery">
+          </metric-table>
         </div>
       </div>
     </div>
     <!-- built files will be auto injected -->
 
     <script type="text/x-template" id="metric-table-tmpl">
-      <table>
+      <table class="full-table">
         <thead>
         <tr>
           <th v-for="key in columns"
@@ -124,7 +145,9 @@
         </thead>
         <tbody>
         <tr v-for="entry in filteredData">
-          <td v-for="key in columns">
+          <td v-for="key in columns"
+              @click="changeTable(entry)"
+              class="td-link">
             {{entry[key]}}
           </td>
         </tr>
@@ -138,7 +161,7 @@
     <script src="https://unpkg.com/vuetable-2@1.6.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.3.4"></script>
     <script>
-      Vue.component('metric-table', {
+      const MetricTable = {
         template: '#metric-table-tmpl',
         props: {
           data: Array,
@@ -164,9 +187,9 @@
             if (filterKey) {
               data = data.filter(row =>
                 Object.keys(row)
-                      .some(key =>
-                        String(row[key]).toLowerCase()
-                                        .indexOf(filterKey) > -1),
+                  .some(key =>
+                  String(row[key]).toLowerCase()
+                    .indexOf(filterKey) > -1),
               );
             }
             if (sortKey) {
@@ -188,17 +211,32 @@
           sortBy(key) {
             this.sortKey = key;
             this.sortOrders[key] = this.sortOrders[key] * -1;
-            console.log('key:', key);
-            console.log(this.sortOrders);
+          },
+          changeTable(entry) {
+            const tableName = entry.name;
+            console.log(this.$router.currentRoute);
+            this.$router.push(tableName);
           },
         },
+      };
+
+      Vue.component('metric-table', MetricTable);
+
+      const routes = [
+        { path: '/', component: MetricTable },
+        { path: '/:table', component: MetricTable },
+      ];
+
+      const router = new VueRouter({
+        routes,
       });
 
       const vue = new Vue({
         el: '#app',
+        router,
         created() {
           this.loadData();
-          this.autoRefreshTimer = setInterval(this.reload, 1000);
+          this.autoRefreshTimer = setInterval(this.reload, 2000);
         },
         beforeDestroy() {
           this.cancelAutoReloadData();
@@ -209,10 +247,14 @@
           gridColumns: ['name', 'size'],
           gridData: [],
           error: null,
+          apiRoot: 'http://localhost:9999/tables',
+          tableParam: '',
         },
         methods: {
           loadData() {
-            this.$http.get('http://localhost:9999/tables').then((res) => {
+            this.tableParam = this.$route.params.table;
+            const url = this.apiRoot + (this.tableParam ? '/' + this.tableParam + '/info' : '');
+            this.$http.get(url).then((res) => {
               this.gridData = this.transformData(res.data);
             }, (res) => {
               this.error = res;
@@ -220,9 +262,13 @@
           },
           transformData(data) {
             const gridData = [];
-            data.forEach((row) => {
-              gridData.push({ name: row.name, size: row.size });
-            });
+            if (this.tableParam) {
+              gridData.push({ name: data.name, size: data.size });
+            } else {
+              data.forEach((row) => {
+                gridData.push({ name: row.name, size: row.size });
+              });
+            }
             return gridData;
           },
           reload() {
@@ -233,8 +279,8 @@
           },
         },
         watch: {
-          dataUrl(t, e) {
-            t !== e && this.refresh();
+          '$route'(to, from) {
+            this.reload();
           },
         },
       });
