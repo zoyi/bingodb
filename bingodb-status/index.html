@@ -28,9 +28,8 @@
       }
 
       .full-table {
-        margin-top: 10px;
+        margin-top: 24px;
         width: 100%;
-        max-width: 1024px;
         border: 0;
         border-top: 2px solid #42b983;
         border-bottom: 2px solid #42b983;
@@ -53,6 +52,10 @@
 
       .td-link {
         cursor: pointer;
+      }
+
+      .td-link:hover {
+        background-color: #eee;
       }
 
       th, td {
@@ -127,6 +130,31 @@
           </metric-table>
         </div>
       </div>
+
+      <chartjs-line
+        :backgroundcolor="'#42b983'"
+        :height="100"
+        :datalabel="'SCAN'"
+        :labels="chartData.scanChart.labels"
+        :data="chartData.scanChart.data"
+        :bind="true"
+      ></chartjs-line>
+      <chartjs-line
+        :backgroundcolor="'#42b983'"
+        :height="100"
+        :datalabel="'PUT'"
+        :labels="chartData.putChart.labels"
+        :data="chartData.putChart.data"
+        :bind="true"
+      ></chartjs-line>
+      <chartjs-line
+        :backgroundcolor="'#42b983'"
+        :height="100"
+        :datalabel="'GET'"
+        :labels="chartData.getChart.labels"
+        :data="chartData.getChart.data"
+        :bind="true"
+      ></chartjs-line>
     </div>
     <!-- built files will be auto injected -->
 
@@ -160,6 +188,14 @@
     <script src="https://unpkg.com/vue-router/dist/vue-router.js"></script>
     <script src="https://unpkg.com/vuetable-2@1.6.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.3.4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.3.0/Chart.js"></script>
+    <script src="http://vue-charts.hchspersonal.tk/js/vue-charts.js"></script>
+
+    <script src="https://unpkg.com/chart.js@2.5.0/dist/Chart.bundle.js"></script>
+    <script src="https://unpkg.com/chartkick@2.2.3"></script>
+    <script src="https://unpkg.com/vue-chartkick@0.2.0/dist/vue-chartkick.js"></script>
+
     <script>
       const MetricTable = {
         template: '#metric-table-tmpl',
@@ -221,6 +257,7 @@
       };
 
       Vue.component('metric-table', MetricTable);
+      Vue.use(VueCharts);
 
       const routes = [
         { path: '/', component: MetricTable },
@@ -235,20 +272,29 @@
         el: '#app',
         router,
         created() {
-          this.loadData();
-          this.autoRefreshTimer = setInterval(this.reload, 2000);
+          this.reload();
+          this.autoMetricRefreshTimer = setInterval(this.reload, 2000);
+          this.reloadChart();
+          this.autoChartRefreshTimer = setInterval(this.reloadChart, 10000);
         },
         beforeDestroy() {
           this.cancelAutoReloadData();
         },
         data: {
-          autoRefreshTimer: '',
+          autoMetricRefreshTimer: '',
           searchQuery: '',
           gridColumns: ['name', 'size'],
           gridData: [],
           error: null,
-          apiRoot: 'http://localhost:9999/tables',
+          apiRoot: 'http://bingo.channel.io:4052/tables',
           tableParam: '',
+          autoChartRefreshTimer: '',
+          chartKeys: ['scan', 'put', 'get'],
+          chartData: {
+            scanChart: { labels: [], data: [] },
+            putChart: { labels: [], data: [] },
+            getChart: { labels: [], data: [] },
+          },
         },
         methods: {
           loadData() {
@@ -275,7 +321,28 @@
             this.loadData();
           },
           cancelAutoReloadData() {
-            clearInterval(this.autoRefreshTimer);
+            clearInterval(this.autoMetricRefreshTimer);
+          },
+          loadChartData(hashKey) {
+            const fetchMinuetsBefore = 60;
+            const url = `${this.apiRoot}/_metrics/scan?hash=${hashKey}&since=${moment().subtract(fetchMinuetsBefore, 'minutes').unix()}&limit=${fetchMinuetsBefore}`;
+            this.$http.get(url).then((res) => {
+              this.chartData[`${hashKey}Chart`] = this.transformChartData(res.data);
+              console.log(this.chartData);
+            }, (res) => {
+              this.error = res;
+            });
+          },
+          transformChartData(data) {
+            const result = { labels: [], data: [] };
+            data.values.forEach((row) => {
+              result.labels.push(moment.unix(row.time).format('A hh:mm'));
+              result.data.push(row.value);
+            });
+            return result;
+          },
+          reloadChart() {
+            this.chartKeys.forEach(key => this.loadChartData(key));
           },
         },
         watch: {
