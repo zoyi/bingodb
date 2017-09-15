@@ -9,6 +9,7 @@ import (
 type IndexInterface interface {
 	Get(hash interface{}, sort interface{}) (*Document, bool)
 	Scan(hash interface{}, since interface{}, limit int) (values []Data, next interface{})
+	RScan(hash interface{}, since interface{}, limit int) (values []Data, next interface{})
 	HashKey() *FieldSchema
 	SortKey() *FieldSchema
 }
@@ -117,6 +118,23 @@ func (index *SubIndex) Scan(hash interface{}, since interface{}, limit int) (res
 	if list := index.skipList(hash); list != nil {
 		it := list.Begin(since)
 		for i := 0; i < limit && it.Present(); i, _ = i+1, it.Next() {
+			result = append(result, it.Value().(*Document).Data())
+		}
+		if it.Present() {
+			next = it.Key()
+		}
+	}
+	return result, next
+}
+
+func (index *SubIndex) RScan(hash interface{}, since interface{}, limit int) (result []Data, next interface{}) {
+	result = make([]Data, 0)
+	hash = ParseField(index.hashKey, hash)
+	since = index.parseSubSortKey(since)
+
+	if list := index.skipList(hash); list != nil {
+		it := list.End(since)
+		for i := 0; i < limit && it.Present(); i, _ = i+1, it.Prev() {
 			result = append(result, it.Value().(*Document).Data())
 		}
 		if it.Present() {

@@ -203,6 +203,20 @@ func TestScanWithValidParams(t *testing.T) {
 	obj.Value("values").Array().Length().Equal(1)
 	obj.Value("values").Array().Element(0).Object().Value("personKey").Equal("person2")
 	obj.Value("next").Equal("person3")
+
+	obj = expector.
+		GET("/tables/onlines/scan").
+		WithQuery("hash", "1").
+		WithQuery("since", "person2").
+		WithQuery("limit", "1").
+		WithQuery("backward", 1).
+		Expect().Status(http.StatusOK).
+		JSON().Object()
+
+	obj.Value("values").Array().Length().Equal(1)
+	obj.Value("values").Array().Element(0).Object().Value("personKey").Equal("person2")
+	obj.Value("next").Equal("person1")
+
 }
 
 func TestScanWithInvalidParams(t *testing.T) {
@@ -258,6 +272,24 @@ func TestScanIndexWithValidParams(t *testing.T) {
 	subSortNext.Element(0).Equal(1700000000)
 	subSortNext.Element(1).Equal("1")
 	subSortNext.Element(2).Equal("person1")
+
+	obj = expector.
+		GET("/tables/onlines/indices/guest/scan").
+		WithQuery("hash", "1").
+		WithQuery("since", 1600000001).
+		WithQuery("limit", "1").
+		WithQuery("backward", 1).
+		Expect().Status(http.StatusOK).
+		JSON().Object()
+
+	obj.Value("values").Array().Length().Equal(1)
+	obj.Value("values").Array().Element(0).Object().Value("personKey").Equal("person2")
+
+	subSortNext = obj.Value("next").Array()
+	subSortNext.Length().Equal(3)
+	subSortNext.Element(0).Equal(1500000000)
+	subSortNext.Element(1).Equal("1")
+	subSortNext.Element(2).Equal("person3")
 
 	obj = expector.
 		GET("/tables/onlines/indices/guest/scan").

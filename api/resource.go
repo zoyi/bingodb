@@ -79,7 +79,13 @@ func (rs *Resource) Scan(ctx *fasthttp.RequestCtx) {
 	if table := rs.fetchTable(ctx); table != nil {
 		if index := table.Index(rs.fetchIndex(ctx)); index != nil {
 			if query, ok := rs.fetchScanQuery(ctx); ok {
-				values, next := index.Scan(query.HashKey, query.Since, query.Limit)
+				var values []bingodb.Data
+				var next interface{}
+				if query.Backward {
+					values, next = index.RScan(query.HashKey, query.Since, query.Limit)
+				} else {
+					values, next = index.Scan(query.HashKey, query.Since, query.Limit)
+				}
 				if bytes, err := json.Marshal(newListResponse(values, next)); err == nil {
 					success(ctx, bytes)
 				}
