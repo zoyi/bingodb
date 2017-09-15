@@ -20,7 +20,7 @@ dep ensure
 ## Usage
 To use BingoDB, you first need to create a `{filename}.yml` and define of your tables (see example.yml below). Once you've done this, you can simply run a server with following command:
 ```sh
-go run main/main.go -config /path/to/config.yml -addr address:port`
+go run cmd/bingodb/bingodb.go -config /path/to/config.yml -addr address:port`
 ```
 
 ```
@@ -29,8 +29,8 @@ tables:
   #your table name
   onlines:
     fields:
-	  #define your fields
-	  #we support string/integer only for now
+      #define your fields
+      #we support string/integer only for now
       id: 'string'
       guestKey: 'string'
       channelId: 'string'
@@ -49,10 +49,19 @@ tables:
 
 ## API Overview
 
+### <code>GET</code> /tables
+* 존재하는 모든 테이블의 정보를 주는 API
+
+### <code>GET</code> /tables/:table?hash=[hash]&sort=[sort]
+* 해당 table 에서 hashKey가 hash, sortKey가 sort 인 item을 찾는 API
+
+### <code>DELETE</code> /tables/:table?hash=[hash]&sort=[sort]
+* 해당 table 에서 hashKey가 hash, sortKey가 sort 인 item을 지우는 API
+
 ### <code>PUT</code> /tables/:table/
 * 새로운 document를 추가하는 API
 * $setOnInsert는 해당 document가 디비에 없어 새로 추가되는 경우에만 값을 set하게 됨
-* Reponse에는 디비에 이전 값이 있다면 이전 값과 새로 추가된 값, 교체된 여부를 알 수 있음
+* Response에는 디비에 이전 값이 있다면 이전 값과 새로 추가된 값, 교체된 여부를 알 수 있음
 * Request example 
 ```json
 {
@@ -68,14 +77,21 @@ tables:
 }
 ```
 
-### <code>GET</code> /tables/:table/scan?hash=[hash]&limit=[limit]&since=[since]
+### <code>GET</code> /tables/:table/info
+* 해당 table 에 대한 정보를 주는 API
+
+### <code>GET</code> /tables/:table/scan?hash=[hash]&sort=[sort]&since=[since]&limit=[limit]&backward=[backward]
 * 해쉬 값에 해당하는 아이템들을 list로 얻는 API
-* since 값을 포함해 그 이후 데이터를 조회함
+* since 값을 포함해 그 이후 데이터를 조회함(backward 값이 y일 경우 그 이전)
 * 최대 limit 개수 만큼 조회 
 
-### <code>GET</code> /tables/:table/indices/:index/scan?hash=[hash]&limit=[limit]&since=[since1]&since=[since2]&since=[since3]
+### <code>GET</code> /tables/:table/indices/:index?hash=[hash]&sort=[sort]
+* index 이름을 가진 서브 인덱스에 대해 hashKey가 hash, sortKey가 sort 인 아이템을 찾는 API
+
+### <code>GET</code> /tables/:table/indices/:index/scan?hash=[hash]&limit=[limit]&since=[since1]&since=[since2]&since=[since3]&backward=[backward]
 * index 이름을 가진 서브 인덱스에 대해 해당하는 아이템들을 list로 얻는 API
-* since 값을 포함해 그 이후 데이터를 조회함
+* since 값을 포함해 그 이후 데이터를 조회함(backward 값이 y일 경우 그 이전)
+* since1: subIndex sort key, since2: primary hash key, since3: primary sort key
 * 최대 limit 개수 만큼 조회
 
 
@@ -83,9 +99,7 @@ tables:
 * put: O(lg(n))
 * lookup: O(lg(n))
 * delete: O(lg(n))
-* fetch with startkey, stopkey, limit(m): O(lg(n)*m)
-* count with startkey, stopkey: O(lg(n))
-* sorted fetch by index with startkey, stopkey, limit(m), index: O(lg(n)*m)
+* fetch with since, limit(m): O(lg(n)*m)
 
 ## Milestones
 * Support distributed computing
@@ -103,8 +117,3 @@ tables:
 
 ## Benchmarks
 * TBD
-
-## TODO
-* scan 풀로 구현하기 역 오더도
-* stats api 구현
-* rabbitmq 구현
