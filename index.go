@@ -58,6 +58,18 @@ func (index *SubIndex) SortKey() *FieldSchema {
 	return index.sortKey
 }
 
+func (index *PrimaryIndex) Get(hash interface{}, sort interface{}) (*Document, bool) {
+	hash = ParseField(index.hashKey, hash)
+	sort = ParseField(index.sortKey, sort)
+
+	if list := index.skipList(hash); list != nil {
+		if value, ok := list.Get(sort); ok {
+			return value.(*Document), true
+		}
+	}
+	return nil, false
+}
+
 func (index *PrimaryIndex) Range(f func(key interface{}, list *lazyskiplist.SkipList) bool) {
 	index.m.Range(func(key, value interface{}) bool {
 		return f(key, value.(*lazyskiplist.SkipList))
@@ -98,13 +110,15 @@ func (index *PrimaryIndex) RScan(hash interface{}, since interface{}, limit int)
 	return result, next
 }
 
-func (index *PrimaryIndex) Get(hash interface{}, sort interface{}) (*Document, bool) {
+func (index *SubIndex) Get(hash interface{}, sort interface{}) (*Document, bool) {
 	hash = ParseField(index.hashKey, hash)
-	sort = ParseField(index.sortKey, sort)
+	sort = index.parseSubSortKey(sort)
 
 	if list := index.skipList(hash); list != nil {
-		if value, ok := list.Get(sort); ok {
-			return value.(*Document), true
+		if key, value, ok := list.Ceiling(sort); ok {
+			if key != nil && sort != nil && GeneralCompare(sort.(SubSortKey).sort, key.(SubSortKey).sort) == 0 {
+				return value.(*Document), true
+			}
 		}
 	}
 	return nil, false
