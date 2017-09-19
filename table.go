@@ -2,6 +2,7 @@ package bingodb
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/zoyi/skiplist/lib"
 	"reflect"
 	"strconv"
@@ -76,6 +77,52 @@ func newTable(
 		subIndices:    subIndices,
 		metricsConfig: metricsConfig,
 	}
+}
+
+func (table *Table) makeMetricsTable() *Table {
+	if table.metricsConfig == nil {
+		return nil
+	}
+	metricsConfig := table.metricsConfig
+
+	tableName := fmt.Sprintf("_%s", table.name)
+
+	fields := make(map[string]*FieldSchema)
+
+	fields[table.HashKey().Name] = table.HashKey()
+
+	if len(metricsConfig.Time) == 0 {
+		metricsConfig.Time = "time"
+	}
+	if len(metricsConfig.Count) == 0 {
+		metricsConfig.Count = "count"
+	}
+	if len(metricsConfig.ExpireKey) == 0 {
+		metricsConfig.ExpireKey = "expireAt"
+	}
+
+	fields[metricsConfig.Time] = &FieldSchema{Name: metricsConfig.Time, Type: "integer"}
+	fields[metricsConfig.Count] = &FieldSchema{Name: metricsConfig.Count, Type: "integer"}
+	fields[metricsConfig.ExpireKey] = &FieldSchema{Name: metricsConfig.ExpireKey, Type: "integer"}
+
+	primaryKey := &Key{
+		hashKey: fields[table.HashKey().Name],
+		sortKey: fields[metricsConfig.Time],
+	}
+
+	schema := &TableSchema{
+		fields:      fields,
+		primaryKey:  primaryKey,
+		expireField: fields[metricsConfig.ExpireKey]}
+
+	primaryIndex := &PrimaryIndex{index: newIndex(primaryKey)}
+
+	subIndices := make(map[string]*SubIndex)
+
+	metricsTable := newTable(table.bingo, tableName, schema, primaryIndex, subIndices, nil)
+	table.bingo.tables[tableName] = metricsTable
+
+	return metricsTable
 }
 
 func (table *Table) HashKey() *FieldSchema {

@@ -15,14 +15,14 @@ type TableMetrics struct {
 func NewTableMetrics(
 	source *Table,
 	output *Table,
-	ttl int,
-	interval int,
+	ttl int64,
+	interval int64,
 ) *TableMetrics {
 	metrics := &TableMetrics{
 		source:   source,
 		output:   output,
-		ttl:      time.Second * time.Duration(ttl),
-		interval: time.Second * time.Duration(interval)}
+		ttl:      time.Millisecond * time.Duration(ttl),
+		interval: time.Millisecond * time.Duration(interval)}
 
 	go metrics.run()
 
@@ -33,9 +33,9 @@ func (metrics *TableMetrics) put(hash interface{}, skipList *lazyskiplist.SkipLi
 	data := Data{}
 	hashKey := metrics.source.primaryKey.hashKey.Name
 	data[hashKey] = hash
-	data["count"] = skipList.Size()
-	data["time"] = time.Now().Unix()
-	data["expiresAt"] = time.Now().Add(metrics.ttl).Unix() * 1000
+	data[metrics.source.metricsConfig.Count] = skipList.Size()
+	data[metrics.source.metricsConfig.Time] = time.Now().Unix() * 1000
+	data[metrics.source.metricsConfig.ExpireKey] = time.Now().Add(metrics.ttl).Unix() * 1000
 	metrics.output.Put(&data, nil)
 	return true
 }

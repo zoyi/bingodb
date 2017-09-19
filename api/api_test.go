@@ -102,7 +102,7 @@ func TestGetTables(t *testing.T) {
 	getExpector(t).
 		GET("/tables").
 		Expect().Status(http.StatusOK).
-		JSON().Array().Length().Equal(2)
+		JSON().Array().Length().Equal(3)
 }
 
 func TestGetTableInfo(t *testing.T) {
