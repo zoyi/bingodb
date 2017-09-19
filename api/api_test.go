@@ -17,8 +17,8 @@ func initDefaultSeedData(bingo *bingodb.Bingo) {
 			"channelId": "1",
 			"personKey": "person1",
 			"lastSeen": 123,
-			"updatedAt": 1700000000,
-			"expiresAt": 2600000000
+			"updatedAt": 1700000000000,
+			"expiresAt": 2600000000000
 		}`
 
 		dec := json.NewDecoder(strings.NewReader(s))
@@ -32,8 +32,8 @@ func initDefaultSeedData(bingo *bingodb.Bingo) {
 			"channelId": "1",
 			"personKey": "person2",
 			"lastSeen": 129,
-			"updatedAt": 1600000000,
-			"expiresAt": 2700000000
+			"updatedAt": 1600000000000,
+			"expiresAt": 2700000000000
 		}`
 
 		dec := json.NewDecoder(strings.NewReader(s))
@@ -47,8 +47,8 @@ func initDefaultSeedData(bingo *bingodb.Bingo) {
 			"channelId": "1",
 			"personKey": "person3",
 			"lastSeen": 132,
-			"updatedAt": 1500000000,
-			"expiresAt": 2800000000
+			"updatedAt": 1500000000000,
+			"expiresAt": 2800000000000
 		}`
 
 		dec := json.NewDecoder(strings.NewReader(s))
@@ -62,7 +62,7 @@ func initDefaultSeedData(bingo *bingodb.Bingo) {
 		var s = `{
 			"hash": 0,
 			"sort": 0,
-			"expiresAt": 2800000000
+			"expiresAt": 2800000000000
 		}`
 
 		dec := json.NewDecoder(strings.NewReader(s))
@@ -252,14 +252,14 @@ func TestScanIndexWithValidParams(t *testing.T) {
 	obj.Value("values").Array().Element(0).Object().Value("personKey").Equal("person3")
 	subSortNext := obj.Value("next").Array()
 	subSortNext.Length().Equal(3)
-	subSortNext.Element(0).Equal(1600000000)
+	subSortNext.Element(0).Equal(1600000000000)
 	subSortNext.Element(1).Equal("1")
 	subSortNext.Element(2).Equal("person2")
 
 	obj = expector.
 		GET("/tables/onlines/indices/guest/scan").
 		WithQuery("hash", "1").
-		WithQuery("since", 1600000000).
+		WithQuery("since", 1600000000000).
 		WithQuery("limit", "1").
 		Expect().Status(http.StatusOK).
 		JSON().Object()
@@ -269,14 +269,14 @@ func TestScanIndexWithValidParams(t *testing.T) {
 
 	subSortNext = obj.Value("next").Array()
 	subSortNext.Length().Equal(3)
-	subSortNext.Element(0).Equal(1700000000)
+	subSortNext.Element(0).Equal(1700000000000)
 	subSortNext.Element(1).Equal("1")
 	subSortNext.Element(2).Equal("person1")
 
 	obj = expector.
 		GET("/tables/onlines/indices/guest/scan").
 		WithQuery("hash", "1").
-		WithQuery("since", 1600000001).
+		WithQuery("since", 1600000000001).
 		WithQuery("limit", "1").
 		WithQuery("backward", 1).
 		Expect().Status(http.StatusOK).
@@ -287,14 +287,14 @@ func TestScanIndexWithValidParams(t *testing.T) {
 
 	subSortNext = obj.Value("next").Array()
 	subSortNext.Length().Equal(3)
-	subSortNext.Element(0).Equal(1500000000)
+	subSortNext.Element(0).Equal(1500000000000)
 	subSortNext.Element(1).Equal("1")
 	subSortNext.Element(2).Equal("person3")
 
 	obj = expector.
 		GET("/tables/onlines/indices/guest/scan").
 		WithQuery("hash", "1").
-		WithQuery("since", 1600000000).
+		WithQuery("since", 1600000000000).
 		WithQuery("since", "1").
 		WithQuery("since", "person4").
 		WithQuery("since", "dummy").
@@ -332,8 +332,8 @@ func TestPutWithValidParams(t *testing.T) {
 	set := make(map[string]interface{})
 	set["channelId"] = "1"
 	set["personKey"] = "person4"
-	set["expiresAt"] = 2800000000
-	set["updatedAt"] = 1400000000
+	set["expiresAt"] = 2800000000000
+	set["updatedAt"] = 1400000000000
 
 	obj := expector.
 		PUT("/tables/onlines").
@@ -346,8 +346,8 @@ func TestPutWithValidParams(t *testing.T) {
 	obj.Value("new").Object().
 		ValueEqual("channelId", "1").
 		ValueEqual("personKey", "person4").
-		ValueEqual("expiresAt", 2800000000).
-		ValueEqual("updatedAt", 1400000000)
+		ValueEqual("expiresAt", 2800000000000).
+		ValueEqual("updatedAt", 1400000000000)
 
 	obj.Value("replaced").Boolean().Equal(false)
 
@@ -369,8 +369,8 @@ func TestPutWithValidParams(t *testing.T) {
 
 	delete(set, "expiresAt")
 	setOnInsert := make(map[string]interface{})
-	setOnInsert["expiresAt"] = 2900000000
-	set["updatedAt"] = 1500000000
+	setOnInsert["expiresAt"] = 2900000000000
+	set["updatedAt"] = 1500000000000
 
 	obj = expector.
 		PUT("/tables/onlines").
@@ -381,14 +381,14 @@ func TestPutWithValidParams(t *testing.T) {
 	obj.Value("old").Object().
 		ValueEqual("channelId", "1").
 		ValueEqual("personKey", "person4").
-		ValueEqual("expiresAt", 2800000000).
-		ValueEqual("updatedAt", 1400000000)
+		ValueEqual("expiresAt", 2800000000000).
+		ValueEqual("updatedAt", 1400000000000)
 
 	obj.Value("new").Object().
 		ValueEqual("channelId", "1").
 		ValueEqual("personKey", "person4").
-		ValueEqual("expiresAt", 2800000000).
-		ValueEqual("updatedAt", 1500000000)
+		ValueEqual("expiresAt", 2800000000000).
+		ValueEqual("updatedAt", 1500000000000)
 
 	obj.Value("replaced").Boolean().Equal(true)
 }

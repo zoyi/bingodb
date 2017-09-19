@@ -35,7 +35,7 @@ func (metrics *TableMetrics) put(hash interface{}, skipList *lazyskiplist.SkipLi
 	data[hashKey] = hash
 	data["count"] = skipList.Size()
 	data["time"] = time.Now().Unix()
-	data["expiresAt"] = time.Now().Add(metrics.ttl).Unix()
+	data["expiresAt"] = time.Now().Add(metrics.ttl).Unix() * 1000
 	metrics.output.Put(&data, nil)
 	return true
 }
