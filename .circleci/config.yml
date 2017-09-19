@@ -33,7 +33,7 @@ jobs:
       - run: go get -v -t -d ./...
       - run:
           name: Run core tests and generating coverage
-          command: go test -v ./ -race -cover -coverprofile=core-cov.out
+          command: go test -v ./ -cover -coverprofile=core-cov.out
       - run:
           name: Run API tests and generating coverage
           command: go test -v ./api -cover -coverprofile=api-cov.out
