@@ -86,6 +86,10 @@ func (table *Table) SortKey() *FieldSchema {
 	return table.primaryKey.sortKey
 }
 
+func (table *Table) ExpiresAt() *FieldSchema {
+	return table.expireField
+}
+
 func ParseField(field *FieldSchema, raw interface{}) interface{} {
 	if field == nil {
 		return nil

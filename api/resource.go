@@ -116,7 +116,7 @@ func (rs *Resource) Get(ctx *fasthttp.RequestCtx) {
 
 func (rs *Resource) Put(ctx *fasthttp.RequestCtx) {
 	if table := rs.fetchTable(ctx); table != nil {
-		if data, ok := rs.fetchPutQuery(ctx, table.HashKey(), table.SortKey()); ok {
+		if data, ok := rs.fetchPutQuery(ctx, table); ok {
 			old, newbie, replaced := table.Put(&data.Set, &data.SetOnInsert)
 			if bytes, err := json.Marshal(newPutResult(old, newbie, replaced)); err == nil {
 				success(ctx, bytes)
@@ -204,8 +204,12 @@ func (rs *Resource) fetchGetQuery(ctx *fasthttp.RequestCtx, hasSortKey bool) (re
 
 func (rs *Resource) fetchPutQuery(
 	ctx *fasthttp.RequestCtx,
-	hashKey *bingodb.FieldSchema,
-	sortKey *bingodb.FieldSchema) (data PutQuery, ok bool) {
+	table *bingodb.Table) (data PutQuery, ok bool) {
+
+	hashKey := table.HashKey()
+	sortKey := table.SortKey()
+	expiresAtKey := table.ExpiresAt()
+
 	if err := json.Unmarshal(ctx.PostBody(), &data); err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return data, false
@@ -229,6 +233,13 @@ func (rs *Resource) fetchPutQuery(
 			return data, false
 		} else if _, ok = sortKey.Parse(sort); !ok {
 			raiseError(ctx, fmt.Sprintf("Parse sort key to %s failed", sortKey.Type))
+			return data, false
+		}
+	}
+	if expiresAtKey != nil {
+		expiresAt, ok := data.Set[expiresAtKey.Name]
+		if _, ok = expiresAtKey.Parse(expiresAt); !ok {
+			raiseError(ctx, fmt.Sprintf("Parse expires key to %s failed", expiresAtKey.Type))
 			return data, false
 		}
 	}

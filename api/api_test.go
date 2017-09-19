@@ -439,6 +439,14 @@ func TestPutWithInvalidParams(t *testing.T) {
 		WithJSON(makePutBody(set, nil)).
 		Expect().Status(http.StatusBadRequest)
 
+	set = make(map[string]interface{})
+	set["hash"] = "1"
+	set["sort"] = "4"
+	set["expiresAt"] = "null"
+	expector.
+		PUT("/tables/tests").
+		WithJSON(makePutBody(set, nil)).
+		Expect().Status(http.StatusBadRequest)
 }
 
 func TestDeleteWithValidParams(t *testing.T) {
@@ -471,11 +479,12 @@ func TestDeleteWithValidParams(t *testing.T) {
 		Expect().Status(http.StatusOK).
 		JSON().Object().Value("values").
 		Array().Length().Equal(2)
-}
 
-//func TestDeleteWithInvalidParams(t *testing.T) {
-//	getExpector(t).
-//		DELETE("/delete/onlines").
-//		WithQuery("hashKey", "1").
-//		Expect().Status(http.StatusBadRequest)
-//}
+	expector.
+		GET("/tables/onlines/scan").
+		WithQuery("hash", "1").
+		WithQuery("test", "20").
+		Expect().Status(http.StatusOK).
+		JSON().Object().Value("values").
+		Array().Length().Equal(2)
+}
