@@ -68,11 +68,11 @@ tables:
   "$set": {
     "id": "soc1",
     "personKey": "user1",
-    "updatedAt": 1505200000,
-    "expiresAt": 1513008702
+    "updatedAt": 1505200000000,
+    "expiresAt": 1513008702000
   },
   "$setOnInsert": {
-    "createdAt": 1505200000
+    "createdAt": 1505200000000
   }
 }
 ```
