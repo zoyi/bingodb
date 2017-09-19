@@ -110,13 +110,13 @@ func (index *PrimaryIndex) RScan(hash interface{}, since interface{}, limit int)
 	return result, next
 }
 
-func (index *SubIndex) Get(hash interface{}, sort interface{}) (*Document, bool) {
+func (index *SubIndex) Get(hash interface{}, sortRaw interface{}) (*Document, bool) {
 	hash = ParseField(index.hashKey, hash)
-	sort = index.parseSubSortKey(sort)
+	sort := index.parseSubSortKey(sortRaw)
 
 	if list := index.skipList(hash); list != nil {
 		if key, value, ok := list.Ceiling(sort); ok {
-			if key != nil && sort != nil && GeneralCompare(sort.(SubSortKey).sort, key.(SubSortKey).sort) == 0 {
+			if key != nil && GeneralCompare(sort.sort, key.(SubSortKey).sort) == 0 {
 				return value.(*Document), true
 			}
 		}
@@ -158,14 +158,14 @@ func (index *SubIndex) RScan(hash interface{}, since interface{}, limit int) (re
 	return result, next
 }
 
-func (index *SubIndex) parseSubSortKey(raw interface{}) interface{} {
+func (index *SubIndex) parseSubSortKey(raw interface{}) SubSortKey {
 	if raw == nil {
-		return nil
+		return SubSortKey{}
 	}
 
 	switch raw.(type) {
 	case SubSortKey:
-		return raw
+		return raw.(SubSortKey)
 
 	case []interface{}:
 		key := SubSortKey{}
