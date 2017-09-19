@@ -61,7 +61,6 @@ func initDefaultSeedData(bingo *bingodb.Bingo) {
 	{
 		var s = `{
 			"hash": 0,
-			"sort": 0,
 			"expiresAt": 2800000000000
 		}`
 
@@ -132,6 +131,23 @@ func TestGetWithValidParams(t *testing.T) {
 		ValueEqual("channelId", "1").
 		ContainsKey("expiresAt").
 		ContainsKey("lastSeen")
+
+	getExpector(t).
+		GET("/tables/tests/indices/index").
+		WithQuery("hash", "0").
+		Expect().Status(http.StatusOK).
+		JSON().Object().
+		ValueEqual("hash", 0).
+		ContainsKey("expiresAt")
+
+	getExpector(t).
+		GET("/tables/tests/indices/index").
+		WithQuery("hash", "0").
+		WithQuery("sort", "0").
+		Expect().Status(http.StatusOK).
+		JSON().Object().
+		ValueEqual("hash", 0).
+		ContainsKey("expiresAt")
 }
 
 func TestGetWithValidParamEmptyResult(t *testing.T) {
@@ -438,6 +454,11 @@ func TestPutWithInvalidParams(t *testing.T) {
 		PUT("/tables/tests").
 		WithJSON(makePutBody(set, nil)).
 		Expect().Status(http.StatusBadRequest)
+
+	set["channelId"] = "1"
+	set["personKey"] = "person4"
+	set["expiresAt"] = 2800000000000
+	set["updatedAt"] = "null"
 
 }
 

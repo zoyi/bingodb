@@ -8,16 +8,58 @@
   revision = "8c0e79dc5ff70fb2919f0d662f44fd72ccdf9be2"
 
 [[projects]]
+  name = "github.com/ajg/form"
+  packages = ["."]
+  revision = "cc2954064ec9ea8d93917f0f87456e11d7b881ad"
+  version = "v1.5"
+
+[[projects]]
   name = "github.com/buaazp/fasthttprouter"
   packages = ["."]
   revision = "ade4e2031af3aed7fffd241084aad80a58faf421"
   version = "v0.1.1"
 
 [[projects]]
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
+
+[[projects]]
   name = "github.com/emirpasic/gods"
   packages = ["utils"]
   revision = "f6c17b524822278a87e3b3bd809fec33b51f5b46"
   version = "v1.9.0"
+
+[[projects]]
+  name = "github.com/fatih/structs"
+  packages = ["."]
+  revision = "a720dfa8df582c51dee1b36feabb906bde1588bd"
+  version = "v1.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/gavv/httpexpect"
+  packages = ["."]
+  revision = "c44a6d7bb636b17e880a53998a7f7061a56ffacb"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/gavv/monotime"
+  packages = ["."]
+  revision = "47d58efa69556a936a3c15eb2ed42706d968ab01"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/google/go-querystring"
+  packages = ["query"]
+  revision = "53e6ce116135b80d037921a7fdd5138cf32d7a8a"
+
+[[projects]]
+  name = "github.com/imkira/go-interpol"
+  packages = ["."]
+  revision = "5accad8134979a6ac504d456a6c7f1c53da237ca"
+  version = "v1.1.0"
 
 [[projects]]
   name = "github.com/klauspost/compress"
@@ -39,9 +81,33 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/moul/http2curl"
+  packages = ["."]
+  revision = "4e24498b31dba4683efb9d35c1c8a91e2eda28c8"
+
+[[projects]]
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
   name = "github.com/robfig/cron"
   packages = ["."]
   revision = "736158dc09e10f1911ca3a1e1b01f11b566ce5db"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/sergi/go-diff"
+  packages = ["diffmatchpatch"]
+  revision = "feef008d51ad2b3778f85d387ccf91735543008d"
+
+[[projects]]
+  name = "github.com/stretchr/testify"
+  packages = ["assert","require"]
+  revision = "69483b4bd14f5845b5a1e55bca19e954e827f1d0"
+  version = "v1.1.4"
 
 [[projects]]
   branch = "master"
@@ -57,9 +123,57 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/xeipuuv/gojsonpointer"
+  packages = ["."]
+  revision = "6fe8760cad3569743d51ddbb243b26f8456742dc"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/xeipuuv/gojsonreference"
+  packages = ["."]
+  revision = "e02fc20de94c78484cd5ffb007f8af96be030a45"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/xeipuuv/gojsonschema"
+  packages = ["."]
+  revision = "3f523f4c14b6e925da10475eb0447c2f28614aac"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/yalp/jsonpath"
+  packages = ["."]
+  revision = "31a79c7593bb93eb10b163650d4a3e6ca190e4dc"
+
+[[projects]]
+  name = "github.com/yudai/gojsondiff"
+  packages = [".","formatter"]
+  revision = "7b1b7adf999dab73a6eb02669c3d82dbb27a3dd6"
+  version = "1.0.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/yudai/golcs"
+  packages = ["."]
+  revision = "ecda9a501e8220fae3b4b600c3db4b0ba22cfc68"
+
+[[projects]]
+  branch = "master"
   name = "github.com/zoyi/skiplist"
   packages = ["lazy","lib"]
   revision = "a568e7a28f7ad9e0f3b26ef0bb1f108859765173"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/net"
+  packages = ["idna","publicsuffix"]
+  revision = "8351a756f30f1297fe94bbf4b767ec589c6ea6d0"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/text"
+  packages = ["collate","collate/build","internal/colltab","internal/gen","internal/tag","internal/triegen","internal/ucd","language","secure/bidirule","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable"]
+  revision = "1cbadb444a806fd9430d14ad08967ed91da4fa0a"
 
 [[projects]]
   branch = "v2"
@@ -70,6 +184,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7f6258a51e3f12572707686558b8f21447284f77f9a687f946a63f9932e676a0"
+  inputs-digest = "60c9ca7ed463b6cd8cec7c7c4e963f167cc0bc8a77a60ef46f19bbfbd58b6bae"
   solver-name = "gps-cdcl"
   solver-version = 1
