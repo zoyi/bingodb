@@ -100,7 +100,7 @@ func (rs *Resource) Scan(ctx *fasthttp.RequestCtx) {
 func (rs *Resource) Get(ctx *fasthttp.RequestCtx) {
 	if table := rs.fetchTable(ctx); table != nil {
 		if index := table.Index(rs.fetchIndex(ctx)); index != nil {
-			if getRequest, ok := rs.fetchGetQuery(ctx, table.SortKey() != nil); ok {
+			if getRequest, ok := rs.fetchGetQuery(ctx, index.SortKey() != nil); ok {
 				if document, ok := index.Get(getRequest.HashKey, getRequest.SortKey); ok {
 					success(ctx, document.ToJSON())
 				} else {
