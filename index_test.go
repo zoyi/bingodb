@@ -99,7 +99,7 @@ func TestScanForPrimaryIndex(t *testing.T) {
 	table := bingo.tables["onlines"]
 	primaryIndex := table.primaryIndex
 
-	result, next := primaryIndex.Scan("1", nil, 10)
+	result, next, _ := primaryIndex.Scan("1", nil, 10)
 	if actualValue, expectedValue := len(result), 4; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
 	}
@@ -107,7 +107,7 @@ func TestScanForPrimaryIndex(t *testing.T) {
 		t.Errorf("Value different. Got %v expected nil", next)
 	}
 
-	result, next = primaryIndex.Scan("1", nil, 2)
+	result, next, _ = primaryIndex.Scan("1", nil, 2)
 	if actualValue, expectedValue := len(result), 2; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
 	}
@@ -115,12 +115,12 @@ func TestScanForPrimaryIndex(t *testing.T) {
 		t.Errorf("Value different. Got %v expected %v", actualValue, expectedValue)
 	}
 
-	result, next = primaryIndex.Scan("1", "a", 10)
+	result, next, _ = primaryIndex.Scan("1", "a", 10)
 	if actualValue, expectedValue := len(result), 4; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
 	}
 
-	result, next = primaryIndex.Scan("1", "rz", 10)
+	result, next, _ = primaryIndex.Scan("1", "rz", 10)
 	if actualValue, expectedValue := len(result), 2; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
 	}
@@ -132,7 +132,7 @@ func TestRScanForPrimaryIndex(t *testing.T) {
 	table := bingo.tables["onlines"]
 	primaryIndex := table.primaryIndex
 
-	result, next := primaryIndex.RScan("1", nil, 10)
+	result, next, _ := primaryIndex.RScan("1", nil, 10)
 	if actualValue, expectedValue := len(result), 4; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
 	}
@@ -140,7 +140,7 @@ func TestRScanForPrimaryIndex(t *testing.T) {
 		t.Errorf("Value different. Got %v expected nil", next)
 	}
 
-	result, next = primaryIndex.RScan("1", nil, 2)
+	result, next, _ = primaryIndex.RScan("1", nil, 2)
 	if actualValue, expectedValue := len(result), 2; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
 	}
@@ -148,7 +148,7 @@ func TestRScanForPrimaryIndex(t *testing.T) {
 		t.Errorf("Value different. Got %v expected %v", actualValue, expectedValue)
 	}
 
-	result, next = primaryIndex.RScan("1", "az", 3)
+	result, next, _ = primaryIndex.RScan("1", "az", 3)
 	if actualValue, expectedValue := len(result), 1; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
 	}
@@ -156,7 +156,7 @@ func TestRScanForPrimaryIndex(t *testing.T) {
 		t.Errorf("Value different. Got %v expected %v", actualValue, nil)
 	}
 
-	result, next = primaryIndex.RScan("1", "rz", 10)
+	result, next, _ = primaryIndex.RScan("1", "rz", 10)
 
 	if actualValue, expectedValue := len(result), 2; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
@@ -168,7 +168,7 @@ func TestFetchSubIndex(t *testing.T) {
 
 	table := bingo.tables["onlines"]
 
-	result, next := table.Index("guest").Scan("1", nil, 10)
+	result, next, _ := table.Index("guest").Scan("1", nil, 10)
 
 	if actualValue, expectedValue := len(result), 4; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
@@ -177,7 +177,7 @@ func TestFetchSubIndex(t *testing.T) {
 		t.Errorf("Value different. Got %v expected empty", next)
 	}
 
-	result, next = table.Index("guest").Scan("1", SubSortKey{primaryHash: "1"}, 10)
+	result, next, _ = table.Index("guest").Scan("1", SubSortKey{primaryHash: "1"}, 10)
 
 	if actualValue, expectedValue := len(result), 4; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
@@ -186,7 +186,7 @@ func TestFetchSubIndex(t *testing.T) {
 		t.Errorf("Value different. Got %v expected empty", next)
 	}
 
-	result, next = table.Index("guest").Scan("1", SubSortKey{sort: int64(1500000000002), primaryHash: "1"}, 10)
+	result, next, _ = table.Index("guest").Scan("1", SubSortKey{sort: int64(1500000000002), primaryHash: "1"}, 10)
 
 	if actualValue, expectedValue := len(result), 3; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)

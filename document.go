@@ -11,6 +11,30 @@ type Document struct {
 	schema *TableSchema
 }
 
+func Merge(doc *Document, op *Document) *Document {
+	if op == nil {
+		return doc
+	}
+	if doc == nil {
+		return op
+	}
+
+	if doc.schema != op.schema {
+		panic("The schema of the two docs are different")
+	}
+
+	newbie := make(map[string]interface{})
+
+	for k, v := range doc.data {
+		newbie[k] = v
+	}
+	for k, v := range op.data {
+		newbie[k] = v
+	}
+
+	return &Document{data: newbie, schema: doc.schema}
+}
+
 func (doc *Document) Merge(op *Document) *Document {
 	if op == nil {
 		return doc
@@ -31,22 +55,24 @@ func (doc *Document) Merge(op *Document) *Document {
 	return &Document{data: newbie, schema: doc.schema}
 }
 
-func ParseDoc(data *Data, schema *TableSchema) *Document {
+func ParseDoc(data *Data, schema *TableSchema) (*Document, error) {
+	//for doc, parsing nil equivalent to success
 	if data == nil {
-		return nil
+		return nil, nil
 	}
+
 	for _, field := range schema.fields {
 		raw, present := (*data)[field.Name]
 		if present {
-			val, ok := field.Parse(raw)
-			if !ok {
-				continue
+			val, err := field.Parse(raw)
+			if err != nil {
+				return nil, err
 			}
 			(*data)[field.Name] = val
 		}
 	}
 
-	return &Document{data: *data, schema: schema}
+	return &Document{data: *data, schema: schema}, nil
 }
 
 func (doc *Document) Data() Data {
