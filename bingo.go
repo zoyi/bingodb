@@ -12,15 +12,6 @@ type Bingo struct {
 	systemMetrics *SystemMetrics
 }
 
-const (
-	FieldError = "Field '%s' is defined as %s type but value '%v' cannot be parsed"
-	SetOrInsertMissing = "set or setOnInsert are required"
-	HashKeyMissing = "Hash key is missing in set"
-	SortKeyMising = "Hash key is missing in set"
-	DocumentNotFound = "Document not found"
-	IndexNotFound = "Index not found"
-)
-
 func (bingo *Bingo) TablesArray() []*TableInfo {
 	tables := make([]*TableInfo, 0, len(bingo.tables))
 	for _, table := range bingo.tables {

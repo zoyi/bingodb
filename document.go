@@ -11,6 +11,11 @@ type Document struct {
 	schema *TableSchema
 }
 
+func (data *Data) Length() int {
+	var d map[string]interface{} = *data
+	return len(d)
+}
+
 func Merge(doc *Document, op *Document) *Document {
 	if op == nil {
 		return doc
@@ -55,9 +60,9 @@ func (doc *Document) Merge(op *Document) *Document {
 	return &Document{data: newbie, schema: doc.schema}
 }
 
-func ParseDoc(data *Data, schema *TableSchema) (*Document, error) {
+func ParseDoc(data *Data, schema *TableSchema) (*Document, *BingoError) {
 	//for doc, parsing nil equivalent to success
-	if data == nil {
+	if data == nil || data.Length() == 0 {
 		return nil, nil
 	}
 
@@ -66,7 +71,7 @@ func ParseDoc(data *Data, schema *TableSchema) (*Document, error) {
 		if present {
 			val, err := field.Parse(raw)
 			if err != nil {
-				return nil, err
+				return nil, &BingoError{Message: err.Error(), Code: BingoFieldParsingError}
 			}
 			(*data)[field.Name] = val
 		}

@@ -217,7 +217,7 @@ func (table *Table) PrimaryIndex() *PrimaryIndex {
 	return table.primaryIndex
 }
 
-func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Document, bool, error) {
+func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Document, bool, *BingoError) {
 	set, setErr := ParseDoc(setData, table.TableSchema)
 	setOnInsert, setOnInsertErr := ParseDoc(setOnInsertData, table.TableSchema)
 	if setErr != nil {
@@ -227,16 +227,16 @@ func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Docum
 		return nil, nil, false, setOnInsertErr
 	}
 	if set == nil && setOnInsert == nil {
-		return nil, nil, false, errors.New(SetOrInsertMissing)
+		return nil, nil, false, &BingoError{Code: BingoSetOrInsertMissingError}
 	}
 
 	merged := Merge(set, setOnInsert)
 
 	if merged.Fetch(table.HashKey().Name) == nil {
-		return nil, nil, false, errors.New(HashKeyMissing)
+		return nil, nil, false, &BingoError{Code: BingoHashKeyMissingError}
 	}
 	if table.SortKey() != nil && merged.Fetch(table.SortKey().Name) == nil {
-		return nil, nil, false, errors.New(SortKeyMising)
+		return nil, nil, false, &BingoError{Code: BingoSortKeyMissingError}
 	}
 
 	onUpdate := func(oldRaw interface{}) interface{} {
@@ -265,7 +265,7 @@ func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Docum
 	return old, newbie, replaced, nil
 }
 
-func (table *Table) Remove(hash interface{}, sort interface{}) (*Document, error) {
+func (table *Table) Remove(hash interface{}, sort interface{}) (*Document, *BingoError) {
 	doc, err := table.primaryIndex.remove(hash, sort)
 	if err != nil {
 		return nil, err
@@ -280,7 +280,7 @@ func (table *Table) Remove(hash interface{}, sort interface{}) (*Document, error
 	return doc, nil
 }
 
-func (table *Table) RemoveByDocument(doc *Document) (*Document, error) {
+func (table *Table) RemoveByDocument(doc *Document) (*Document, *BingoError) {
 	hashValue := doc.Get(table.primaryKey.hashKey)
 	sortValue := doc.Get(table.primaryKey.sortKey)
 

@@ -39,11 +39,6 @@ type PutResult struct {
 	Replaced bool        `json:"replaced"`
 }
 
-const (
-	IndexNotFound = "Index not found"
-	TableNotFound = "Table not found: %s"
-)
-
 func newPutResult(old *bingodb.Document, newbie *bingodb.Document, replaced bool) *PutResult {
 	var oldDoc, newbieDoc bingodb.Data
 	if old != nil {
@@ -97,7 +92,7 @@ func (rs *Resource) Scan(ctx *fasthttp.RequestCtx) {
 				success(ctx, bytes)
 			}
 		} else {
-			raiseError(ctx, fasthttp.StatusNotFound, IndexNotFound)
+			raiseError(ctx, bingodb.BingoIndexNotFoundError, "")
 		}
 	}
 	rs.bingo.AddScan()
@@ -109,13 +104,13 @@ func (rs *Resource) Get(ctx *fasthttp.RequestCtx) {
 			getRequest := rs.fetchGetQuery(ctx)
 			document, err := index.Get(getRequest.HashKey, getRequest.SortKey)
 			if err != nil {
-				raiseError(ctx, fasthttp.StatusBadRequest, err.Error())
+				raiseError(ctx, err.Code, err.Message)
 			} else {
 				success(ctx, document.ToJSON())
 			}
 
 		} else {
-			raiseError(ctx, fasthttp.StatusNotFound, IndexNotFound)
+			raiseError(ctx, bingodb.BingoIndexNotFoundError, "")
 		}
 	}
 	rs.bingo.AddGet()
@@ -126,7 +121,7 @@ func (rs *Resource) Put(ctx *fasthttp.RequestCtx) {
 		if data, ok := rs.fetchPutQuery(ctx); ok {
 			old, newbie, replaced, err := table.Put(&data.Set, &data.SetOnInsert)
 			if err != nil {
-				raiseError(ctx, fasthttp.StatusBadRequest, err.Error())
+				raiseError(ctx, err.Code, err.Message)
 			} else if bytes, err := json.Marshal(newPutResult(old, newbie, replaced)); err == nil {
 				success(ctx, bytes)
 			}
@@ -140,7 +135,7 @@ func (rs *Resource) Remove(ctx *fasthttp.RequestCtx) {
 		getRequest := rs.fetchGetQuery(ctx)
 		document, err := table.Remove(getRequest.HashKey, getRequest.SortKey)
 		if err != nil {
-			raiseError(ctx, fasthttp.StatusBadRequest, err.Error())
+			raiseError(ctx, err.Code, err.Message)
 		} else {
 			success(ctx, document.ToJSON())
 		}
@@ -152,8 +147,38 @@ func success(ctx *fasthttp.RequestCtx, p []byte) {
 	ctx.Success("application/json", p)
 }
 
-func raiseError(ctx *fasthttp.RequestCtx, statusCode int, error string) {
-	ctx.Error(error, statusCode)
+func raiseError(ctx *fasthttp.RequestCtx, bingoErrorCode int, message string) {
+	getMsgAndCode := func(defaultMsg, msg string, code int) (string, int) {
+		if msg == "" {
+			return defaultMsg, code
+		}
+		return msg, code
+	}
+	statusCode := 500
+
+	switch bingoErrorCode {
+	case bingodb.BingoFieldParsingError:
+		message, statusCode = getMsgAndCode(bingodb.GeneralFieldError, message, fasthttp.StatusBadRequest)
+	case bingodb.BingoHashKeyMissingError:
+		message, statusCode = getMsgAndCode(bingodb.HashKeyMissing, message, fasthttp.StatusBadRequest)
+	case bingodb.BingoSortKeyMissingError:
+		message, statusCode = getMsgAndCode(bingodb.SortKeyMissing, message, fasthttp.StatusBadRequest)
+	case bingodb.BingoSetOrInsertMissingError:
+		message, statusCode = getMsgAndCode(bingodb.SetOrInsertMissing, message, fasthttp.StatusBadRequest)
+	case bingodb.BingoDocumentNotFoundError:
+		message, statusCode = getMsgAndCode(bingodb.DocumentNotFound, message, fasthttp.StatusBadRequest)
+	case bingodb.BingoIndexNotFoundError:
+		message, statusCode = getMsgAndCode(bingodb.IndexNotFound, message, fasthttp.StatusNotFound)
+	case bingodb.BingoTableNotFoundError:
+		message, statusCode = getMsgAndCode(bingodb.GeneralTableNotFound, message, fasthttp.StatusNotFound)
+	case bingodb.BingoJSONParsingError:
+		message, statusCode = getMsgAndCode(bingodb.GeneralParsingError, message, fasthttp.StatusBadRequest)
+	default:
+		message = bingodb.UnknownError
+		statusCode = fasthttp.StatusInternalServerError
+	}
+
+	ctx.Error(message, statusCode)
 }
 
 func (rs *Resource) fetchTable(ctx *fasthttp.RequestCtx) *bingodb.Table {
@@ -161,7 +186,7 @@ func (rs *Resource) fetchTable(ctx *fasthttp.RequestCtx) *bingodb.Table {
 	if table, ok := rs.bingo.Table(tableName); ok {
 		return table
 	}
-	raiseError(ctx, fasthttp.StatusNotFound, fmt.Sprintf(TableNotFound, tableName))
+	raiseError(ctx, bingodb.BingoTableNotFoundError, fmt.Sprintf(bingodb.TableNotFound, tableName))
 	return nil
 }
 
@@ -208,7 +233,7 @@ func (rs *Resource) fetchGetQuery(ctx *fasthttp.RequestCtx) (request GetQuery) {
 
 func (rs *Resource) fetchPutQuery(ctx *fasthttp.RequestCtx) (data PutQuery, ok bool) {
 	if err := json.Unmarshal(ctx.PostBody(), &data); err != nil {
-		raiseError(ctx, fasthttp.StatusBadRequest, err.Error())
+		raiseError(ctx, bingodb.BingoJSONParsingError, err.Error())
 		return data, false
 	}
 
