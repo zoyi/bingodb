@@ -2,6 +2,7 @@ package bingodb
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/zoyi/skiplist/lib"
 	"reflect"
@@ -137,61 +138,70 @@ func ParseField(field *FieldSchema, raw interface{}) interface{} {
 	if field == nil {
 		return nil
 	} else {
-		val, ok := field.Parse(raw)
-		if !ok {
+		val, err := field.Parse(raw)
+		if err != nil {
 			return nil
 		}
 		return val
 	}
 }
 
-func (field *FieldSchema) Parse(raw interface{}) (interface{}, bool) {
-	if raw == nil {
-		return nil, true
-	}
-
+func (field *FieldSchema) Parse(raw interface{}) (interface{}, error) {
 	switch field.Type {
 	case "integer":
 		switch raw.(type) {
 		case json.Number:
 			value, err := raw.(json.Number).Int64()
-			return value, err == nil
+			return value, err
 
 		case string:
 			value, err := strconv.ParseInt(raw.(string), 10, 64)
-			return value, err == nil
+			return value, err
 
 		case []byte:
 			value, err := strconv.ParseInt(string(raw.([]byte)), 10, 64)
-			return value, err == nil
+			return value, err
 
 		case int:
-			return int64(raw.(int)), true
+			return int64(raw.(int)), nil
 
 		case int64:
-			return raw.(int64), true
+			return raw.(int64), nil
 
 		case float64:
-			return int64(raw.(float64)), true
+			return int64(raw.(float64)), nil
 
 		case []interface{}:
 			return field.Parse(raw.([]interface{})[0])
+
+		default:
+			goto fieldError
 		}
 
 	case "string":
 		switch raw.(type) {
 		case []byte:
 			if bytes := raw.([]byte); len(bytes) > 0 {
-				return string(raw.([]byte)), true
+				return string(raw.([]byte)), nil
 			} else {
-				return nil, true
+				return nil, nil
 			}
 
 		case []interface{}:
 			return field.Parse(raw.([]interface{})[0])
+
+		case string:
+			return raw, nil
+
+		default:
+			goto fieldError
 		}
 	}
-	return raw, true
+
+	return raw, nil
+
+fieldError:
+	return raw, errors.New(fmt.Sprintf(FieldError, field.Name, field.Type, raw))
 }
 
 func NumberComparator(a, b interface{}) int {
@@ -253,9 +263,27 @@ func (table *Table) PrimaryIndex() *PrimaryIndex {
 	return table.primaryIndex
 }
 
-func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Document, bool) {
-	set := ParseDoc(setData, table.TableSchema)
-	setOnInsert := ParseDoc(setOnInsertData, table.TableSchema)
+func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Document, bool, *BingoError) {
+	set, setErr := ParseDoc(setData, table.TableSchema)
+	setOnInsert, setOnInsertErr := ParseDoc(setOnInsertData, table.TableSchema)
+	if setErr != nil {
+		return nil, nil, false, setErr
+	}
+	if setOnInsertErr != nil {
+		return nil, nil, false, setOnInsertErr
+	}
+	if set == nil && setOnInsert == nil {
+		return nil, nil, false, &BingoError{Code: BingoSetOrInsertMissingError}
+	}
+
+	merged := Merge(set, setOnInsert)
+
+	if merged.Fetch(table.HashKey().Name) == nil {
+		return nil, nil, false, &BingoError{Code: BingoHashKeyMissingError}
+	}
+	if table.SortKey() != nil && merged.Fetch(table.SortKey().Name) == nil {
+		return nil, nil, false, &BingoError{Code: BingoSortKeyMissingError}
+	}
 
 	onUpdate := func(oldRaw interface{}) interface{} {
 		old := oldRaw.(*Document)
@@ -263,7 +291,7 @@ func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Docum
 	}
 
 	// Insert doc into primary index
-	old, newbie, replaced := table.primaryIndex.put(set.Merge(setOnInsert), onUpdate)
+	old, newbie, replaced := table.primaryIndex.put(merged, onUpdate)
 
 	// Update for sub index
 	for _, index := range table.subIndices {
@@ -280,12 +308,13 @@ func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Docum
 	}
 	keeper.put(table, newbie)
 
-	return old, newbie, replaced
+	return old, newbie, replaced, nil
 }
 
-func (table *Table) Remove(hash interface{}, sort interface{}) (doc *Document, ok bool) {
-	if doc, ok = table.primaryIndex.remove(hash, sort); !ok {
-		return
+func (table *Table) Remove(hash interface{}, sort interface{}) (*Document, *BingoError) {
+	doc, err := table.primaryIndex.remove(hash, sort)
+	if err != nil {
+		return nil, err
 	}
 
 	for _, index := range table.subIndices {
@@ -294,10 +323,10 @@ func (table *Table) Remove(hash interface{}, sort interface{}) (doc *Document, o
 
 	table.bingo.keeper.remove(table, doc)
 
-	return
+	return doc, nil
 }
 
-func (table *Table) RemoveByDocument(doc *Document) (*Document, bool) {
+func (table *Table) RemoveByDocument(doc *Document) (*Document, *BingoError) {
 	hashValue := doc.Get(table.primaryKey.hashKey)
 	sortValue := doc.Get(table.primaryKey.sortKey)
 

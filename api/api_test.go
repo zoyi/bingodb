@@ -119,7 +119,7 @@ func TestGetTableInfo(t *testing.T) {
 func TestGetInvalidTableInfo(t *testing.T) {
 	getExpector(t).
 		GET("/tables/wrong/info").
-		Expect().Status(http.StatusBadRequest)
+		Expect().Status(http.StatusNotFound)
 }
 
 func TestGetWithValidParams(t *testing.T) {
@@ -132,6 +132,23 @@ func TestGetWithValidParams(t *testing.T) {
 		ValueEqual("channelId", "1").
 		ContainsKey("expiresAt").
 		ContainsKey("lastSeen")
+
+	getExpector(t).
+		GET("/tables/tests/indices/index").
+		WithQuery("hash", "0").
+		Expect().Status(http.StatusOK).
+		JSON().Object().
+		ValueEqual("hash", 0).
+		ContainsKey("expiresAt")
+
+	getExpector(t).
+		GET("/tables/tests/indices/index").
+		WithQuery("hash", "0").
+		WithQuery("sort", "0").
+		Expect().Status(http.StatusOK).
+		JSON().Object().
+		ValueEqual("hash", 0).
+		ContainsKey("expiresAt")
 }
 
 func TestGetWithValidParamEmptyResult(t *testing.T) {
@@ -163,7 +180,7 @@ func TestGetWithInvalidParams(t *testing.T) {
 		GET("/tables/onlines/indices/wrong").
 		WithQuery("hash", "1").
 		WithQuery("limit", "20").
-		Expect().Status(http.StatusBadRequest)
+		Expect().Status(http.StatusNotFound)
 }
 
 func TestScanWithValidParams(t *testing.T) {
@@ -223,7 +240,9 @@ func TestScanWithInvalidParams(t *testing.T) {
 	getExpector(t).
 		GET("/tables/onlines/scan").
 		WithQuery("limit", "20").
-		Expect().Status(http.StatusBadRequest)
+		Expect().Status(http.StatusOK).
+		JSON().Object().
+		Value("values").Array().Empty()
 }
 
 func TestScanIndexWithValidParams(t *testing.T) {
@@ -310,7 +329,7 @@ func TestScanIndexWithInvalidName(t *testing.T) {
 	getExpector(t).
 		GET("/tables/onlines/indices/wrong/scan").
 		WithQuery("limit", "20").
-		Expect().Status(http.StatusBadRequest)
+		Expect().Status(http.StatusNotFound)
 }
 
 func makePutBody(set map[string]interface{}, setOnInsert map[string]interface{}) map[string]interface{} {
@@ -439,6 +458,21 @@ func TestPutWithInvalidParams(t *testing.T) {
 		WithJSON(makePutBody(set, nil)).
 		Expect().Status(http.StatusBadRequest)
 
+	set = make(map[string]interface{})
+	set["hash"] = "1"
+	set["sort"] = "4"
+	set["expiresAt"] = "null"
+	expector.
+		PUT("/tables/tests").
+		WithJSON(makePutBody(set, nil)).
+		Expect().Status(http.StatusBadRequest)
+
+	setOnInsert := make(map[string]interface{})
+	set = make(map[string]interface{})
+	expector.
+		PUT("/tables/tests").
+		WithJSON(makePutBody(set, setOnInsert)).
+		Expect().Status(http.StatusBadRequest)
 }
 
 func TestDeleteWithValidParams(t *testing.T) {
@@ -450,13 +484,6 @@ func TestDeleteWithValidParams(t *testing.T) {
 		WithQuery("sort", "person1").
 		Expect().Status(http.StatusOK).
 		JSON().Object().Value("personKey").Equal("person1")
-
-	expector.
-		DELETE("/tables/onlines").
-		WithQuery("hash", "1").
-		WithQuery("sort", "person1").
-		Expect().Status(http.StatusOK).
-		JSON().Object().Empty()
 
 	expector.
 		GET("/tables/onlines").
@@ -471,11 +498,19 @@ func TestDeleteWithValidParams(t *testing.T) {
 		Expect().Status(http.StatusOK).
 		JSON().Object().Value("values").
 		Array().Length().Equal(2)
+
+	expector.
+		GET("/tables/onlines/scan").
+		WithQuery("hash", "1").
+		WithQuery("test", "20").
+		Expect().Status(http.StatusOK).
+		JSON().Object().Value("values").
+		Array().Length().Equal(2)
 }
 
-//func TestDeleteWithInvalidParams(t *testing.T) {
-//	getExpector(t).
-//		DELETE("/delete/onlines").
-//		WithQuery("hashKey", "1").
-//		Expect().Status(http.StatusBadRequest)
-//}
+func TestDeletWithInvalidParams(t *testing.T) {
+	getExpector(t).
+		DELETE("/tables/onlines").
+		WithQuery("hash", "1").
+		Expect().Status(http.StatusBadRequest)
+}
