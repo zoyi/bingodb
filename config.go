@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"strings"
 )
 
 type MetricsConfig struct {
-	Table    string `yaml:"table"`
-	Ttl      int    `yaml:"ttl"`
-	Interval int    `yaml:"interval"`
+	Ttl       int64  `yaml:"ttl"`
+	Interval  int64  `yaml:"interval"`
+	ExpireKey string `yaml:"expireKey"`
+	Count     string `yaml:"count"`
+	Time      string `yaml:"time"`
 }
 
 type SubIndexConfig struct {
@@ -120,7 +123,17 @@ func ParseConfigBytes(bingo *Bingo, configBytes []byte) error {
 func isValidTable(tableName string, tableInfo TableConfig) error {
 	format := fmt.Sprintf("Table configuration error (Table '%v')", tableName)
 
+	if strings.HasPrefix(tableName, "_") {
+		return errors.New("Table name starts with '_' is prohibited.")
+	} else if tableName == "metrics" {
+		return errors.New("Table name cannot be 'metrics'")
+	}
+
 	if err := isValidFields(tableInfo.Fields); err != nil {
+		return errors.New(fmt.Sprintf("%v - %v", format, err.Error()))
+	}
+
+	if err := isValidMetrics(tableInfo.Metrics); err != nil {
 		return errors.New(fmt.Sprintf("%v - %v", format, err.Error()))
 	}
 
@@ -148,6 +161,22 @@ func isValidFields(fields map[string]string) error {
 		if ok := isAllowedFieldType(fieldType); !ok {
 			return errors.New(fmt.Sprintf("unknown field type '%v' in '%v'", fieldType, fieldName))
 		}
+	}
+
+	return nil
+}
+
+// check fields is not empty and field's value type is valid
+func isValidMetrics(metricConfig *MetricsConfig) error {
+	if metricConfig == nil {
+		return nil
+	}
+
+	if metricConfig.Ttl == 0 {
+		return errors.New("ttl value must be specified in metrics")
+	}
+	if metricConfig.Interval == 0 {
+		return errors.New("interval value must be specified in metrics")
 	}
 
 	return nil

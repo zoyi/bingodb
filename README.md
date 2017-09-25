@@ -45,6 +45,11 @@ tables:
         #these fields' value suppose to be in fields
         hashKey: 'channelId'
         sortKey: 'lastSeen'
+    metrics:
+      #metrics table is optional. If you define metric with ttl and interval with milliseconds,
+      #bingoDB records the table state.
+      ttl: 600000
+      interval: 2000
 ```
 
 ## API Overview
