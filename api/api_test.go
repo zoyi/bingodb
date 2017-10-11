@@ -75,6 +75,7 @@ func initDefaultSeedData(bingo *bingodb.Bingo) {
 
 func getRouterForTest() *fasthttprouter.Router {
 	bingo := bingodb.NewBingoFromConfigFile("../config/test.yml")
+	bingo.SetNewRelicAgent()
 	router := MakeRouter(bingo)
 	initDefaultSeedData(bingo)
 

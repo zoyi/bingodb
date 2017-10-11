@@ -18,6 +18,7 @@ func main() {
 
 	fmt.Printf("* Loading configration file... %s %s\n", *config, *addr)
 	bingo := bingodb.NewBingoFromConfigFile(*config)
+	bingo.SetNewRelicAgent()
 
 	router := api.MakeRouter(bingo)
 

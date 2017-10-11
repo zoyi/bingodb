@@ -16,3 +16,4 @@ vendor/
 glide.lock
 .DS_Store
 .idea/
+log/

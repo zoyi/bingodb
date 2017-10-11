@@ -31,7 +31,8 @@ type TableConfig struct {
 }
 
 type BingoConfig struct {
-	Tables map[string]TableConfig `yaml:"tables,omitempty"`
+	Tables		map[string]TableConfig	`yaml:"tables,omitempty"`
+	NewRelic	map[string]string		`yaml:"newrelic"`
 }
 
 const (
@@ -116,6 +117,7 @@ func ParseConfigBytes(bingo *Bingo, configBytes []byte) error {
 	}
 
 	bingo.setTableMetrics()
+	bingo.BingoConfig = bingoConfig
 
 	return nil
 }
