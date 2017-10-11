@@ -32,3 +32,9 @@ tables:
     metrics:
       ttl: 600000
       interval: 2000
+
+newrelic:
+  enable: 'true'
+  applicationName: 'bingodb_dev'
+  licenseKey: ''
+  logPath: './log/newrelic.log'

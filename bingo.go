@@ -5,12 +5,16 @@ import (
 	"log"
 	"strings"
 	"sync/atomic"
+	"os"
+	"github.com/newrelic/go-agent"
 )
 
 type Bingo struct {
 	tables        map[string]*Table
 	keeper        *Keeper
 	systemMetrics *SystemMetrics
+	BingoConfig   *BingoConfig
+	NrApp         *newrelic.Application
 }
 
 func (bingo *Bingo) TablesArray() []*TableInfo {
@@ -86,6 +90,51 @@ func (bingo *Bingo) setTableMetrics() {
 		make(map[string]*SubIndex),
 		nil,
 	)
+}
+
+func (bingo *Bingo) SetNewRelicAgent() {
+	e := bingo.BingoConfig.NewRelic["enable"]
+	enabled := len(e) > 0 && e == "true"
+
+	a := bingo.BingoConfig.NewRelic["applicationName"]
+	var appName string
+	if len(a) > 0 {
+		appName = a
+	} else {
+		appName = "develop"
+	}
+
+	licenseKey := bingo.BingoConfig.NewRelic["licenseKey"]
+	logPath := bingo.BingoConfig.NewRelic["logPath"]
+
+	nrConfig := newrelic.NewConfig(appName, licenseKey)
+
+	// nrApp is enabled when 'enable' is 'true' and 'licenseKey' is not empty
+	nrConfig.Enabled = enabled && len(licenseKey) > 0
+
+	// File log is enabled when 'logPath' is not empty
+	if nrConfig.Enabled {
+		if len(logPath) > 0 {
+			w, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+			if nil == err {
+				nrConfig.Logger = newrelic.NewLogger(w)
+			}
+		} else {
+			nrConfig.Logger = newrelic.NewDebugLogger(os.Stdout)
+		}
+	}
+
+	// Create agent
+	if nrApp, err := newrelic.NewApplication(nrConfig); nrConfig.Enabled && err != nil {
+		log.Fatalln("NewRelic set enabled but error occurred:", err)
+	} else {
+		bingo.NrApp = &nrApp
+	}
+
+	if nrConfig.Enabled {
+		fmt.Printf("* NewRelic agent enabled\n\t- Agent version: %s\n\t- App name: %s\n\t- Log path: %s\n",
+			newrelic.Version, appName, logPath)
+	}
 }
 
 func (bingo *Bingo) AddScan() {

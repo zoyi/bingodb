@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/valyala/fasthttp"
 	"github.com/zoyi/bingodb"
+	"github.com/newrelic/go-agent"
 )
 
 type GetQuery struct {
@@ -62,12 +63,20 @@ func newListResponse(values []bingodb.Data, next interface{}) *ScanResult {
 }
 
 func (rs *Resource) Tables(ctx *fasthttp.RequestCtx) {
+	// #NR
+	transaction := (*rs.bingo.NrApp).StartTransaction("Tables", nil, nil)
+	defer transaction.End()
+
 	if bytes, err := json.Marshal(rs.bingo.TablesArray()); err == nil {
 		success(ctx, bytes)
 	}
 }
 
 func (rs *Resource) TableInfo(ctx *fasthttp.RequestCtx) {
+	// #NR
+	transaction := (*rs.bingo.NrApp).StartTransaction("TableInfo", nil, nil)
+	defer transaction.End()
+
 	if table := rs.fetchTable(ctx); table != nil {
 		if bytes, err := json.Marshal(table.Info()); err == nil {
 			success(ctx, bytes)
@@ -76,21 +85,40 @@ func (rs *Resource) TableInfo(ctx *fasthttp.RequestCtx) {
 }
 
 func (rs *Resource) Scan(ctx *fasthttp.RequestCtx) {
+	// #NR
+	transaction := (*rs.bingo.NrApp).StartTransaction("Scan", nil, nil)
+	defer transaction.End()
+
 	if table := rs.fetchTable(ctx); table != nil {
 		if index := table.Index(rs.fetchIndex(ctx)); index != nil {
 			query := rs.fetchScanQuery(ctx)
 			var values []bingodb.Data
 			var next interface{}
-			
+
+			// #NR
+			transaction.AddAttribute("Backward", query.Backward)
+			transaction.AddAttribute("HashKey",  query.HashKey)
+			transaction.AddAttribute("Limit",	  query.Limit)
+			transaction.AddAttribute("Since",	  query.Since)
+			sgFetchQuery := newrelic.StartSegment(transaction, "fetchQuery")
+
 			if query.Backward {
 				values, next, _ = index.RScan(query.HashKey, query.Since, query.Limit)
 			} else {
 				values, next, _ = index.Scan(query.HashKey, query.Since, query.Limit)
 			}
 
+			// #NR
+			sgFetchQuery.End()
+			sgRenderResult := newrelic.StartSegment(transaction, "renderResult")
+
 			if bytes, err := json.Marshal(newListResponse(values, next)); err == nil {
 				success(ctx, bytes)
 			}
+
+			// #NR
+			sgRenderResult.End()
+
 		} else {
 			raiseError(ctx, bingodb.BingoIndexNotFoundError, "")
 		}
@@ -99,15 +127,33 @@ func (rs *Resource) Scan(ctx *fasthttp.RequestCtx) {
 }
 
 func (rs *Resource) Get(ctx *fasthttp.RequestCtx) {
+	// #NR
+	transaction := (*rs.bingo.NrApp).StartTransaction("Get", nil, nil)
+	defer transaction.End()
+
 	if table := rs.fetchTable(ctx); table != nil {
 		if index := table.Index(rs.fetchIndex(ctx)); index != nil {
 			getRequest := rs.fetchGetQuery(ctx)
+
+			// #NR
+			transaction.AddAttribute("HashKey", getRequest.HashKey)
+			transaction.AddAttribute("SortKey", getRequest.SortKey)
+			sgFetchQuery := newrelic.StartSegment(transaction, "fetchQuery")
+
 			document, err := index.Get(getRequest.HashKey, getRequest.SortKey)
+
+			// #NR
+			sgFetchQuery.End()
+			sgRenderResult := newrelic.StartSegment(transaction, "renderResult")
+
 			if err != nil {
 				raiseError(ctx, err.Code, err.Message)
 			} else {
 				success(ctx, document.ToJSON())
 			}
+
+			// #NR
+			sgRenderResult.End()
 
 		} else {
 			raiseError(ctx, bingodb.BingoIndexNotFoundError, "")
@@ -117,28 +163,67 @@ func (rs *Resource) Get(ctx *fasthttp.RequestCtx) {
 }
 
 func (rs *Resource) Put(ctx *fasthttp.RequestCtx) {
+	// #NR
+	transaction := (*rs.bingo.NrApp).StartTransaction("Put", nil, nil)
+	defer transaction.End()
+
 	if table := rs.fetchTable(ctx); table != nil {
+		// #NR
+		sgFetchQuery := newrelic.StartSegment(transaction, "fetchQuery")
+
 		if data, ok := rs.fetchPutQuery(ctx); ok {
+			// #NR
+			sgFetchQuery.End()
+			sgPutData := newrelic.StartSegment(transaction, "putData")
+
 			old, newbie, replaced, err := table.Put(&data.Set, &data.SetOnInsert)
+
+			// #NR
+			sgPutData.End()
+			sgRenderResult := newrelic.StartSegment(transaction, "renderResult")
+
 			if err != nil {
 				raiseError(ctx, err.Code, err.Message)
 			} else if bytes, err := json.Marshal(newPutResult(old, newbie, replaced)); err == nil {
 				success(ctx, bytes)
 			}
+
+			// #NR
+			sgRenderResult.End()
 		}
 	}
 	rs.bingo.AddPut()
 }
 
 func (rs *Resource) Remove(ctx *fasthttp.RequestCtx) {
+	// #NR
+	transaction := (*rs.bingo.NrApp).StartTransaction("Remove", nil, nil)
+	defer transaction.End()
+
 	if table := rs.fetchTable(ctx); table != nil {
+		// #NR
+		sgFetchQuery := newrelic.StartSegment(transaction, "fetchQuery")
+
 		getRequest := rs.fetchGetQuery(ctx)
+
+		// #NR
+		sgFetchQuery.End()
+		sgRemoveData := newrelic.StartSegment(transaction, "removeData")
+
 		document, err := table.Remove(getRequest.HashKey, getRequest.SortKey)
+
+		// #NR
+		sgRemoveData.End()
+		sgRenderResult := newrelic.StartSegment(transaction, "renderResult")
+
 		if err != nil {
 			raiseError(ctx, err.Code, err.Message)
 		} else {
 			success(ctx, document.ToJSON())
 		}
+
+		// #NR
+		sgRenderResult.End()
 	}
 	rs.bingo.AddRemove()
 }
