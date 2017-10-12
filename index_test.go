@@ -21,9 +21,9 @@ func prepare() {
 	{
 		var s = `{
 			"channelId": "1",
-			"id": "test@gmail.com",
-			"lastSeen": 123,
-			"expiresAt": 200
+			"personKey": "test",
+			"updatedAt": 1500000000000,
+			"expiresAt": 2505789870000
 		}`
 
 		dec := json.NewDecoder(strings.NewReader(s))
@@ -35,24 +35,9 @@ func prepare() {
 	{
 		var s = `{
 			"channelId": "1",
-			"id": "test@gmail.com",
-			"lastSeen": 123,
-			"expiresAt": 201
-		}`
-
-		dec := json.NewDecoder(strings.NewReader(s))
-		dec.UseNumber()
-		var data Data
-		dec.Decode(&data)
-		table.Put(&data, nil)
-	}
-
-	{
-		var s = `{
-			"channelId": "1",
-			"id": "aaa@gmail.com",
-			"lastSeen": 123,
-			"expiresAt": 202
+			"personKey": "test",
+			"updatedAt": 1500000000001,
+			"expiresAt": 2505789870000
 		}`
 
 		dec := json.NewDecoder(strings.NewReader(s))
@@ -65,9 +50,9 @@ func prepare() {
 	{
 		var s = `{
 			"channelId": "1",
-			"id": "terry@zoyi.co",
-			"lastSeen": 144,
-			"expiresAt": 210
+			"personKey": "aaa",
+			"updatedAt": 1500000000002,
+			"expiresAt": 2505789870000
 		}`
 
 		dec := json.NewDecoder(strings.NewReader(s))
@@ -80,9 +65,24 @@ func prepare() {
 	{
 		var s = `{
 			"channelId": "1",
-			"id": "red@zoyi.co",
-			"lastSeen": 100,
-			"expiresAt": 200
+			"personKey": "terry",
+			"updatedAt": 1500000000003,
+			"expiresAt": 2505789870000
+		}`
+
+		dec := json.NewDecoder(strings.NewReader(s))
+		dec.UseNumber()
+		var data Data
+		dec.Decode(&data)
+		table.Put(&data, nil)
+	}
+
+	{
+		var s = `{
+			"channelId": "1",
+			"personKey": "red",
+			"updatedAt": 1500000000004,
+			"expiresAt": 2505789870000
 		}`
 
 		dec := json.NewDecoder(strings.NewReader(s))
@@ -99,7 +99,7 @@ func TestScanForPrimaryIndex(t *testing.T) {
 	table := bingo.tables["onlines"]
 	primaryIndex := table.primaryIndex
 
-	result, next := primaryIndex.Scan("1", nil, 10)
+	result, next, _ := primaryIndex.Scan("1", nil, 10)
 	if actualValue, expectedValue := len(result), 4; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
 	}
@@ -107,20 +107,20 @@ func TestScanForPrimaryIndex(t *testing.T) {
 		t.Errorf("Value different. Got %v expected nil", next)
 	}
 
-	result, next = primaryIndex.Scan("1", nil, 2)
+	result, next, _ = primaryIndex.Scan("1", nil, 2)
 	if actualValue, expectedValue := len(result), 2; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
 	}
-	if actualValue, expectedValue := next, "terry@zoyi.co"; actualValue != expectedValue {
+	if actualValue, expectedValue := next, "terry"; actualValue != expectedValue {
 		t.Errorf("Value different. Got %v expected %v", actualValue, expectedValue)
 	}
 
-	result, next = primaryIndex.Scan("1", "a", 10)
+	result, next, _ = primaryIndex.Scan("1", "a", 10)
 	if actualValue, expectedValue := len(result), 4; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
 	}
 
-	result, next = primaryIndex.Scan("1", "rz", 10)
+	result, next, _ = primaryIndex.Scan("1", "rz", 10)
 	if actualValue, expectedValue := len(result), 2; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
 	}
@@ -132,7 +132,7 @@ func TestRScanForPrimaryIndex(t *testing.T) {
 	table := bingo.tables["onlines"]
 	primaryIndex := table.primaryIndex
 
-	result, next := primaryIndex.RScan("1", nil, 10)
+	result, next, _ := primaryIndex.RScan("1", nil, 10)
 	if actualValue, expectedValue := len(result), 4; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
 	}
@@ -140,15 +140,15 @@ func TestRScanForPrimaryIndex(t *testing.T) {
 		t.Errorf("Value different. Got %v expected nil", next)
 	}
 
-	result, next = primaryIndex.RScan("1", nil, 2)
+	result, next, _ = primaryIndex.RScan("1", nil, 2)
 	if actualValue, expectedValue := len(result), 2; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
 	}
-	if actualValue, expectedValue := next, "red@zoyi.co"; actualValue != expectedValue {
+	if actualValue, expectedValue := next, "red"; actualValue != expectedValue {
 		t.Errorf("Value different. Got %v expected %v", actualValue, expectedValue)
 	}
 
-	result, next = primaryIndex.RScan("1", "az", 3)
+	result, next, _ = primaryIndex.RScan("1", "az", 3)
 	if actualValue, expectedValue := len(result), 1; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
 	}
@@ -156,7 +156,7 @@ func TestRScanForPrimaryIndex(t *testing.T) {
 		t.Errorf("Value different. Got %v expected %v", actualValue, nil)
 	}
 
-	result, next = primaryIndex.RScan("1", "rz", 10)
+	result, next, _ = primaryIndex.RScan("1", "rz", 10)
 
 	if actualValue, expectedValue := len(result), 2; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
@@ -168,7 +168,7 @@ func TestFetchSubIndex(t *testing.T) {
 
 	table := bingo.tables["onlines"]
 
-	result, next := table.Index("guest").Scan("1", nil, 10)
+	result, next, _ := table.Index("guest").Scan("1", nil, 10)
 
 	if actualValue, expectedValue := len(result), 4; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
@@ -177,7 +177,7 @@ func TestFetchSubIndex(t *testing.T) {
 		t.Errorf("Value different. Got %v expected empty", next)
 	}
 
-	result, next = table.Index("guest").Scan("1", SubSortKey{sort: int64(100), primaryHash: "1"}, 10)
+	result, next, _ = table.Index("guest").Scan("1", SubSortKey{primaryHash: "1"}, 10)
 
 	if actualValue, expectedValue := len(result), 4; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)
@@ -186,7 +186,7 @@ func TestFetchSubIndex(t *testing.T) {
 		t.Errorf("Value different. Got %v expected empty", next)
 	}
 
-	result, next = table.Index("guest").Scan("1", SubSortKey{sort: int64(123), primaryHash: "1"}, 10)
+	result, next, _ = table.Index("guest").Scan("1", SubSortKey{sort: int64(1500000000002), primaryHash: "1"}, 10)
 
 	if actualValue, expectedValue := len(result), 3; actualValue != expectedValue {
 		t.Errorf("size different. Got %v expected %v", actualValue, expectedValue)

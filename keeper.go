@@ -81,7 +81,7 @@ func (keeper *Keeper) expire() {
 	i := 0
 	for it := keeper.list.Begin(nil); it.Present(); it.Next() {
 		key := it.Key().(*ExpireKey)
-		if key.expiresAt > time.Now().Unix() {
+		if key.expiresAt > time.Now().Unix()*1000 { // For millis
 			break
 		}
 		key.table.RemoveByDocument(key.Document)

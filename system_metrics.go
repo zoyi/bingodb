@@ -61,8 +61,8 @@ func (metrics *SystemMetrics) output(key string, value int64) {
 		data := Data{}
 		data["key"] = key
 		data["value"] = value
-		data["time"] = time.Now().Unix()
-		data["expiresAt"] = time.Now().Add(time.Hour * 3).Unix()
+		data["time"] = time.Now().Unix() * 1000
+		data["expireAt"] = time.Now().Add(time.Hour*3).Unix() * 1000
 		table.Put(&data, nil)
 	}
 }

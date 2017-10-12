@@ -13,19 +13,11 @@ tables:
         hashKey: 'channelId'
         sortKey: 'updatedAt'
     metrics:
-      table: 'onlines-metrics'
-      ttl: 600
-      interval: 2
-
-  onlines-metrics:
-    fields:
-      channelId: 'string'
-      time: 'integer'
-      value: 'integer'
-      expiresAt: 'integer'
-    expireKey: 'expiresAt'
-    hashKey: 'channelId'
-    sortKey: 'time'
+      ttl: 600000
+      interval: 2000
+      expireKey: 'expiresAt'
+      count: 'value'
+      time: 'createdAt'
 
   sockets:
     fields:
@@ -38,26 +30,5 @@ tables:
       person:
         hashKey: 'personKey'
     metrics:
-      table: 'sockets-metrics'
-      ttl: 600
-      interval: 2
-
-  sockets-metrics:
-    fields:
-      id: 'string'
-      time: 'integer'
-      value: 'integer'
-      expiresAt: 'integer'
-    expireKey: 'expiresAt'
-    hashKey: 'id'
-    sortKey: 'time'
-
-  _metrics:
-    fields:
-      key: 'string'
-      time: 'integer'
-      value: 'integer'
-      expiresAt: 'integer'
-    expireKey: 'expiresAt'
-    hashKey: 'key'
-    sortKey: 'time'
+      ttl: 600000
+      interval: 2000

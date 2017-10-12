@@ -3,6 +3,7 @@ package bingodb
 import (
 	"fmt"
 	"log"
+	"strings"
 	"sync/atomic"
 )
 
@@ -55,14 +56,36 @@ func (bingo *Bingo) Stop() {
 
 func (bingo *Bingo) setTableMetrics() {
 	for _, source := range bingo.tables {
-		if config := source.metricsConfig; config != nil {
+		if config := source.metricsConfig; !strings.HasPrefix(source.name, "_") && config != nil {
 			NewTableMetrics(
 				source,
-				bingo.tables[config.Table],
+				source.makeMetricsTable(),
 				config.Ttl,
 				config.Interval)
 		}
 	}
+
+	// Make global system metrics
+	metricsFields := make(map[string]*FieldSchema)
+	metricsFields["key"] = &FieldSchema{Name: "key", Type: "string"}
+	metricsFields["value"] = &FieldSchema{Name: "value", Type: "integer"}
+	metricsFields["time"] = &FieldSchema{Name: "time", Type: "integer"}
+	metricsFields["expireAt"] = &FieldSchema{Name: "expireAt", Type: "integer"}
+
+	metricsPrimaryKey := &Key{hashKey: metricsFields["key"], sortKey: metricsFields["time"]}
+
+	bingo.tables["_metrics"] = newTable(
+		bingo,
+		"_metrics",
+		&TableSchema{
+			fields:      metricsFields,
+			primaryKey:  metricsPrimaryKey,
+			expireField: metricsFields["expireAt"],
+		},
+		&PrimaryIndex{index: newIndex(metricsPrimaryKey)},
+		make(map[string]*SubIndex),
+		nil,
+	)
 }
 
 func (bingo *Bingo) AddScan() {

@@ -11,6 +11,35 @@ type Document struct {
 	schema *TableSchema
 }
 
+func (data *Data) Length() int {
+	var d map[string]interface{} = *data
+	return len(d)
+}
+
+func Merge(doc *Document, op *Document) *Document {
+	if op == nil {
+		return doc
+	}
+	if doc == nil {
+		return op
+	}
+
+	if doc.schema != op.schema {
+		panic("The schema of the two docs are different")
+	}
+
+	newbie := make(map[string]interface{})
+
+	for k, v := range doc.data {
+		newbie[k] = v
+	}
+	for k, v := range op.data {
+		newbie[k] = v
+	}
+
+	return &Document{data: newbie, schema: doc.schema}
+}
+
 func (doc *Document) Merge(op *Document) *Document {
 	if op == nil {
 		return doc
@@ -31,18 +60,24 @@ func (doc *Document) Merge(op *Document) *Document {
 	return &Document{data: newbie, schema: doc.schema}
 }
 
-func ParseDoc(data *Data, schema *TableSchema) *Document {
-	if data == nil {
-		return nil
+func ParseDoc(data *Data, schema *TableSchema) (*Document, *BingoError) {
+	//for doc, parsing nil equivalent to success
+	if data == nil || data.Length() == 0 {
+		return nil, nil
 	}
+
 	for _, field := range schema.fields {
 		raw, present := (*data)[field.Name]
 		if present {
-			(*data)[field.Name] = field.Parse(raw)
+			val, err := field.Parse(raw)
+			if err != nil {
+				return nil, &BingoError{Message: err.Error(), Code: BingoFieldParsingError}
+			}
+			(*data)[field.Name] = val
 		}
 	}
 
-	return &Document{data: *data, schema: schema}
+	return &Document{data: *data, schema: schema}, nil
 }
 
 func (doc *Document) Data() Data {
