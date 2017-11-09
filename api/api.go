@@ -1,11 +1,12 @@
 package api
 
 import (
-	"flag"
 	"fmt"
+	"github.com/CrowdSurge/banner"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
 	"github.com/zoyi/bingodb"
+	"log"
 )
 
 const (
@@ -15,46 +16,59 @@ const (
 	corsAllowCredentials = "true"
 )
 
-type Manager struct {
-	*Resource
+type BingoServer struct {
+	bingo      *bingodb.Bingo
+	config     *bingodb.ServerConfig
+	router     *fasthttprouter.Router
+	middleware []Middleware
 }
 
-func MakeRouter(bingo *bingodb.Bingo) *fasthttprouter.Router {
-	flag.Parse()
+func NewBingoServer(bingo *bingodb.Bingo, middleware []Middleware) *BingoServer {
+	server := &BingoServer{
+		bingo:      bingo,
+		config:     bingo.ServerConfig,
+		router:     fasthttprouter.New(),
+		middleware: middleware,
+	}
+	server.initRouter()
 
+	return server
+}
+
+func (server *BingoServer) Run() {
+	banner.Print("bingodb")
+	fmt.Printf("* bingo is ready on %s\n", server.config.Addr)
+	log.Fatal(fasthttp.ListenAndServe(server.config.Addr, server.router.Handler))
+}
+
+func (server *BingoServer) initRouter() {
 	fmt.Printf("* Preparing resources..\n")
-	resource := &Resource{
-		bingo: bingo}
+	resource := &Resource{bingo: server.bingo}
 
-	router := fasthttprouter.New()
+	server.router.GET("/tables", server.handler(resource.Tables))
+	server.router.GET("/tables/:table", server.handler(resource.Get))
+	server.router.GET("/tables/:table/info", server.handler(resource.TableInfo))
+	server.router.GET("/tables/:table/scan", server.handler(resource.Scan))
+	server.router.GET("/tables/:table/indices/:index", server.handler(resource.Get))
+	server.router.GET("/tables/:table/indices/:index/scan", server.handler(resource.Scan))
 
-	router.GET("/tables", cors(resource.Tables))
-	router.GET("/tables/:table", cors(resource.Get))
-	router.GET("/tables/:table/info", cors(resource.TableInfo))
-	router.GET("/tables/:table/scan", cors(resource.Scan))
-	router.GET("/tables/:table/indices/:index", cors(resource.Get))
-	router.GET("/tables/:table/indices/:index/scan", cors(resource.Scan))
+	server.router.PUT("/tables/:table", server.handler(resource.Put))
 
-	router.PUT("/tables/:table", cors(resource.Put))
-
-	router.DELETE("/tables/:table", cors(resource.Remove))
-
-	return router
+	server.router.DELETE("/tables/:table", server.handler(resource.Remove))
 }
 
-func cors(next fasthttp.RequestHandler) fasthttp.RequestHandler {
-	return logging(fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
-		ctx.Response.Header.Set("Access-Control-Allow-Credentials", corsAllowCredentials)
-		ctx.Response.Header.Set("Access-Control-Allow-Headers", corsAllowHeaders)
-		ctx.Response.Header.Set("Access-Control-Allow-Methods", corsAllowMethods)
-		ctx.Response.Header.Set("Access-Control-Allow-Origin", corsAllowOrigin)
-		next(ctx)
-	}))
-}
+func (server *BingoServer) handler(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
+	if server.config.Logging {
+		handler = logging(handler)
+	}
 
-func logging(next fasthttp.RequestHandler) fasthttp.RequestHandler {
-	return fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
-		ctx.Logger().Printf("%s at %s\n", ctx.Method(), ctx.Path())
-		next(ctx)
-	})
+	handler = cors(handler)
+
+	if server.middleware != nil {
+		for i := range server.middleware {
+			handler = server.middleware[i](handler)
+		}
+	}
+
+	return handler
 }

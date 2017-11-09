@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/buaazp/fasthttprouter"
 	"github.com/gavv/httpexpect"
 	"github.com/zoyi/bingodb"
 	"net/http"
@@ -73,21 +72,15 @@ func initDefaultSeedData(bingo *bingodb.Bingo) {
 	}
 }
 
-func getRouterForTest() *fasthttprouter.Router {
-	bingo := bingodb.NewBingoFromConfigFile("../config/test.yml")
-	router := MakeRouter(bingo)
-	initDefaultSeedData(bingo)
-
-	return router
-}
-
 func getExpector(t *testing.T) *httpexpect.Expect {
-	router := getRouterForTest()
+	bingo := bingodb.NewBingoFromConfigFile("../config/test.yml")
+	server := NewBingoServer(bingo, nil)
+	initDefaultSeedData(bingo)
 
 	e := httpexpect.WithConfig(httpexpect.Config{
 		Reporter: httpexpect.NewAssertReporter(t),
 		Client: &http.Client{
-			Transport: httpexpect.NewFastBinder(router.Handler),
+			Transport: httpexpect.NewFastBinder(server.router.Handler),
 		},
 		Printers: []httpexpect.Printer{
 			httpexpect.NewCurlPrinter(t),

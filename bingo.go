@@ -11,6 +11,7 @@ type Bingo struct {
 	tables        map[string]*Table
 	keeper        *Keeper
 	systemMetrics *SystemMetrics
+	ServerConfig  *ServerConfig
 }
 
 func (bingo *Bingo) TablesArray() []*TableInfo {
@@ -33,6 +34,7 @@ func NewBingoFromConfigFile(configFile string) *Bingo {
 		fmt.Println(err)
 		log.Fatalf("error: %v", err)
 	}
+	bingo.Start()
 	return bingo
 }
 
@@ -40,7 +42,6 @@ func newBingo() *Bingo {
 	bingo := &Bingo{tables: make(map[string]*Table)}
 	bingo.keeper = NewKeeper(bingo)
 	bingo.systemMetrics = NewSystemMetrics(bingo)
-	bingo.Start()
 	return bingo
 }
 

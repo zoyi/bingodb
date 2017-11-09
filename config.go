@@ -30,8 +30,14 @@ type TableConfig struct {
 	Metrics    *MetricsConfig            `yaml:"metrics"`
 }
 
+type ServerConfig struct {
+	Addr    string `yaml:"addr,omitempty"`
+	Logging bool   `yaml:"logging,omitempty"`
+}
+
 type BingoConfig struct {
-	Tables map[string]TableConfig `yaml:"tables,omitempty"`
+	ServerConfig *ServerConfig          `yaml:"server,omitempty"`
+	Tables       map[string]TableConfig `yaml:"tables,omitempty"`
 }
 
 const (
@@ -62,7 +68,6 @@ func ParseConfigString(bingo *Bingo, configString string) error {
 // It returns any error encountered.
 func ParseConfigBytes(bingo *Bingo, configBytes []byte) error {
 	bingoConfig := &BingoConfig{}
-
 	if err := yaml.UnmarshalStrict(configBytes, bingoConfig); err != nil {
 		return err
 	}
@@ -116,6 +121,8 @@ func ParseConfigBytes(bingo *Bingo, configBytes []byte) error {
 	}
 
 	bingo.setTableMetrics()
+
+	bingo.ServerConfig = bingoConfig.ServerConfig
 
 	return nil
 }

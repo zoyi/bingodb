@@ -81,7 +81,7 @@ func (rs *Resource) Scan(ctx *fasthttp.RequestCtx) {
 			query := rs.fetchScanQuery(ctx)
 			var values []bingodb.Data
 			var next interface{}
-			
+
 			if query.Backward {
 				values, next, _ = index.RScan(query.HashKey, query.Since, query.Limit)
 			} else {

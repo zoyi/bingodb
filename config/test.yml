@@ -1,3 +1,7 @@
+server:
+  addr: ':8000'
+  logging: true
+
 tables:
   onlines:
     fields:
