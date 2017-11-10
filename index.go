@@ -1,15 +1,16 @@
 package bingodb
 
 import (
+	"errors"
 	"github.com/zoyi/skiplist/lazy"
 	"sync"
 	"sync/atomic"
 )
 
 type IndexInterface interface {
-	Get(hash interface{}, sort interface{}) (*Document, *BingoError)
-	Scan(hash interface{}, since interface{}, limit int) (values []Data, next interface{}, err *BingoError)
-	RScan(hash interface{}, since interface{}, limit int) (values []Data, next interface{}, err *BingoError)
+	Get(hash interface{}, sort interface{}) (*Document, error)
+	Scan(hash interface{}, since interface{}, limit int) (values []Data, next interface{}, err error)
+	RScan(hash interface{}, since interface{}, limit int) (values []Data, next interface{}, err error)
 	HashKey() *FieldSchema
 	SortKey() *FieldSchema
 }
@@ -58,36 +59,36 @@ func (index *SubIndex) SortKey() *FieldSchema {
 	return index.sortKey
 }
 
-func (index *PrimaryIndex) parseKeys(hashRaw, sortRaw interface{}) (interface{}, interface{}, *BingoError) {
+func (index *PrimaryIndex) parseKeys(hashRaw, sortRaw interface{}) (interface{}, interface{}, error) {
 	hash := ParseField(index.hashKey, hashRaw)
 	sort := ParseField(index.sortKey, sortRaw)
 
 	if hash == nil {
-		return nil, nil, &BingoError{Code: BingoHashKeyMissingError}
+		return nil, nil, errors.New(HashKeyMissing)
 	}
 
 	if sort == nil {
-		return nil, nil, &BingoError{Code: BingoSortKeyMissingError}
+		return nil, nil, errors.New(SortKeyMissing)
 	}
 
 	return hash, sort, nil
 }
 
-func (index *SubIndex) parseKeys(hashRaw, sortRaw interface{}) (interface{}, SubSortKey, *BingoError) {
+func (index *SubIndex) parseKeys(hashRaw, sortRaw interface{}) (interface{}, SubSortKey, error) {
 	hash := ParseField(index.hashKey, hashRaw)
 	sort := index.parseSubSortKey(sortRaw)
 
 	if hash == nil {
-		return nil, sort, &BingoError{Code: BingoHashKeyMissingError}
+		return nil, sort, errors.New(HashKeyMissing)
 	}
 	if index.sortKey != nil && sort.sort == nil {
-		return nil, sort, &BingoError{Code: BingoSortKeyMissingError}
+		return nil, sort, errors.New(SortKeyMissing)
 	}
 
 	return hash, sort, nil
 }
 
-func (index *PrimaryIndex) Get(hashRaw, sortRaw interface{}) (*Document, *BingoError) {
+func (index *PrimaryIndex) Get(hashRaw, sortRaw interface{}) (*Document, error) {
 	hash, sort, err := index.parseKeys(hashRaw, sortRaw)
 	if err != nil {
 		return nil, err
@@ -98,7 +99,7 @@ func (index *PrimaryIndex) Get(hashRaw, sortRaw interface{}) (*Document, *BingoE
 			return value.(*Document), nil
 		}
 	}
-	return nil, &BingoError{Code: BingoDocumentNotFoundError}
+	return nil, errors.New(DocumentNotFound)
 }
 
 func (index *PrimaryIndex) Range(f func(key interface{}, list *lazyskiplist.SkipList) bool) {
@@ -107,12 +108,12 @@ func (index *PrimaryIndex) Range(f func(key interface{}, list *lazyskiplist.Skip
 	})
 }
 
-func (index *PrimaryIndex) Scan(hashRaw, sinceRaw interface{}, limit int) (result []Data, next interface{}, err *BingoError) {
+func (index *PrimaryIndex) Scan(hashRaw, sinceRaw interface{}, limit int) (result []Data, next interface{}, err error) {
 	result = make([]Data, 0)
 	hash := ParseField(index.hashKey, hashRaw)
 	since := ParseField(index.sortKey, sinceRaw)
 	if hash == nil {
-		return result, next, &BingoError{Code: BingoHashKeyMissingError}
+		return result, next, errors.New(HashKeyMissing)
 	}
 
 	if list := index.skipList(hash); list != nil {
@@ -127,12 +128,12 @@ func (index *PrimaryIndex) Scan(hashRaw, sinceRaw interface{}, limit int) (resul
 	return result, next, nil
 }
 
-func (index *PrimaryIndex) RScan(hashRaw, sinceRaw interface{}, limit int) (result []Data, next interface{}, err *BingoError) {
+func (index *PrimaryIndex) RScan(hashRaw, sinceRaw interface{}, limit int) (result []Data, next interface{}, err error) {
 	result = make([]Data, 0)
 	hash := ParseField(index.hashKey, hashRaw)
 	since := ParseField(index.sortKey, sinceRaw)
 	if hash == nil {
-		return result, next, &BingoError{Code: BingoHashKeyMissingError}
+		return result, next, errors.New(HashKeyMissing)
 	}
 
 	if list := index.skipList(hash); list != nil {
@@ -147,7 +148,7 @@ func (index *PrimaryIndex) RScan(hashRaw, sinceRaw interface{}, limit int) (resu
 	return result, next, nil
 }
 
-func (index *SubIndex) Get(hashRaw, sortRaw interface{}) (*Document, *BingoError) {
+func (index *SubIndex) Get(hashRaw, sortRaw interface{}) (*Document, error) {
 	hash, sort, err := index.parseKeys(hashRaw, sortRaw)
 	if err != nil {
 		return nil, err
@@ -161,15 +162,15 @@ func (index *SubIndex) Get(hashRaw, sortRaw interface{}) (*Document, *BingoError
 		}
 	}
 
-	return nil, &BingoError{Code: BingoDocumentNotFoundError}
+	return nil, errors.New(DocumentNotFound)
 }
 
-func (index *SubIndex) Scan(hashRaw, sinceRaw interface{}, limit int) (result []Data, next interface{}, err *BingoError) {
+func (index *SubIndex) Scan(hashRaw, sinceRaw interface{}, limit int) (result []Data, next interface{}, err error) {
 	result = make([]Data, 0)
 	hash := ParseField(index.hashKey, hashRaw)
 	since := index.parseSubSortKey(sinceRaw)
 	if hash == nil {
-		return result, next, &BingoError{Code: BingoHashKeyMissingError}
+		return result, next, errors.New(HashKeyMissing)
 	}
 
 	if list := index.skipList(hash); list != nil {
@@ -184,12 +185,12 @@ func (index *SubIndex) Scan(hashRaw, sinceRaw interface{}, limit int) (result []
 	return result, next, nil
 }
 
-func (index *SubIndex) RScan(hashRaw, sinceRaw interface{}, limit int) (result []Data, next interface{}, err *BingoError) {
+func (index *SubIndex) RScan(hashRaw, sinceRaw interface{}, limit int) (result []Data, next interface{}, err error) {
 	result = make([]Data, 0)
 	hash := ParseField(index.hashKey, hashRaw)
 	since := index.parseSubSortKey(sinceRaw)
 	if hash == nil {
-		return result, next, &BingoError{Code: BingoHashKeyMissingError}
+		return result, next, errors.New(HashKeyMissing)
 	}
 
 	if list := index.skipList(hash); list != nil {
@@ -278,7 +279,7 @@ func (index *SubIndex) put(doc *Document) {
 	}
 }
 
-func (index *PrimaryIndex) remove(hashRaw, sortRaw interface{}) (*Document, *BingoError) {
+func (index *PrimaryIndex) remove(hashRaw, sortRaw interface{}) (*Document, error) {
 	hash, sort, err := index.parseKeys(hashRaw, sortRaw)
 	if err != nil {
 		return nil, err
@@ -290,7 +291,7 @@ func (index *PrimaryIndex) remove(hashRaw, sortRaw interface{}) (*Document, *Bin
 			return value.(*Document), nil
 		}
 	}
-	return nil, &BingoError{Code: BingoDocumentNotFoundError}
+	return nil, errors.New(DocumentNotFound)
 }
 
 func (index *SubIndex) remove(doc *Document) {

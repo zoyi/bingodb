@@ -33,6 +33,7 @@ type TableConfig struct {
 type ServerConfig struct {
 	Addr    string `yaml:"addr,omitempty"`
 	Logging bool   `yaml:"logging,omitempty"`
+	Mode    string `yaml:"mode,omitempty"`
 }
 
 type BingoConfig struct {
@@ -68,7 +69,7 @@ func ParseConfigString(bingo *Bingo, configString string) error {
 // It returns any error encountered.
 func ParseConfigBytes(bingo *Bingo, configBytes []byte) error {
 	bingoConfig := &BingoConfig{}
-	if err := yaml.UnmarshalStrict(configBytes, bingoConfig); err != nil {
+	if err := yaml.Unmarshal(configBytes, bingoConfig); err != nil {
 		return err
 	}
 

@@ -173,9 +173,6 @@ func (field *FieldSchema) Parse(raw interface{}) (interface{}, error) {
 
 		case []interface{}:
 			return field.Parse(raw.([]interface{})[0])
-
-		default:
-			goto fieldError
 		}
 
 	case "string":
@@ -191,17 +188,13 @@ func (field *FieldSchema) Parse(raw interface{}) (interface{}, error) {
 			return field.Parse(raw.([]interface{})[0])
 
 		case string:
-			return raw, nil
-
-		default:
-			goto fieldError
+			if len(raw.(string)) > 0 {
+				return raw, nil
+			}
 		}
 	}
 
-	return raw, nil
-
-fieldError:
-	return raw, errors.New(fmt.Sprintf(FieldError, field.Name, field.Type, raw))
+	return raw, fmt.Errorf(FieldError, field.Name, field.Type, raw)
 }
 
 func NumberComparator(a, b interface{}) int {
@@ -263,7 +256,7 @@ func (table *Table) PrimaryIndex() *PrimaryIndex {
 	return table.primaryIndex
 }
 
-func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Document, bool, *BingoError) {
+func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Document, bool, error) {
 	set, setErr := ParseDoc(setData, table.TableSchema)
 	setOnInsert, setOnInsertErr := ParseDoc(setOnInsertData, table.TableSchema)
 	if setErr != nil {
@@ -273,16 +266,16 @@ func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Docum
 		return nil, nil, false, setOnInsertErr
 	}
 	if set == nil && setOnInsert == nil {
-		return nil, nil, false, &BingoError{Code: BingoSetOrInsertMissingError}
+		return nil, nil, false, errors.New(SetOrInsertMissing)
 	}
 
 	merged := Merge(set, setOnInsert)
 
 	if merged.Fetch(table.HashKey().Name) == nil {
-		return nil, nil, false, &BingoError{Code: BingoHashKeyMissingError}
+		return nil, nil, false, errors.New(HashKeyMissing)
 	}
 	if table.SortKey() != nil && merged.Fetch(table.SortKey().Name) == nil {
-		return nil, nil, false, &BingoError{Code: BingoSortKeyMissingError}
+		return nil, nil, false, errors.New(SortKeyMissing)
 	}
 
 	onUpdate := func(oldRaw interface{}) interface{} {
@@ -311,7 +304,7 @@ func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Docum
 	return old, newbie, replaced, nil
 }
 
-func (table *Table) Remove(hash interface{}, sort interface{}) (*Document, *BingoError) {
+func (table *Table) Remove(hash interface{}, sort interface{}) (*Document, error) {
 	doc, err := table.primaryIndex.remove(hash, sort)
 	if err != nil {
 		return nil, err
@@ -326,7 +319,7 @@ func (table *Table) Remove(hash interface{}, sort interface{}) (*Document, *Bing
 	return doc, nil
 }
 
-func (table *Table) RemoveByDocument(doc *Document) (*Document, *BingoError) {
+func (table *Table) RemoveByDocument(doc *Document) (*Document, error) {
 	hashValue := doc.Get(table.primaryKey.hashKey)
 	sortValue := doc.Get(table.primaryKey.sortKey)
 

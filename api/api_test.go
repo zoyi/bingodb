@@ -74,13 +74,14 @@ func initDefaultSeedData(bingo *bingodb.Bingo) {
 
 func getExpector(t *testing.T) *httpexpect.Expect {
 	bingo := bingodb.NewBingoFromConfigFile("../config/test.yml")
-	server := NewBingoServer(bingo, nil)
+	server := NewBingoServer(bingo)
+
 	initDefaultSeedData(bingo)
 
 	e := httpexpect.WithConfig(httpexpect.Config{
 		Reporter: httpexpect.NewAssertReporter(t),
 		Client: &http.Client{
-			Transport: httpexpect.NewFastBinder(server.router.Handler),
+			Transport: httpexpect.NewBinder(server.engine),
 		},
 		Printers: []httpexpect.Printer{
 			httpexpect.NewCurlPrinter(t),
@@ -112,7 +113,7 @@ func TestGetTableInfo(t *testing.T) {
 func TestGetInvalidTableInfo(t *testing.T) {
 	getExpector(t).
 		GET("/tables/wrong/info").
-		Expect().Status(http.StatusNotFound)
+		Expect().Status(http.StatusUnprocessableEntity)
 }
 
 func TestGetWithValidParams(t *testing.T) {
@@ -149,7 +150,7 @@ func TestGetWithValidParamEmptyResult(t *testing.T) {
 		GET("/tables/onlines").
 		WithQuery("hash", "1").
 		WithQuery("sort", "red").
-		Expect().Status(http.StatusBadRequest)
+		Expect().Status(http.StatusUnprocessableEntity)
 }
 
 func TestGetWithInvalidParams(t *testing.T) {
@@ -158,22 +159,22 @@ func TestGetWithInvalidParams(t *testing.T) {
 	expector.
 		GET("/tables/onlines").
 		WithQuery("hash", "1").
-		Expect().Status(http.StatusBadRequest)
+		Expect().Status(http.StatusUnprocessableEntity)
 
 	expector.
 		GET("/tables/onlines").
-		Expect().Status(http.StatusBadRequest)
+		Expect().Status(http.StatusUnprocessableEntity)
 
 	expector.
 		GET("/tables/tests").
 		WithQuery("hash", "wrong").
-		Expect().Status(http.StatusBadRequest)
+		Expect().Status(http.StatusUnprocessableEntity)
 
 	expector.
 		GET("/tables/onlines/indices/wrong").
 		WithQuery("hash", "1").
 		WithQuery("limit", "20").
-		Expect().Status(http.StatusNotFound)
+		Expect().Status(http.StatusUnprocessableEntity)
 }
 
 func TestScanWithValidParams(t *testing.T) {
@@ -322,7 +323,7 @@ func TestScanIndexWithInvalidName(t *testing.T) {
 	getExpector(t).
 		GET("/tables/onlines/indices/wrong/scan").
 		WithQuery("limit", "20").
-		Expect().Status(http.StatusNotFound)
+		Expect().Status(http.StatusUnprocessableEntity)
 }
 
 func makePutBody(set map[string]interface{}, setOnInsert map[string]interface{}) map[string]interface{} {
@@ -411,45 +412,45 @@ func TestPutWithInvalidParams(t *testing.T) {
 	expector.
 		PUT("/tables/onlines").
 		WithJSON(makePutBody(nil, nil)).
-		Expect().Status(http.StatusBadRequest)
+		Expect().Status(http.StatusUnprocessableEntity)
 
 	expector.
 		PUT("/tables/onlines").
 		WithJSON("{ dummy }").
-		Expect().Status(http.StatusBadRequest)
+		Expect().Status(http.StatusUnprocessableEntity)
 
 	set := make(map[string]interface{})
 	expector.
 		PUT("/tables/onlines").
 		WithJSON(makePutBody(set, nil)).
-		Expect().Status(http.StatusBadRequest)
+		Expect().Status(http.StatusUnprocessableEntity)
 
 	set["channelId"] = "1"
 	expector.
 		PUT("/tables/onlines").
 		WithJSON(makePutBody(set, nil)).
-		Expect().Status(http.StatusBadRequest)
+		Expect().Status(http.StatusUnprocessableEntity)
 
 	delete(set, "channelId")
 	set["personKey"] = "person"
 	expector.
 		PUT("/tables/onlines").
 		WithJSON(makePutBody(set, nil)).
-		Expect().Status(http.StatusBadRequest)
+		Expect().Status(http.StatusUnprocessableEntity)
 
 	set = make(map[string]interface{})
 	set["hash"] = "dummy"
 	expector.
 		PUT("/tables/tests").
 		WithJSON(makePutBody(set, nil)).
-		Expect().Status(http.StatusBadRequest)
+		Expect().Status(http.StatusUnprocessableEntity)
 
 	set["hash"] = 0
 	set["sort"] = "dummy"
 	expector.
 		PUT("/tables/tests").
 		WithJSON(makePutBody(set, nil)).
-		Expect().Status(http.StatusBadRequest)
+		Expect().Status(http.StatusUnprocessableEntity)
 
 	set = make(map[string]interface{})
 	set["hash"] = "1"
@@ -458,14 +459,14 @@ func TestPutWithInvalidParams(t *testing.T) {
 	expector.
 		PUT("/tables/tests").
 		WithJSON(makePutBody(set, nil)).
-		Expect().Status(http.StatusBadRequest)
+		Expect().Status(http.StatusUnprocessableEntity)
 
 	setOnInsert := make(map[string]interface{})
 	set = make(map[string]interface{})
 	expector.
 		PUT("/tables/tests").
 		WithJSON(makePutBody(set, setOnInsert)).
-		Expect().Status(http.StatusBadRequest)
+		Expect().Status(http.StatusUnprocessableEntity)
 }
 
 func TestDeleteWithValidParams(t *testing.T) {
@@ -482,7 +483,7 @@ func TestDeleteWithValidParams(t *testing.T) {
 		GET("/tables/onlines").
 		WithQuery("hash", "1").
 		WithQuery("sort", "person1").
-		Expect().Status(http.StatusBadRequest)
+		Expect().Status(http.StatusUnprocessableEntity)
 
 	expector.
 		GET("/tables/onlines/scan").
@@ -505,5 +506,5 @@ func TestDeletWithInvalidParams(t *testing.T) {
 	getExpector(t).
 		DELETE("/tables/onlines").
 		WithQuery("hash", "1").
-		Expect().Status(http.StatusBadRequest)
+		Expect().Status(http.StatusUnprocessableEntity)
 }

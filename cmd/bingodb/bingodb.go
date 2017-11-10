@@ -12,6 +12,6 @@ func main() {
 
 	bingo := bingodb.NewBingoFromConfigFile(*config)
 
-	server := api.NewBingoServer(bingo, nil)
+	server := api.NewBingoServer(bingo)
 	server.Run()
 }

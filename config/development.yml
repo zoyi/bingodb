@@ -1,6 +1,7 @@
 server:
   addr: ':8000'
   logging: true
+  mode: 'debug'
 
 tables:
   onlines:
@@ -36,3 +37,5 @@ tables:
     metrics:
       ttl: 600000
       interval: 2000
+
+test: 'ok'

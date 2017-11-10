@@ -3,72 +3,80 @@ package api
 import (
 	"fmt"
 	"github.com/CrowdSurge/banner"
-	"github.com/buaazp/fasthttprouter"
-	"github.com/valyala/fasthttp"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	"github.com/zoyi/bingodb"
 	"log"
-)
-
-const (
-	corsAllowHeaders     = "authorization"
-	corsAllowMethods     = "HEAD,GET,POST,PUT,DELETE,OPTIONS,PATCH"
-	corsAllowOrigin      = "*"
-	corsAllowCredentials = "true"
+	"net/http"
+	"time"
 )
 
 type BingoServer struct {
-	bingo      *bingodb.Bingo
-	config     *bingodb.ServerConfig
-	router     *fasthttprouter.Router
-	middleware []Middleware
+	bingo  *bingodb.Bingo
+	config *bingodb.ServerConfig
+	engine *gin.Engine
 }
 
-func NewBingoServer(bingo *bingodb.Bingo, middleware []Middleware) *BingoServer {
-	server := &BingoServer{
-		bingo:      bingo,
-		config:     bingo.ServerConfig,
-		router:     fasthttprouter.New(),
-		middleware: middleware,
-	}
-	server.initRouter()
+func NewBingoServer(bingo *bingodb.Bingo, middleware ...gin.HandlerFunc) *BingoServer {
+	engine := gin.New()
 
-	return server
+	gin.SetMode(bingo.ServerConfig.Mode)
+
+	engine.NoMethod(notFound())
+	engine.NoRoute(notFound())
+
+	engine.Use(cors.Default())
+	engine.Use(gin.Recovery())
+	engine.Use(errorHandler())
+
+	if bingo.ServerConfig.Logging {
+		engine.Use(gin.Logger())
+	}
+
+	if middleware != nil {
+		engine.Use(middleware...)
+	}
+
+	fmt.Printf("* Preparing resources..\n")
+	resource := &Resource{bingo: bingo}
+
+	engine.GET("/tables", resource.Tables)
+	engine.GET("/tables/:table", resource.Get)
+	engine.GET("/tables/:table/info", resource.TableInfo)
+	engine.GET("/tables/:table/scan", resource.Scan)
+	engine.GET("/tables/:table/indices/:index", resource.Get)
+	engine.GET("/tables/:table/indices/:index/scan", resource.Scan)
+
+	engine.PUT("/tables/:table", resource.Put)
+
+	engine.DELETE("/tables/:table", resource.Remove)
+
+	time.Sleep(50000000)
+
+	return &BingoServer{
+		bingo:  bingo,
+		config: bingo.ServerConfig,
+		engine: engine,
+	}
 }
 
 func (server *BingoServer) Run() {
 	banner.Print("bingodb")
 	fmt.Printf("* bingo is ready on %s\n", server.config.Addr)
-	log.Fatal(fasthttp.ListenAndServe(server.config.Addr, server.router.Handler))
+	log.Fatal(http.ListenAndServe(server.config.Addr, server.engine))
 }
 
-func (server *BingoServer) initRouter() {
-	fmt.Printf("* Preparing resources..\n")
-	resource := &Resource{bingo: server.bingo}
-
-	server.router.GET("/tables", server.handler(resource.Tables))
-	server.router.GET("/tables/:table", server.handler(resource.Get))
-	server.router.GET("/tables/:table/info", server.handler(resource.TableInfo))
-	server.router.GET("/tables/:table/scan", server.handler(resource.Scan))
-	server.router.GET("/tables/:table/indices/:index", server.handler(resource.Get))
-	server.router.GET("/tables/:table/indices/:index/scan", server.handler(resource.Scan))
-
-	server.router.PUT("/tables/:table", server.handler(resource.Put))
-
-	server.router.DELETE("/tables/:table", server.handler(resource.Remove))
-}
-
-func (server *BingoServer) handler(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
-	if server.config.Logging {
-		handler = logging(handler)
-	}
-
-	handler = cors(handler)
-
-	if server.middleware != nil {
-		for i := range server.middleware {
-			handler = server.middleware[i](handler)
+func errorHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+		if len(c.Errors) > 0 {
+			c.JSON(http.StatusUnprocessableEntity, c.Errors)
 		}
 	}
+}
 
-	return handler
+func notFound() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "page not found"})
+	}
 }

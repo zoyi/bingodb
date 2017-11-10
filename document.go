@@ -60,7 +60,7 @@ func (doc *Document) Merge(op *Document) *Document {
 	return &Document{data: newbie, schema: doc.schema}
 }
 
-func ParseDoc(data *Data, schema *TableSchema) (*Document, *BingoError) {
+func ParseDoc(data *Data, schema *TableSchema) (*Document, error) {
 	//for doc, parsing nil equivalent to success
 	if data == nil || data.Length() == 0 {
 		return nil, nil
@@ -71,7 +71,7 @@ func ParseDoc(data *Data, schema *TableSchema) (*Document, *BingoError) {
 		if present {
 			val, err := field.Parse(raw)
 			if err != nil {
-				return nil, &BingoError{Message: err.Error(), Code: BingoFieldParsingError}
+				return nil, err
 			}
 			(*data)[field.Name] = val
 		}

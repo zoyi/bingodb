@@ -26,10 +26,6 @@
   name = "github.com/CrowdSurge/banner"
 
 [[constraint]]
-  name = "github.com/buaazp/fasthttprouter"
-  version = "0.1.1"
-
-[[constraint]]
   branch = "master"
   name = "github.com/zoyi/skiplist"
 
@@ -39,12 +35,12 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/valyala/fasthttp"
-
-[[constraint]]
-  branch = "master"
   name = "github.com/robfig/cron"
 
 [[constraint]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
+
+[[constraint]]
+  name = "github.com/gin-contrib/cors"
+  version = "1.2.0"

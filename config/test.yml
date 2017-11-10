@@ -1,6 +1,7 @@
 server:
   addr: ':8000'
   logging: true
+  mode: 'test'
 
 tables:
   onlines:
