@@ -18,9 +18,9 @@ type BingoServer struct {
 }
 
 func NewBingoServer(bingo *bingodb.Bingo, middleware ...gin.HandlerFunc) *BingoServer {
-	engine := gin.New()
-
 	gin.SetMode(bingo.ServerConfig.Mode)
+
+	engine := gin.New()
 
 	engine.NoMethod(notFound())
 	engine.NoRoute(notFound())
