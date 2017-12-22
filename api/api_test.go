@@ -92,11 +92,11 @@ func getExpector(t *testing.T) *httpexpect.Expect {
 	return e
 }
 
-func TestGetTables(t *testing.T) {
+func TestGetOverview(t *testing.T) {
 	getExpector(t).
-		GET("/tables").
+		GET("/").
 		Expect().Status(http.StatusOK).
-		JSON().Array().Length().Equal(3)
+		JSON().Object().Value("tables").Array().Length().Equal(3)
 }
 
 func TestGetTableInfo(t *testing.T) {
