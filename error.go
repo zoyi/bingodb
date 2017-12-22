@@ -5,5 +5,6 @@ const (
 	SetOrInsertMissing = "set or setOnInsert are required"
 	HashKeyMissing     = "hash key is missing in set"
 	SortKeyMissing     = "sort key is missing in set"
+	ExpireKeyMissing   = "expire key is missing in set"
 	DocumentNotFound   = "document not found"
 )

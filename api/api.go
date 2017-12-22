@@ -40,7 +40,7 @@ func NewBingoServer(bingo *bingodb.Bingo, middleware ...gin.HandlerFunc) *BingoS
 	fmt.Printf("* Preparing resources..\n")
 	resource := &Resource{bingo: bingo}
 
-	engine.GET("/tables", resource.Tables)
+	engine.GET("/", resource.Overview)
 	engine.GET("/tables/:table", resource.Get)
 	engine.GET("/tables/:table/info", resource.TableInfo)
 	engine.GET("/tables/:table/scan", resource.Scan)

@@ -28,17 +28,19 @@ type TableSchema struct {
 
 type Table struct {
 	*TableSchema
-	bingo         *Bingo
-	name          string
-	primaryIndex  *PrimaryIndex
-	subIndices    map[string]*SubIndex
-	metricsConfig *MetricsConfig
+	bingo             *Bingo
+	name              string
+	primaryIndex      *PrimaryIndex
+	subIndices        map[string]*SubIndex
+	metricsConfig     *MetricsConfig
+	expireKeyRequired bool
 }
 
 type TableInfo struct {
-	Name       string           `json:"name"`
-	Size       int              `json:"size"`
-	SubIndices map[string]int64 `json:"subIndices,omitempty"`
+	Name              string           `json:"name"`
+	Size              int              `json:"size"`
+	SubIndices        map[string]int64 `json:"subIndices,omitempty"`
+	ExpireKeyRequired bool             `json:"expireKeyRequired"`
 }
 
 func (table *Table) Info() *TableInfo {
@@ -47,9 +49,10 @@ func (table *Table) Info() *TableInfo {
 		subIndices[key] = index.size
 	}
 	return &TableInfo{
-		Name:       table.name,
-		Size:       int(table.primaryIndex.size),
-		SubIndices: subIndices}
+		Name:              table.name,
+		Size:              int(table.primaryIndex.size),
+		SubIndices:        subIndices,
+		ExpireKeyRequired: table.expireKeyRequired}
 }
 
 type SubSortKey struct {
@@ -69,14 +72,16 @@ func newTable(
 	primaryIndex *PrimaryIndex,
 	subIndices map[string]*SubIndex,
 	metricsConfig *MetricsConfig,
+	expireKeyRequired bool,
 ) *Table {
 	return &Table{
-		TableSchema:   schema,
-		bingo:         bingo,
-		name:          tableName,
-		primaryIndex:  primaryIndex,
-		subIndices:    subIndices,
-		metricsConfig: metricsConfig,
+		TableSchema:       schema,
+		bingo:             bingo,
+		name:              tableName,
+		primaryIndex:      primaryIndex,
+		subIndices:        subIndices,
+		metricsConfig:     metricsConfig,
+		expireKeyRequired: expireKeyRequired,
 	}
 }
 
@@ -120,7 +125,7 @@ func (table *Table) makeMetricsTable() *Table {
 
 	subIndices := make(map[string]*SubIndex)
 
-	metricsTable := newTable(table.bingo, tableName, schema, primaryIndex, subIndices, nil)
+	metricsTable := newTable(table.bingo, tableName, schema, primaryIndex, subIndices, nil, true)
 	table.bingo.tables[tableName] = metricsTable
 
 	return metricsTable
@@ -276,6 +281,9 @@ func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Docum
 	}
 	if table.SortKey() != nil && merged.Fetch(table.SortKey().Name) == nil {
 		return nil, nil, false, errors.New(SortKeyMissing)
+	}
+	if table.expireKeyRequired && merged.Fetch(table.expireField.Name) == nil {
+		return nil, nil, false, errors.New(ExpireKeyMissing)
 	}
 
 	onUpdate := func(oldRaw interface{}) interface{} {

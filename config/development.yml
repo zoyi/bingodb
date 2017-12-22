@@ -11,6 +11,7 @@ tables:
       expiresAt: 'integer'
       updatedAt: 'integer'
     expireKey: 'expiresAt'
+    expireKeyRequired: true
     hashKey: 'channelId'
     sortKey: 'personKey'
     subIndices:
@@ -30,6 +31,7 @@ tables:
       personKey: 'string'
       expiresAt: 'integer'
     expireKey: 'expiresAt'
+    expireKeyRequired: true
     hashKey: 'id'
     subIndices:
       person:
@@ -37,5 +39,3 @@ tables:
     metrics:
       ttl: 600000
       interval: 2000
-
-test: 'ok'

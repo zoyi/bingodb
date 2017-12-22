@@ -22,12 +22,13 @@ type SubIndexConfig struct {
 }
 
 type TableConfig struct {
-	Fields     map[string]string         `yaml:"fields"`
-	HashKey    string                    `yaml:"hashKey"`
-	SortKey    string                    `yaml:"sortKey"`
-	SubIndices map[string]SubIndexConfig `yaml:"subIndices"`
-	ExpireKey  string                    `yaml:"expireKey"`
-	Metrics    *MetricsConfig            `yaml:"metrics"`
+	Fields            map[string]string         `yaml:"fields"`
+	HashKey           string                    `yaml:"hashKey"`
+	SortKey           string                    `yaml:"sortKey"`
+	SubIndices        map[string]SubIndexConfig `yaml:"subIndices"`
+	ExpireKey         string                    `yaml:"expireKey"`
+	Metrics           *MetricsConfig            `yaml:"metrics"`
+	ExpireKeyRequired bool                      `yaml:"expireKeyRequired"`
 }
 
 type ServerConfig struct {
@@ -118,7 +119,14 @@ func ParseConfigBytes(bingo *Bingo, configBytes []byte) error {
 			}
 		}
 
-		bingo.tables[tableName] = newTable(bingo, tableName, schema, primaryIndex, subIndices, tableConfig.Metrics)
+		bingo.tables[tableName] = newTable(
+			bingo,
+			tableName,
+			schema,
+			primaryIndex,
+			subIndices,
+			tableConfig.Metrics,
+			tableConfig.ExpireKeyRequired)
 	}
 
 	bingo.setTableMetrics()

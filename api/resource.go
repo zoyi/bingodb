@@ -26,6 +26,12 @@ type Resource struct {
 	bingo *bingodb.Bingo
 }
 
+type Overview struct {
+	Tables       []*bingodb.TableInfo  `json:"tables"`
+	ServerConfig *bingodb.ServerConfig `json:"serverConfig"`
+	KeeperSize   int64                 `json:"keeperSize"`
+}
+
 type ScanResult struct {
 	Values interface{} `json:"values"`
 	Next   interface{} `json:"next,omitempty"`
@@ -59,8 +65,12 @@ func newListResponse(values []bingodb.Data, next interface{}) *ScanResult {
 	return &ScanResult{Values: values, Next: next}
 }
 
-func (rs *Resource) Tables(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, rs.bingo.TablesArray())
+func (rs *Resource) Overview(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, Overview{
+		Tables:       rs.bingo.TablesArray(),
+		ServerConfig: rs.bingo.ServerConfig,
+		KeeperSize:   rs.bingo.KeeperSize(),
+	})
 }
 
 func (rs *Resource) TableInfo(ctx *gin.Context) {

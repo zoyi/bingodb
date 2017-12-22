@@ -86,6 +86,7 @@ func (bingo *Bingo) setTableMetrics() {
 		&PrimaryIndex{index: newIndex(metricsPrimaryKey)},
 		make(map[string]*SubIndex),
 		nil,
+		true,
 	)
 }
 
@@ -107,4 +108,8 @@ func (bingo *Bingo) AddRemove() {
 
 func (bingo *Bingo) AddExpire(i int64) {
 	atomic.AddInt64(&bingo.systemMetrics.expire, i)
+}
+
+func (bingo *Bingo) KeeperSize() int64 {
+	return bingo.keeper.list.Size()
 }
