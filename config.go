@@ -93,36 +93,36 @@ func ParseConfigBytes(bingo *Bingo, configBytes []byte) error {
 			fields[fieldKey] = field
 		}
 
-		primaryKey := &Key{
+		primaryKeySchema := &KeySchema{
 			hashKey: fields[tableConfig.HashKey],
 			sortKey: fields[tableConfig.SortKey],
 		}
 
-		schema := &TableSchema{
+		tableSchema := &TableSchema{
 			fields:      fields,
-			primaryKey:  primaryKey,
+			primaryKey:  primaryKeySchema,
 			expireField: fields[tableConfig.ExpireKey]}
 
-		primaryIndex := &PrimaryIndex{index: newIndex(primaryKey)}
+		primaryIndex := &PrimaryIndex{index: newIndex(primaryKeySchema)}
 
 		subIndices := make(map[string]*SubIndex)
 
 		for indexName, indexConfig := range tableConfig.SubIndices {
-			subKey := &Key{
+			subKeySchema := &KeySchema{
 				hashKey: fields[indexConfig.HashKey],
 				sortKey: fields[indexConfig.SortKey],
 			}
 
 			subIndices[indexName] = &SubIndex{
-				index:      newIndex(subKey),
-				primaryKey: primaryKey,
+				index:            newIndex(subKeySchema),
+				primaryKeySchema: primaryKeySchema,
 			}
 		}
 
 		bingo.tables[tableName] = newTable(
 			bingo,
 			tableName,
-			schema,
+			tableSchema,
 			primaryIndex,
 			subIndices,
 			tableConfig.Metrics,

@@ -14,15 +14,15 @@ type FieldSchema struct {
 	Type string
 }
 
-type Key struct {
+type KeySchema struct {
 	hashKey *FieldSchema
 	sortKey *FieldSchema
 }
 
 type TableSchema struct {
 	fields      map[string]*FieldSchema
-	primaryKey  *Key
-	subKeys     map[string]*Key
+	primaryKey  *KeySchema
+	subKeys     map[string]*KeySchema
 	expireField *FieldSchema
 }
 
@@ -111,7 +111,7 @@ func (table *Table) makeMetricsTable() *Table {
 	fields[metricsConfig.Count] = &FieldSchema{Name: metricsConfig.Count, Type: "integer"}
 	fields[metricsConfig.ExpireKey] = &FieldSchema{Name: metricsConfig.ExpireKey, Type: "integer"}
 
-	primaryKey := &Key{
+	primaryKey := &KeySchema{
 		hashKey: fields[table.HashKey().Name],
 		sortKey: fields[metricsConfig.Time],
 	}

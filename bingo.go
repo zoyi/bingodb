@@ -73,17 +73,17 @@ func (bingo *Bingo) setTableMetrics() {
 	metricsFields["time"] = &FieldSchema{Name: "time", Type: "integer"}
 	metricsFields["expireAt"] = &FieldSchema{Name: "expireAt", Type: "integer"}
 
-	metricsPrimaryKey := &Key{hashKey: metricsFields["key"], sortKey: metricsFields["time"]}
+	metricsPrimaryKeySchema := &KeySchema{hashKey: metricsFields["key"], sortKey: metricsFields["time"]}
 
 	bingo.tables["_metrics"] = newTable(
 		bingo,
 		"_metrics",
 		&TableSchema{
 			fields:      metricsFields,
-			primaryKey:  metricsPrimaryKey,
+			primaryKey:  metricsPrimaryKeySchema,
 			expireField: metricsFields["expireAt"],
 		},
-		&PrimaryIndex{index: newIndex(metricsPrimaryKey)},
+		&PrimaryIndex{index: newIndex(metricsPrimaryKeySchema)},
 		make(map[string]*SubIndex),
 		nil,
 		true,

@@ -197,8 +197,8 @@ func TestFetchSubIndex(t *testing.T) {
 
 	//
 	//result, next = table.Index("guest").Fetch("1",
-	//	SubSortKey{Key: int64(100), Document: ParseDoc(Data{"channelId": "1"}, table.schema)},
-	//	SubSortKey{Key: int64(123), Document: ParseDoc(Data{"channelId": "1", "id": "z"}, table.schema)},
+	//	SubSortKey{KeySchema: int64(100), Document: ParseDoc(Data{"channelId": "1"}, table.schema)},
+	//	SubSortKey{KeySchema: int64(123), Document: ParseDoc(Data{"channelId": "1", "id": "z"}, table.schema)},
 	//	2)
 	//
 	//if actualValue, expectedValue := len(result), 2; actualValue != expectedValue {
@@ -209,8 +209,8 @@ func TestFetchSubIndex(t *testing.T) {
 	//}
 	//
 	//result, next = table.Index("guest").Fetch("1",
-	//	SubSortKey{Key: int64(100), Document: ParseDoc(Data{"channelId": "1"}, table.schema)},
-	//	SubSortKey{Key: int64(123), Document: ParseDoc(Data{"channelId": "1", "id": "z"}, table.schema)},
+	//	SubSortKey{KeySchema: int64(100), Document: ParseDoc(Data{"channelId": "1"}, table.schema)},
+	//	SubSortKey{KeySchema: int64(123), Document: ParseDoc(Data{"channelId": "1", "id": "z"}, table.schema)},
 	//	1)
 	//
 	//if actualValue, expectedValue := len(result), 1; actualValue != expectedValue {
@@ -240,8 +240,8 @@ func TestFetchSubIndex(t *testing.T) {
 //	}
 //
 //	result, next = table.Index("guest").RFetch("1",
-//		SubSortKey{Key: int64(100), Document: ParseDoc(Data{"channelId": "1"}, table.schema)},
-//		SubSortKey{Key: int64(300), Document: ParseDoc(Data{"channelId": "1"}, table.schema)},
+//		SubSortKey{KeySchema: int64(100), Document: ParseDoc(Data{"channelId": "1"}, table.schema)},
+//		SubSortKey{KeySchema: int64(300), Document: ParseDoc(Data{"channelId": "1"}, table.schema)},
 //		10)
 //
 //	if actualValue, expectedValue := len(result), 4; actualValue != expectedValue {
@@ -252,8 +252,8 @@ func TestFetchSubIndex(t *testing.T) {
 //	}
 //
 //	result, next = table.Index("guest").RFetch("1",
-//		SubSortKey{Key: int64(100), Document: ParseDoc(Data{"channelId": "1"}, table.schema)},
-//		SubSortKey{Key: int64(123), Document: ParseDoc(Data{"channelId": "1", "id": "z"}, table.schema)},
+//		SubSortKey{KeySchema: int64(100), Document: ParseDoc(Data{"channelId": "1"}, table.schema)},
+//		SubSortKey{KeySchema: int64(123), Document: ParseDoc(Data{"channelId": "1", "id": "z"}, table.schema)},
 //		2)
 //
 //	if actualValue, expectedValue := len(result), 2; actualValue != expectedValue {
@@ -264,8 +264,8 @@ func TestFetchSubIndex(t *testing.T) {
 //	}
 //
 //	result, next = table.Index("guest").RFetch("1",
-//		SubSortKey{Key: int64(100), Document: ParseDoc(Data{"channelId": "1"}, table.schema)},
-//		SubSortKey{Key: int64(123), Document: ParseDoc(Data{"channelId": "1", "id": "z"}, table.schema)},
+//		SubSortKey{KeySchema: int64(100), Document: ParseDoc(Data{"channelId": "1"}, table.schema)},
+//		SubSortKey{KeySchema: int64(123), Document: ParseDoc(Data{"channelId": "1", "id": "z"}, table.schema)},
 //		1)
 //
 //	if actualValue, expectedValue := len(result), 1; actualValue != expectedValue {

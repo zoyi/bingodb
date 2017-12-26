@@ -17,7 +17,7 @@ type IndexInterface interface {
 
 type index struct {
 	m *sync.Map
-	*Key
+	*KeySchema
 	size int64
 }
 
@@ -29,11 +29,11 @@ type PrimaryIndex struct {
 type SubIndex struct {
 	IndexInterface
 	*index
-	primaryKey *Key
+	primaryKeySchema *KeySchema
 }
 
-func newIndex(key *Key) *index {
-	return &index{m: new(sync.Map), Key: key}
+func newIndex(keySchema *KeySchema) *index {
+	return &index{m: new(sync.Map), KeySchema: keySchema}
 }
 
 func (index *index) skipList(hash interface{}) *lazyskiplist.SkipList {
@@ -221,10 +221,10 @@ func (index *SubIndex) parseSubSortKey(raw interface{}) SubSortKey {
 			key.sort = ParseField(index.sortKey, ary[0])
 		}
 		if len(ary) > 1 {
-			key.primaryHash = ParseField(index.primaryKey.hashKey, ary[1])
+			key.primaryHash = ParseField(index.primaryKeySchema.hashKey, ary[1])
 		}
 		if len(ary) > 2 {
-			key.primarySort = ParseField(index.primaryKey.sortKey, ary[2])
+			key.primarySort = ParseField(index.primaryKeySchema.sortKey, ary[2])
 		}
 		return key
 
@@ -309,7 +309,7 @@ func (index *SubIndex) remove(doc *Document) {
 func (index *SubIndex) makeSubSortKey(doc *Document) SubSortKey {
 	return SubSortKey{
 		sort:        doc.Get(index.sortKey),
-		primarySort: doc.Get(index.primaryKey.sortKey),
-		primaryHash: doc.Get(index.primaryKey.hashKey),
+		primarySort: doc.Get(index.primaryKeySchema.sortKey),
+		primaryHash: doc.Get(index.primaryKeySchema.hashKey),
 	}
 }
