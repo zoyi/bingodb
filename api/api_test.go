@@ -502,7 +502,7 @@ func TestDeleteWithValidParams(t *testing.T) {
 		Array().Length().Equal(2)
 }
 
-func TestDeletWithInvalidParams(t *testing.T) {
+func TestDeleteWithInvalidParams(t *testing.T) {
 	getExpector(t).
 		DELETE("/tables/onlines").
 		WithQuery("hash", "1").

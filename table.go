@@ -7,6 +7,7 @@ import (
 	"github.com/zoyi/skiplist/lib"
 	"reflect"
 	"strconv"
+	"sync"
 )
 
 type FieldSchema struct {
@@ -32,6 +33,8 @@ type Table struct {
 	name              string
 	primaryIndex      *PrimaryIndex
 	subIndices        map[string]*SubIndex
+	mutex             *sync.RWMutex
+	rowLocks          *sync.Map
 	metricsConfig     *MetricsConfig
 	expireKeyRequired bool
 }
@@ -53,6 +56,11 @@ func (table *Table) Info() *TableInfo {
 		Size:              int(table.primaryIndex.size),
 		SubIndices:        subIndices,
 		ExpireKeyRequired: table.expireKeyRequired}
+}
+
+type KeyTuple struct {
+	hash interface{}
+	sort interface{}
 }
 
 type SubSortKey struct {
@@ -80,6 +88,8 @@ func newTable(
 		name:              tableName,
 		primaryIndex:      primaryIndex,
 		subIndices:        subIndices,
+		mutex:             new(sync.RWMutex),
+		rowLocks:          new(sync.Map),
 		metricsConfig:     metricsConfig,
 		expireKeyRequired: expireKeyRequired,
 	}
@@ -291,6 +301,10 @@ func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Docum
 		return old.Merge(set)
 	}
 
+	keyTuple := merged.NewKeyTuple(table.primaryKey)
+	mutex := table.lock(keyTuple)
+	defer mutex.Unlock()
+
 	// Insert doc into primary index
 	old, newbie, replaced := table.primaryIndex.put(merged, onUpdate)
 
@@ -313,6 +327,14 @@ func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Docum
 }
 
 func (table *Table) Remove(hash interface{}, sort interface{}) (*Document, error) {
+	keyTuple, err := table.parseKey(hash, sort)
+	if err != nil {
+		return nil, err
+	}
+
+	table.lock(keyTuple)
+	defer table.lockAndRemove(keyTuple)
+
 	doc, err := table.primaryIndex.remove(hash, sort)
 	if err != nil {
 		return nil, err
@@ -332,4 +354,46 @@ func (table *Table) RemoveByDocument(doc *Document) (*Document, error) {
 	sortValue := doc.Get(table.primaryKey.sortKey)
 
 	return table.Remove(hashValue, sortValue)
+}
+
+//
+
+func (table *Table) parseKey(hashRaw, sortRaw interface{}) (*KeyTuple, error) {
+	hash := ParseField(table.primaryKey.hashKey, hashRaw)
+	sort := ParseField(table.primaryKey.sortKey, sortRaw)
+
+	if hash == nil {
+		return nil, errors.New(HashKeyMissing)
+	}
+
+	if sort == nil {
+		return nil, errors.New(SortKeyMissing)
+	}
+
+	return &KeyTuple{hash: hash, sort: sort}, nil
+}
+
+
+func (table *Table) lock(keyTuple *KeyTuple) *sync.Mutex {
+	table.mutex.RLock()
+	defer table.mutex.RUnlock()
+
+	value, _ := table.rowLocks.LoadOrStore(*keyTuple, new(sync.Mutex))
+	mutex := value.(*sync.Mutex)
+	mutex.Lock()
+
+	return mutex
+}
+
+func (table *Table) lockAndRemove(keyTuple *KeyTuple) {
+	table.mutex.Lock()
+	defer table.mutex.Unlock()
+
+	value, ok := table.rowLocks.Load(*keyTuple)
+	if !ok {
+		return
+	}
+	value.(*sync.Mutex).Unlock()
+
+	table.rowLocks.Delete(*keyTuple)
 }

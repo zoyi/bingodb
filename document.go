@@ -116,3 +116,7 @@ func (doc *Document) GetExpiresAt() (int64, bool) {
 
 	return value.(int64), ok
 }
+
+func (doc *Document) NewKeyTuple(schema *KeySchema) *KeyTuple {
+	return &KeyTuple{hash: doc.Get(schema.hashKey), sort: doc.Get(schema.sortKey)}
+}
