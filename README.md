@@ -87,7 +87,7 @@ tables:
 
 ### <code>GET</code> /tables/:table/scan?hash=[hash]&since=[since]&limit=[limit]&backward=[backward]
 * 해쉬 값에 해당하는 아이템들을 list로 얻는 API
-* since 값을 포함해 그 이후 데이터를 조회함(backward 값이 y일 경우 그 이전)
+* since 값을 포함해 그 이후 데이터를 조회함(backward 값이 1일 경우 그 이전)
 * 최대 limit 개수 만큼 조회 
 
 ### <code>GET</code> /tables/:table/indices/:index?hash=[hash]&sort=[sort]
@@ -95,7 +95,7 @@ tables:
 
 ### <code>GET</code> /tables/:table/indices/:index/scan?hash=[hash]&limit=[limit]&since=[since1]&since=[since2]&since=[since3]&backward=[backward]
 * index 이름을 가진 서브 인덱스에 대해 해당하는 아이템들을 list로 얻는 API
-* since 값을 포함해 그 이후 데이터를 조회함(backward 값이 y일 경우 그 이전)
+* since 값을 포함해 그 이후 데이터를 조회함(backward 값이 1일 경우 그 이전)
 * since1: subIndex sort key, since2: primary hash key, since3: primary sort key
 * 최대 limit 개수 만큼 조회
 
