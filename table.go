@@ -302,7 +302,7 @@ func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Docum
 	}
 
 	keyTuple := merged.NewKeyTuple(table.primaryKey)
-	mutex := table.lock(keyTuple)
+	mutex := table.lockForRead(keyTuple)
 	defer mutex.Unlock()
 
 	// Insert doc into primary index
@@ -332,8 +332,16 @@ func (table *Table) Remove(hash interface{}, sort interface{}) (*Document, error
 		return nil, err
 	}
 
-	table.lock(keyTuple)
-	defer table.lockAndRemove(keyTuple)
+	table.mutex.Lock()
+	defer table.mutex.Unlock()
+
+	value, ok := table.rowLocks.Load(*keyTuple)
+	if ok {
+		mutex := value.(*sync.Mutex)
+		mutex.Lock()
+		defer mutex.Unlock()
+		defer table.rowLocks.Delete(*keyTuple)
+	}
 
 	doc, err := table.primaryIndex.remove(hash, sort)
 	if err != nil {
@@ -374,7 +382,7 @@ func (table *Table) parseKey(hashRaw, sortRaw interface{}) (*KeyTuple, error) {
 }
 
 
-func (table *Table) lock(keyTuple *KeyTuple) *sync.Mutex {
+func (table *Table) lockForRead(keyTuple *KeyTuple) *sync.Mutex {
 	table.mutex.RLock()
 	defer table.mutex.RUnlock()
 
@@ -383,17 +391,4 @@ func (table *Table) lock(keyTuple *KeyTuple) *sync.Mutex {
 	mutex.Lock()
 
 	return mutex
-}
-
-func (table *Table) lockAndRemove(keyTuple *KeyTuple) {
-	table.mutex.Lock()
-	defer table.mutex.Unlock()
-
-	value, ok := table.rowLocks.Load(*keyTuple)
-	if !ok {
-		return
-	}
-	value.(*sync.Mutex).Unlock()
-
-	table.rowLocks.Delete(*keyTuple)
 }
