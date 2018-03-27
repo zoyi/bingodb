@@ -33,7 +33,7 @@ type Table struct {
 	name              string
 	primaryIndex      *PrimaryIndex
 	subIndices        map[string]*SubIndex
-	mutex             *sync.RWMutex
+	mutex             *sync.Mutex
 	rowLocks          *sync.Map
 	metricsConfig     *MetricsConfig
 	expireKeyRequired bool
@@ -88,7 +88,7 @@ func newTable(
 		name:              tableName,
 		primaryIndex:      primaryIndex,
 		subIndices:        subIndices,
-		mutex:             new(sync.RWMutex),
+		mutex:             new(sync.Mutex),
 		rowLocks:          new(sync.Map),
 		metricsConfig:     metricsConfig,
 		expireKeyRequired: expireKeyRequired,
@@ -301,9 +301,12 @@ func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Docum
 		return old.Merge(set)
 	}
 
-	keyTuple := merged.NewKeyTuple(table.primaryKey)
-	mutex := table.lockForRead(keyTuple)
-	defer mutex.Unlock()
+	table.mutex.Lock()
+	defer table.mutex.Unlock()
+
+	//keyTuple := merged.NewKeyTuple(table.primaryKey)
+	//mutex := table.lockForRead(keyTuple)
+	//defer mutex.Unlock()
 
 	// Insert doc into primary index
 	old, newbie, replaced := table.primaryIndex.put(merged, onUpdate)
@@ -327,21 +330,21 @@ func (table *Table) Put(setData *Data, setOnInsertData *Data) (*Document, *Docum
 }
 
 func (table *Table) Remove(hash interface{}, sort interface{}) (*Document, error) {
-	keyTuple, err := table.parseKey(hash, sort)
-	if err != nil {
-		return nil, err
-	}
+	//keyTuple, err := table.parseKey(hash, sort)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	table.mutex.Lock()
 	defer table.mutex.Unlock()
 
-	value, ok := table.rowLocks.Load(*keyTuple)
-	if ok {
-		mutex := value.(*sync.Mutex)
-		mutex.Lock()
-		defer mutex.Unlock()
-		defer table.rowLocks.Delete(*keyTuple)
-	}
+	//value, ok := table.rowLocks.Load(*keyTuple)
+	//if ok {
+	//	mutex := value.(*sync.Mutex)
+	//	mutex.Lock()
+	//	defer mutex.Unlock()
+	//	defer table.rowLocks.Delete(*keyTuple)
+	//}
 
 	doc, err := table.primaryIndex.remove(hash, sort)
 	if err != nil {
@@ -382,13 +385,13 @@ func (table *Table) parseKey(hashRaw, sortRaw interface{}) (*KeyTuple, error) {
 }
 
 
-func (table *Table) lockForRead(keyTuple *KeyTuple) *sync.Mutex {
-	table.mutex.RLock()
-	defer table.mutex.RUnlock()
-
-	value, _ := table.rowLocks.LoadOrStore(*keyTuple, new(sync.Mutex))
-	mutex := value.(*sync.Mutex)
-	mutex.Lock()
-
-	return mutex
-}
+//func (table *Table) lockForRead(keyTuple *KeyTuple) *sync.Mutex {
+//	table.mutex.RLock()
+//	defer table.mutex.RUnlock()
+//
+//	value, _ := table.rowLocks.LoadOrStore(*keyTuple, new(sync.Mutex))
+//	mutex := value.(*sync.Mutex)
+//	mutex.Lock()
+//
+//	return mutex
+//}
