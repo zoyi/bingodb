@@ -17,6 +17,10 @@ type BingoServer struct {
 	engine *gin.Engine
 }
 
+type Version struct {
+	Version string `json:"version"`
+}
+
 func NewBingoServer(bingo *bingodb.Bingo, middleware ...gin.HandlerFunc) *BingoServer {
 	gin.SetMode(bingo.ServerConfig.Mode)
 
@@ -40,6 +44,8 @@ func NewBingoServer(bingo *bingodb.Bingo, middleware ...gin.HandlerFunc) *BingoS
 	fmt.Printf("* Preparing resources..\n")
 	resource := &Resource{bingo: bingo}
 
+	engine.GET("/ping", ping)
+	engine.GET("/version", version)
 	engine.GET("/", resource.Overview)
 	engine.GET("/tables/:table", resource.Get)
 	engine.GET("/tables/:table/info", resource.TableInfo)
@@ -58,6 +64,14 @@ func NewBingoServer(bingo *bingodb.Bingo, middleware ...gin.HandlerFunc) *BingoS
 		config: bingo.ServerConfig,
 		engine: engine,
 	}
+}
+
+func ping(ctx *gin.Context) {
+	ctx.String(http.StatusOK, "pong")
+}
+
+func version(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, Version{Version: "1.0.1"})
 }
 
 func (server *BingoServer) Run() {
